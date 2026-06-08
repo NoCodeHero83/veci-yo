@@ -1,4 +1,5 @@
 import theme from '../../../config/theme';
+import Logo from '../../../components/ui/Logo';
 
 export default function OnboardingHeader() {
   return (
@@ -10,18 +11,7 @@ export default function OnboardingHeader() {
       padding: '22px 16px 16px',
       flexShrink: 0,
     }}>
-      <div style={{
-        width: '40px',
-        height: '40px',
-        borderRadius: '50%',
-        background: theme.colors.primary,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '22px',
-      }}>
-        🦉
-      </div>
+      <Logo size={40} />
       <span style={{
         fontSize: theme.fonts.sizes.xl,
         fontWeight: theme.fonts.weights.bold,

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { edificios } from '../../data/mockData';
 import theme from '../../config/theme';
+import Logo from '../ui/Logo';
 
 export default function TopBar() {
   const { edificioActivo, setEdificioActivo } = useApp();
@@ -23,18 +24,7 @@ export default function TopBar() {
     >
       {/* Logo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <div style={{
-          width: '36px',
-          height: '36px',
-          borderRadius: '50%',
-          background: theme.colors.primary,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '20px',
-        }}>
-          🦉
-        </div>
+        <Logo size={36} />
         <span style={{
           fontSize: theme.fonts.sizes.xl,
           fontWeight: theme.fonts.weights.bold,

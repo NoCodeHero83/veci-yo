@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
+import fondoOnboarding from '../../assets/branding/fondo-onboarding.png';
 import Button from '../../components/ui/Button';
 import InputField from '../../components/ui/InputField';
 import SelectField from '../../components/ui/SelectField';
@@ -111,14 +112,10 @@ export default function RegistroPage() {
         <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, overflow: 'hidden', boxShadow: theme.shadows.card }}>
           <div style={{
             height: '120px',
-            background: `linear-gradient(135deg, ${theme.colors.primaryLight}, #E8E4DC)`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '48px',
-          }}>
-            📝
-          </div>
+            backgroundImage: `url(${fondoOnboarding})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }} />
           <p style={{
             textAlign: 'center',
             padding: '16px',

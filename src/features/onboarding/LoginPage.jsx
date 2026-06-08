@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import theme from '../../config/theme';
+import fondoOnboarding from '../../assets/branding/fondo-onboarding.png';
 import { useApp } from '../../context/AppContext';
 import Button from '../../components/ui/Button';
 import InputField from '../../components/ui/InputField';
@@ -103,14 +104,10 @@ export default function LoginPage() {
         }}>
           <div style={{
             height: '150px',
-            background: `linear-gradient(135deg, ${theme.colors.primaryLight}, #E8E4DC)`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '56px',
-          }}>
-            🏡
-          </div>
+            backgroundImage: `url(${fondoOnboarding})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }} />
           <div style={{ padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <p style={{
               textAlign: 'center',
