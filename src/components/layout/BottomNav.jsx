@@ -1,13 +1,16 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import theme from '../../config/theme';
 
+const ACTIVE_GRADIENT_ID = 'bottomNavActiveGradient';
+const activeStroke = `url(#${ACTIVE_GRADIENT_ID})`;
+
 const tabs = [
   {
     key: 'inicio',
     label: 'Inicio',
     path: '/',
     icon: (active) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? theme.colors.navActive : theme.colors.navInactive} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? activeStroke : theme.colors.navInactive} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
         <polyline points="9 22 9 12 15 12 15 22"/>
       </svg>
@@ -18,7 +21,7 @@ const tabs = [
     label: 'Comunidad',
     path: '/comunidad',
     icon: (active) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? theme.colors.navActive : theme.colors.navInactive} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? activeStroke : theme.colors.navInactive} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
         <circle cx="9" cy="7" r="4"/>
         <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
@@ -31,22 +34,21 @@ const tabs = [
     label: 'Viviendas',
     path: '/',
     icon: (active) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? theme.colors.navActive : 'none'} stroke={active ? theme.colors.navActive : theme.colors.navInactive} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="3" width="20" height="18" rx="2"/>
-        <line x1="12" y1="3" x2="12" y2="21"/>
-        <path d="M6 8h3M6 12h3M6 16h3M15 8h3M15 12h3M15 16h3"/>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? activeStroke : theme.colors.navInactive} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="4" y="3" width="16" height="18" rx="1.5"/>
+        <path d="M9 21v-4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4"/>
+        <path d="M8 7h.01M8 11h.01M16 7h.01M16 11h.01"/>
       </svg>
     ),
-    isCentral: true,
   },
   {
     key: 'pagos',
     label: 'Pagos',
     path: '/pagos',
     icon: (active) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? theme.colors.navActive : theme.colors.navInactive} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-        <line x1="1" y1="10" x2="23" y2="10"/>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? activeStroke : theme.colors.navInactive} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-2"/>
+        <path d="M15 12h6v4h-6a2 2 0 0 1 0-4z"/>
       </svg>
     ),
   },
@@ -55,7 +57,7 @@ const tabs = [
     label: 'Perfil',
     path: '/perfil',
     icon: (active) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? theme.colors.navActive : theme.colors.navInactive} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? activeStroke : theme.colors.navInactive} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
         <circle cx="12" cy="7" r="4"/>
       </svg>
@@ -83,6 +85,16 @@ export default function BottomNav() {
         boxShadow: '0 -2px 8px rgba(0,0,0,0.06)',
       }}
     >
+      {/* Shared gradient definition referenced by every icon's stroke when active (gold -> dark gold) */}
+      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+        <defs>
+          <linearGradient id={ACTIVE_GRADIENT_ID} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={theme.colors.primary} />
+            <stop offset="100%" stopColor={theme.colors.primaryDark} />
+          </linearGradient>
+        </defs>
+      </svg>
+
       {tabs.map(tab => {
         const active = isActive(tab);
         return (
@@ -99,28 +111,9 @@ export default function BottomNav() {
               border: 'none',
               cursor: 'pointer',
               padding: '4px 0',
-              position: 'relative',
             }}
           >
-            {tab.isCentral ? (
-              <div
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '12px',
-                  background: active ? theme.colors.primary : theme.colors.bgMuted,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginTop: '-16px',
-                  boxShadow: active ? theme.shadows.fab : 'none',
-                }}
-              >
-                {tab.icon(active)}
-              </div>
-            ) : (
-              tab.icon(active)
-            )}
+            {tab.icon(active)}
             <span
               style={{
                 fontSize: theme.fonts.sizes.xs,
