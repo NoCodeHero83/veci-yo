@@ -26,6 +26,11 @@ import ZonasComunesPage from './features/zonas/ZonasComunesPage';
 import ZonaDetallesPage from './features/zonas/ZonaDetallesPage';
 import ZonaReservarPage from './features/zonas/ZonaReservarPage';
 
+// Administrador
+import AdministradorArquitecturaPage from './features/administrador/AdministradorArquitecturaPage';
+import AdministradorPermisosPage from './features/administrador/AdministradorPermisosPage';
+import AdministradorSeguridadPage from './features/administrador/AdministradorSeguridadPage';
+
 // Placeholder pages
 function PlaceholderPage({ title }) {
   return (
@@ -82,6 +87,11 @@ export default function App() {
         <Route path="/zonas-comunes" element={<ZonasComunesPage />} />
         <Route path="/zonas-comunes/:zonaId" element={<ZonaDetallesPage />} />
         <Route path="/zonas-comunes/:zonaId/reservar" element={<ZonaReservarPage />} />
+
+        <Route path="/admin/arquitectura" element={<AdministradorArquitecturaPage />} />
+        <Route path="/admin/permisos" element={<AdministradorPermisosPage />} />
+        <Route path="/admin/seguridad" element={<AdministradorSeguridadPage />} />
+        <Route path="/integracion-externa" element={<PlaceholderPage title="Integración externa" />} />
 
         <Route path="/comunidad" element={<PlaceholderPage title="Comunidad" />} />
         <Route path="/pagos" element={<PlaceholderPage title="Pagos" />} />

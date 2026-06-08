@@ -1,0 +1,315 @@
+import { useState } from 'react';
+import AppShell from '../../components/layout/AppShell';
+import PageHeader from '../../components/layout/PageHeader';
+import BottomSheet, { BottomSheetOption } from '../../components/ui/BottomSheet';
+import Modal from '../../components/ui/Modal';
+import SelectField from '../../components/ui/SelectField';
+import InputField from '../../components/ui/InputField';
+import Button from '../../components/ui/Button';
+import theme from '../../config/theme';
+import { useApp } from '../../context/AppContext';
+import DotsMenuButton from './components/DotsMenuButton';
+import { ciudadesCalendario, diasSemana, rangosHora, garitas } from '../../data/mockData';
+
+const labelStyle = {
+  display: 'block',
+  fontSize: theme.fonts.sizes.sm,
+  color: theme.colors.textSecondary,
+  marginBottom: '6px',
+  fontWeight: theme.fonts.weights.medium,
+};
+
+const cardStyle = {
+  background: theme.colors.bgCard,
+  borderRadius: theme.radius.xl,
+  boxShadow: theme.shadows.card,
+};
+
+const TURNOS_TRABAJO = ['Mañana', 'Tarde', 'Noche'];
+const turnoDeHora = (hora) => {
+  const inicio = parseInt(hora, 10);
+  if (inicio >= 6 && inicio < 12) return 'Mañana';
+  if (inicio >= 12 && inicio < 18) return 'Tarde';
+  return 'Noche';
+};
+
+const FORM_VACIO = {
+  nombre: '', correo: '', cedula: '', diasCalendario: '',
+  turnos: [{ dia: '', hora: '' }],
+  garita: '',
+};
+
+export default function AdministradorSeguridadPage() {
+  const { guardias, agregarGuardia, actualizarGuardia, eliminarGuardia } = useApp();
+
+  // 'lista' | 'form' | 'confirmacion'
+  const [vista, setVista] = useState('lista');
+  const [modoForm, setModoForm] = useState('agregar'); // 'agregar' | 'editar'
+  const [guardiaActivo, setGuardiaActivo] = useState(null);
+  const [form, setForm] = useState(FORM_VACIO);
+
+  const [menuGuardia, setMenuGuardia] = useState(null);
+  const [deleteGuardia, setDeleteGuardia] = useState(null);
+
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filtroHorario, setFiltroHorario] = useState('');
+  const [filtroTurno, setFiltroTurno] = useState('');
+  const [filtroDia, setFiltroDia] = useState('');
+
+  const guardiasFiltrados = guardias.filter(g => {
+    if (filtroHorario && !g.turnos.some(t => t.hora === filtroHorario)) return false;
+    if (filtroTurno && !g.turnos.some(t => turnoDeHora(t.hora) === filtroTurno)) return false;
+    if (filtroDia && !g.turnos.some(t => t.dia === filtroDia)) return false;
+    return true;
+  });
+
+  const setField = (key) => (value) => setForm(prev => ({ ...prev, [key]: value }));
+
+  const setTurno = (idx, key) => (value) => setForm(prev => ({
+    ...prev,
+    turnos: prev.turnos.map((t, i) => i === idx ? { ...t, [key]: value } : t),
+  }));
+  const addTurno = () => setForm(prev => ({ ...prev, turnos: [...prev.turnos, { dia: '', hora: '' }] }));
+  const removeTurno = (idx) => setForm(prev => ({ ...prev, turnos: prev.turnos.filter((_, i) => i !== idx) }));
+
+  const abrirAgregar = () => {
+    setModoForm('agregar');
+    setGuardiaActivo(null);
+    setForm(FORM_VACIO);
+    setVista('form');
+  };
+
+  const abrirEditar = (guardia) => {
+    setMenuGuardia(null);
+    setModoForm('editar');
+    setGuardiaActivo(guardia);
+    setForm({ ...FORM_VACIO, ...guardia, turnos: guardia.turnos.map(t => ({ ...t })) });
+    setVista('form');
+  };
+
+  const volverALista = () => { setVista('lista'); setGuardiaActivo(null); };
+
+  const handleSubmitForm = () => {
+    if (modoForm === 'agregar') {
+      agregarGuardia(form);
+      volverALista();
+    } else {
+      setVista('confirmacion');
+    }
+  };
+
+  const confirmarEdicion = () => {
+    actualizarGuardia({ ...guardiaActivo, ...form });
+    volverALista();
+  };
+
+  const confirmarEliminar = () => { eliminarGuardia(deleteGuardia); setDeleteGuardia(null); };
+
+  // ── Vista: formulario Agregar / Editar ──────────────────────────────────
+  if (vista === 'form') {
+    return (
+      <AppShell>
+        <PageHeader title={modoForm === 'agregar' ? 'Agregar seguridad' : 'Editar seguridad'} onBack={volverALista} />
+        <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ ...cardStyle, padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <InputField label="Nombre completo" value={form.nombre} onChange={setField('nombre')} placeholder="Ej: Roberto Hornado" showEditIcon={false} />
+            <InputField label="Correo" value={form.correo} onChange={setField('correo')} placeholder="correo@ejemplo.com" type="email" showEditIcon={false} />
+            <InputField label="Cédula" value={form.cedula} onChange={setField('cedula')} placeholder="N° de identificación" showEditIcon={false} />
+            <div>
+              <span style={labelStyle}>Días del calendario</span>
+              <SelectField value={form.diasCalendario} options={ciudadesCalendario} onChange={setField('diasCalendario')} placeholder="Seleccionar" />
+            </div>
+          </div>
+
+          <div style={{ ...cardStyle, padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: theme.fonts.sizes.base, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>
+                Día/hora de la semana
+              </span>
+              <button
+                onClick={addTurno}
+                aria-label="Agregar día y hora"
+                style={{
+                  width: '36px', height: '36px', borderRadius: '50%', background: theme.colors.primary,
+                  color: '#fff', fontSize: '20px', fontWeight: 'bold', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', border: 'none', cursor: 'pointer', flexShrink: 0,
+                }}
+              >
+                +
+              </button>
+            </div>
+
+            {form.turnos.map((turno, idx) => (
+              <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
+                <div style={{ flex: 1 }}>
+                  <span style={labelStyle}>Día</span>
+                  <SelectField value={turno.dia} options={diasSemana} onChange={setTurno(idx, 'dia')} placeholder="Seleccionar" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <span style={labelStyle}>Hora</span>
+                  <SelectField value={turno.hora} options={rangosHora} onChange={setTurno(idx, 'hora')} placeholder="Seleccionar" />
+                </div>
+                {form.turnos.length > 1 && (
+                  <button
+                    onClick={() => removeTurno(idx)}
+                    aria-label="Quitar día y hora"
+                    style={{
+                      width: '50px', height: '50px', borderRadius: theme.radius['2xl'], background: 'none',
+                      border: `1.5px solid ${theme.colors.border}`, color: theme.colors.danger, fontSize: '18px',
+                      cursor: 'pointer', flexShrink: 0,
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div style={{ ...cardStyle, padding: '16px' }}>
+            <span style={labelStyle}>Garita o entrada</span>
+            <SelectField value={form.garita} options={garitas} onChange={setField('garita')} placeholder="Seleccionar" />
+          </div>
+
+          <Button variant="primary" fullWidth onClick={handleSubmitForm}>Guardar</Button>
+        </div>
+      </AppShell>
+    );
+  }
+
+  // ── Vista: confirmación de edición ───────────────────────────────────────
+  if (vista === 'confirmacion') {
+    return (
+      <AppShell>
+        <PageHeader title="Confirmar edición" onBack={() => setVista('form')} />
+        <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <p style={{ fontSize: theme.fonts.sizes.base, textAlign: 'center', color: theme.colors.text }}>
+            Revisa los datos del guardia antes de confirmar
+          </p>
+          <div style={{ ...cardStyle, border: `1.5px solid ${theme.colors.primary}`, padding: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.md, color: theme.colors.text }}>{form.nombre}</div>
+            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>Correo: {form.correo}</div>
+            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>Cédula: {form.cedula}</div>
+            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>Días del calendario: {form.diasCalendario}</div>
+            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>Garita o entrada: {form.garita}</div>
+            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
+              Turnos: {form.turnos.map(t => `${t.dia} ${t.hora}`).join(' · ')}
+            </div>
+          </div>
+          <Button variant="primary" fullWidth onClick={confirmarEdicion}>Aceptar</Button>
+        </div>
+      </AppShell>
+    );
+  }
+
+  // ── Vista: lista ─────────────────────────────────────────────────────────
+  return (
+    <AppShell>
+      <PageHeader
+        title="Seguridad del condominio"
+        action={
+          <button
+            onClick={abrirAgregar}
+            aria-label="Agregar seguridad"
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: theme.radius.md,
+              background: theme.colors.primary,
+              color: '#fff',
+              fontSize: '22px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+            }}
+          >
+            +
+          </button>
+        }
+      />
+
+      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* Filtros */}
+        <div style={{ ...cardStyle, padding: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div>
+              <span style={labelStyle}>Horarios</span>
+              <SelectField value={filtroHorario} options={rangosHora} onChange={setFiltroHorario} placeholder="Todos" />
+            </div>
+            <div>
+              <span style={labelStyle}>Turnos</span>
+              <SelectField value={filtroTurno} options={TURNOS_TRABAJO} onChange={setFiltroTurno} placeholder="Todos" />
+            </div>
+          </div>
+          {filterOpen && (
+            <div style={{ marginTop: '10px', animation: 'slideDown 200ms ease' }}>
+              <span style={labelStyle}>Días</span>
+              <SelectField value={filtroDia} options={diasSemana} onChange={setFiltroDia} placeholder="Todos" />
+            </div>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '4px' }}>
+            <button
+              onClick={() => setFilterOpen(!filterOpen)}
+              aria-label={filterOpen ? 'Contraer filtros' : 'Expandir filtros'}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer', color: theme.colors.textSecondary,
+                fontSize: '16px', transform: filterOpen ? 'rotate(180deg)' : 'none', transition: 'transform 200ms',
+              }}
+            >
+              ▾
+            </button>
+          </div>
+        </div>
+
+        {/* Lista de guardias */}
+        {guardiasFiltrados.map(guardia => (
+          <div key={guardia.id} style={{ ...cardStyle, padding: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>
+                  👤 {guardia.nombre}
+                </span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
+                  🪪 {guardia.cedula}
+                </span>
+              </div>
+              <DotsMenuButton onClick={() => setMenuGuardia(guardia)} />
+            </div>
+            <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textMuted }}>
+              {guardia.turnos[0]?.hora} hs
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Menú "..." */}
+      <BottomSheet isOpen={!!menuGuardia} onClose={() => setMenuGuardia(null)}>
+        <BottomSheetOption label="Editar" onPress={() => abrirEditar(menuGuardia)} />
+        <BottomSheetOption
+          label="Eliminar"
+          variant="danger"
+          onPress={() => { setDeleteGuardia(menuGuardia); setMenuGuardia(null); }}
+        />
+      </BottomSheet>
+
+      {/* Eliminar guardia */}
+      <Modal isOpen={!!deleteGuardia} onClose={() => setDeleteGuardia(null)} title="Eliminar guardia">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <p style={{ fontSize: theme.fonts.sizes.base, textAlign: 'center', color: theme.colors.text }}>
+            ¿Seguro que deseas eliminar este guardia?
+          </p>
+          {deleteGuardia && (
+            <div style={{ border: `1.5px solid ${theme.colors.primary}`, borderRadius: theme.radius.xl, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.md }}>{deleteGuardia.nombre}</div>
+              <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>Cédula: {deleteGuardia.cedula}</div>
+            </div>
+          )}
+          <Button variant="danger" fullWidth onClick={confirmarEliminar}>Eliminar</Button>
+        </div>
+      </Modal>
+    </AppShell>
+  );
+}

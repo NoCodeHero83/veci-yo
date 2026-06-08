@@ -30,7 +30,7 @@ export default function DemoRolePage() {
   if (disponible) return null;
 
   return (
-    <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', background: theme.colors.bgApp, fontFamily: theme.fonts.family }}>
+    <div className="scrollable" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', background: theme.colors.bgApp, fontFamily: theme.fonts.family }}>
       <OnboardingHeader />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', padding: '32px 24px', textAlign: 'center' }}>
         <span style={{ fontSize: '52px' }}>{rolInfo.emoji}</span>

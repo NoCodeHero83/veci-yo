@@ -276,3 +276,78 @@ export const edificios = [
 ];
 
 export const departamentos = ['101', '102', '103', '104', '105', '106', '201', '202', '302', '506 C'];
+
+// ─── ADMINISTRADOR · ARQUITECTURA ───────────────────────────────────────────
+
+export const arquitecturaTorres = [
+  {
+    id: 1, numero: 1, depto: '9', penthouse: '2', tipo: 'Alfabético',
+    cocherasVisitas: '10', cocherasPrivadas: '60', almacenPrivados: '20',
+    entradasPeatonales: '2', entradasVehiculares: '2', mascotas: 'Sí', ninos: 'Sí',
+  },
+  {
+    id: 2, numero: 2, depto: '9', penthouse: '2', tipo: 'Alfabético',
+    cocherasVisitas: '10', cocherasPrivadas: '60', almacenPrivados: '20',
+    entradasPeatonales: '2', entradasVehiculares: '2', mascotas: 'Sí', ninos: 'Sí',
+  },
+  {
+    id: 3, numero: 3, depto: '9', penthouse: '2', tipo: 'Alfabético',
+    cocherasVisitas: '10', cocherasPrivadas: '60', almacenPrivados: '20',
+    entradasPeatonales: '2', entradasVehiculares: '2', mascotas: 'Sí', ninos: 'Sí',
+  },
+];
+
+export const deptosPorTorre = ['6', '9', '12', '15', '20'];
+export const penthousesOpciones = ['0', '1', '2', '3', '4'];
+export const tiposNumeracion = ['Alfabético', 'Numérico'];
+export const cocherasVisitasOpciones = ['0', '5', '10', '15', '20'];
+export const cocherasPrivadasOpciones = ['10', '20', '40', '60', '80'];
+export const almacenesPrivadosOpciones = ['0', '10', '20', '30'];
+export const entradasOpciones = ['1', '2', '3'];
+export const opcionesSiNo = ['Sí', 'No'];
+
+// ─── ADMINISTRADOR · PERMISOS ───────────────────────────────────────────────
+
+export const permisosViviendas = {
+  entregaDirecta: true,
+  huespedesTemporales: true,
+  estanciaCorta: {
+    permiteVisitas: 'Sí',
+    estanciaMinima: '2 días',
+    permiteHuespedNinos: 'Sí',
+    permiteMascotas: 'No',
+    permiteCocherasVisit: 'Sí',
+    horarioCheckin: '08:30 a 13:30',
+  },
+  estanciaLarga: {
+    permiteVisitas: 'Sí',
+    estanciaMinima: '2 días',
+    permiteHuespedNinos: 'Sí',
+    permiteMascotas: 'No',
+    permiteCocherasVisit: 'Sí',
+    horarioCheckin: '08:30 a 13:30',
+  },
+};
+
+export const estanciasMinimas = ['1 día', '2 días', '3 días', '7 días'];
+export const horariosCheckin = ['08:30 a 13:30', '14:00 a 20:00', '24 horas'];
+
+// ─── ADMINISTRADOR · SEGURIDAD ──────────────────────────────────────────────
+
+export const guardiasSeguridad = [
+  {
+    id: 1, nombre: 'Roberto Hornado', correo: 'roberto.hornado@gmail.com', cedula: '2975186114',
+    diasCalendario: 'Quito', garita: 'Principal',
+    turnos: [{ dia: 'Lunes', hora: '18:00 a 24:00' }, { dia: 'Miércoles', hora: '18:00 a 24:00' }],
+  },
+  {
+    id: 2, nombre: 'Juan Franco', correo: 'juan.franco@gmail.com', cedula: '29748676114',
+    diasCalendario: 'Quito', garita: 'Principal',
+    turnos: [{ dia: 'Martes', hora: '00:00 a 06:00' }, { dia: 'Jueves', hora: '00:00 a 06:00' }],
+  },
+];
+
+export const ciudadesCalendario = ['Quito', 'Guayaquil', 'Cuenca'];
+export const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+export const rangosHora = ['00:00 a 06:00', '06:00 a 12:00', '12:00 a 18:00', '18:00 a 24:00'];
+export const garitas = ['Principal', 'Secundaria', 'Peatonal', 'Vehicular'];

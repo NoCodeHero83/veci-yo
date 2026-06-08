@@ -80,7 +80,7 @@ export default function RegistroPage() {
   };
 
   return (
-    <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', background: theme.colors.bgApp, fontFamily: theme.fonts.family }}>
+    <div className="scrollable" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', background: theme.colors.bgApp, fontFamily: theme.fonts.family }}>
       <OnboardingHeader />
 
       <form onSubmit={handleSubmit} style={{ flex: 1, padding: '0 16px 32px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -111,7 +111,7 @@ export default function RegistroPage() {
         {/* Hero card */}
         <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, overflow: 'hidden', boxShadow: theme.shadows.card }}>
           <div style={{
-            height: '120px',
+            height: '170px',
             backgroundImage: `url(${fondoOnboarding})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',

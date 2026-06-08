@@ -6,6 +6,16 @@ import Button from '../../components/ui/Button';
 import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
 
+// Panel de "Configuración" del Administrador — un componente desplegable
+// in-place, no pantallas separadas. Sumar/quitar una sección del flujo de
+// Administrador es solo editar este array.
+const CONFIG_ADMIN_OPCIONES = [
+  { key: 'arquitectura', label: 'ARQUITECTURA', path: '/admin/arquitectura' },
+  { key: 'permisos', label: 'PERMISOS', path: '/admin/permisos' },
+  { key: 'seguridad', label: 'SEGURIDAD', path: '/admin/seguridad' },
+  { key: 'integracion', label: 'INTEGRACIÓN EXTERNA', path: '/integracion-externa' },
+];
+
 const modules = [
   { label: 'Correspondencia', emoji: '📬', bg: '#FEF3C7', path: '/correspondencia' },
   { label: 'Visitas',         emoji: '🗝️',  bg: '#FEF3C7', path: '/visitas' },
@@ -39,7 +49,14 @@ function ReglasThumbnail() {
 export default function HomePage() {
   const navigate = useNavigate();
   const [fabOpen, setFabOpen] = useState(false);
-  const { usuario, mostrarBienvenida, cerrarBienvenida } = useApp();
+  const [configOpen, setConfigOpen] = useState(false);
+  const { usuario, mostrarBienvenida, cerrarBienvenida, rolActivo } = useApp();
+  const esAdministrador = rolActivo === 'administrador';
+
+  const handleConfiguracion = () => {
+    if (esAdministrador) setConfigOpen(o => !o);
+    else navigate('/configuracion');
+  };
 
   const irAVerificacion = () => {
     cerrarBienvenida();
@@ -82,11 +99,11 @@ export default function HomePage() {
             Vivienda
           </h2>
           <button
-            onClick={() => navigate('/configuracion')}
+            onClick={handleConfiguracion}
             style={{
               width: '100%',
               padding: '14px',
-              borderRadius: theme.radius.full,
+              borderRadius: esAdministrador && configOpen ? `${theme.radius.full} ${theme.radius.full} 0 0` : theme.radius.full,
               background: theme.colors.primary,
               color: theme.colors.text,
               fontWeight: theme.fonts.weights.semibold,
@@ -94,10 +111,51 @@ export default function HomePage() {
               border: 'none',
               cursor: 'pointer',
               fontFamily: theme.fonts.family,
+              position: 'relative',
             }}
           >
             Configuración
+            {esAdministrador && (
+              <span style={{
+                position: 'absolute',
+                right: '18px',
+                top: '50%',
+                transform: `translateY(-50%) rotate(${configOpen ? 180 : 0}deg)`,
+                transition: 'transform 200ms',
+                fontSize: '14px',
+              }}>
+                ↓
+              </span>
+            )}
           </button>
+
+          {/* Panel desplegable del Administrador — componente in-place, no rutas nuevas para abrirlo */}
+          {esAdministrador && configOpen && (
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', animation: 'slideDown 200ms ease' }}>
+              {CONFIG_ADMIN_OPCIONES.map((op, i) => (
+                <button
+                  key={op.key}
+                  onClick={() => { setConfigOpen(false); navigate(op.path); }}
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    background: theme.colors.primary,
+                    color: theme.colors.text,
+                    fontWeight: theme.fonts.weights.bold,
+                    fontSize: theme.fonts.sizes.sm,
+                    letterSpacing: '0.04em',
+                    border: 'none',
+                    borderTop: '1px solid rgba(0,0,0,0.08)',
+                    cursor: 'pointer',
+                    fontFamily: theme.fonts.family,
+                    borderRadius: i === CONFIG_ADMIN_OPCIONES.length - 1 ? `0 0 ${theme.radius.full} ${theme.radius.full}` : 0,
+                  }}
+                >
+                  {op.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Module grid */}

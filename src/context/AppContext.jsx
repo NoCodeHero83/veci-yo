@@ -4,6 +4,9 @@ import {
   visitasItems as initialVisitas,
   reservasZona as initialReservas,
   mensajesChat as initialMensajes,
+  arquitecturaTorres as initialTorres,
+  guardiasSeguridad as initialGuardias,
+  permisosViviendas as initialPermisos,
 } from '../data/mockData';
 
 const AppContext = createContext(null);
@@ -14,6 +17,9 @@ export function AppProvider({ children }) {
   const [visitas, setVisitas] = useState(initialVisitas);
   const [reservas, setReservas] = useState(initialReservas);
   const [mensajes, setMensajes] = useState(initialMensajes);
+  const [torres, setTorres] = useState(initialTorres);
+  const [guardias, setGuardias] = useState(initialGuardias);
+  const [permisos, setPermisos] = useState(initialPermisos);
   const [toasts, setToasts] = useState([]);
 
   // ─── Onboarding / Autenticación ──────────────────────────────────────────
@@ -23,6 +29,10 @@ export function AppProvider({ children }) {
   const [modo, setModo] = useState(null);
   const [usuario, setUsuario] = useState(null);
   const [mostrarBienvenida, setMostrarBienvenida] = useState(false);
+  // Qué rol demo está activo ('guardia', 'administrador', ...). Permite que
+  // pantallas compartidas (como el Home) ramifiquen su comportamiento según
+  // el rol sin duplicar pantallas para cada uno.
+  const [rolActivo, setRolActivo] = useState(null);
 
   const addToast = useCallback((message, type = 'success') => {
     const id = Date.now();
@@ -39,12 +49,14 @@ export function AppProvider({ children }) {
       verificado: true,
     });
     setModo('cuenta');
+    setRolActivo(null);
     setAutenticado(true);
   }, []);
 
   const registrarUsuario = useCallback((datos) => {
     setUsuario({ ...datos, verificado: false });
     setModo('cuenta');
+    setRolActivo(null);
     setAutenticado(true);
     setMostrarBienvenida(true);
   }, []);
@@ -52,12 +64,14 @@ export function AppProvider({ children }) {
   const ingresarIncognito = useCallback(() => {
     setUsuario(null);
     setModo('incognito');
+    setRolActivo(null);
     setAutenticado(true);
   }, []);
 
-  const ingresarComoDemo = useCallback(() => {
+  const ingresarComoDemo = useCallback((rol) => {
     setUsuario(null);
     setModo('demo');
+    setRolActivo(rol);
     setAutenticado(true);
   }, []);
 
@@ -141,16 +155,60 @@ export function AppProvider({ children }) {
     setMensajes(prev => [...prev, msg]);
   }, []);
 
+  // Administrador · Arquitectura
+  const agregarTorre = useCallback((datos) => {
+    setTorres(prev => {
+      const numero = prev.length ? Math.max(...prev.map(t => t.numero)) + 1 : 1;
+      return [...prev, { id: Date.now(), numero, ...datos }];
+    });
+    addToast('Su nueva arquitectura se guardó con éxito');
+  }, [addToast]);
+
+  const actualizarTorre = useCallback((torre) => {
+    setTorres(prev => prev.map(t => t.id === torre.id ? { ...t, ...torre } : t));
+    addToast(`Edición de la torre N° ${torre.numero} realizada con éxito`);
+  }, [addToast]);
+
+  const eliminarTorre = useCallback((torre) => {
+    setTorres(prev => prev.filter(t => t.id !== torre.id));
+    addToast(`Su arquitectura N°${torre.numero} fue eliminada`);
+  }, [addToast]);
+
+  // Administrador · Permisos
+  const actualizarPermisos = useCallback((datos) => {
+    setPermisos(prev => ({ ...prev, ...datos }));
+    addToast('Sus permisos se guardaron con éxito');
+  }, [addToast]);
+
+  // Administrador · Seguridad
+  const agregarGuardia = useCallback((datos) => {
+    setGuardias(prev => [{ id: Date.now(), ...datos }, ...prev]);
+    addToast('Guardia creado con éxito');
+  }, [addToast]);
+
+  const actualizarGuardia = useCallback((guardia) => {
+    setGuardias(prev => prev.map(g => g.id === guardia.id ? { ...g, ...guardia } : g));
+    addToast(`Edición del guardia ${guardia.nombre} realizada con éxito`);
+  }, [addToast]);
+
+  const eliminarGuardia = useCallback((guardia) => {
+    setGuardias(prev => prev.filter(g => g.id !== guardia.id));
+    addToast(`El guardia ${guardia.nombre} fue eliminado con éxito`);
+  }, [addToast]);
+
   return (
     <AppContext.Provider value={{
       edificioActivo, setEdificioActivo,
-      autenticado, modo, usuario,
+      autenticado, modo, usuario, rolActivo,
       iniciarSesion, registrarUsuario, ingresarIncognito, ingresarComoDemo, completarVerificacion,
       mostrarBienvenida, cerrarBienvenida,
       correspondencia, agregarCorrespondencia, actualizarEstadoCorrespondencia, eliminarCorrespondencia,
       visitas, agregarVisita, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado,
       reservas, agregarReserva, actualizarEstadoReserva, eliminarReserva,
       mensajes, enviarMensaje,
+      torres, agregarTorre, actualizarTorre, eliminarTorre,
+      permisos, actualizarPermisos,
+      guardias, agregarGuardia, actualizarGuardia, eliminarGuardia,
       toasts, addToast,
     }}>
       {children}

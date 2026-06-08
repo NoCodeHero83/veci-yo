@@ -85,8 +85,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{
-      minHeight: '100%',
+    <div className="scrollable" style={{
+      flex: 1,
+      minHeight: 0,
+      overflowY: 'auto',
       display: 'flex',
       flexDirection: 'column',
       background: theme.colors.bgApp,
@@ -103,7 +105,7 @@ export default function LoginPage() {
           boxShadow: theme.shadows.card,
         }}>
           <div style={{
-            height: '150px',
+            height: '215px',
             backgroundImage: `url(${fondoOnboarding})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
