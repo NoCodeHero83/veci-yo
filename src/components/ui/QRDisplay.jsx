@@ -1,7 +1,15 @@
 import theme from '../../config/theme';
+import { useApp } from '../../context/AppContext';
 
 // Visual QR code placeholder – replace with a real QR library in production
 export default function QRDisplay({ url, size = 180 }) {
+  const { addToast } = useApp();
+
+  const handleCopiar = () => {
+    navigator.clipboard?.writeText(url);
+    addToast('Enlace copiado al portapapeles');
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
       <div
@@ -64,13 +72,15 @@ export default function QRDisplay({ url, size = 180 }) {
             {url}
           </span>
           <button
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.colors.textSecondary, flexShrink: 0 }}
-            onClick={() => navigator.clipboard?.writeText(url)}
+            aria-label="Copiar QR"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.colors.textSecondary, flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px' }}
+            onClick={handleCopiar}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
             </svg>
+            <span style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.medium }}>Copiar QR</span>
           </button>
         </div>
       )}

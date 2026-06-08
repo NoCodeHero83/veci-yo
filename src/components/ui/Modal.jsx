@@ -12,7 +12,7 @@ export default function Modal({ isOpen, onClose, title, children, showClose = tr
   return (
     <div
       style={{
-        position: 'absolute',
+        position: 'fixed',
         inset: 0,
         background: theme.colors.bgOverlay,
         zIndex: 1000,

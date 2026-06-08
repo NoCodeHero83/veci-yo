@@ -187,7 +187,7 @@ export default function CorrespondenciaPage() {
                     {item.empresa}: {item.unidad}
                   </span>
                 </div>
-                <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.md, color: theme.colors.text }}>
+                <div style={{ fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.md, color: theme.colors.text }}>
                   {item.nombre}
                 </div>
                 <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>

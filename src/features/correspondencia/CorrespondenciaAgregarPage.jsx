@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell';
 import PageHeader from '../../components/layout/PageHeader';
@@ -34,6 +34,31 @@ export default function CorrespondenciaAgregarPage() {
   const [selectedUnidades, setSelectedUnidades] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  // Carga de fotos — selector múltiple de imágenes con vista previa real
+  const fotosInputRef = useRef(null);
+  const [fotos, setFotos] = useState([]);
+  const [fotoError, setFotoError] = useState('');
+  const [fotoPreviews, setFotoPreviews] = useState([]);
+
+  useEffect(() => {
+    const previews = fotos.map(f => ({ url: URL.createObjectURL(f), name: f.name }));
+    setFotoPreviews(previews);
+    return () => previews.forEach(p => URL.revokeObjectURL(p.url));
+  }, [fotos]);
+
+  const abrirSelectorFotos = () => fotosInputRef.current?.click();
+
+  const handleFotosChange = (e) => {
+    const archivos = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (!archivos.length) return;
+    const validos = archivos.filter(f => f.type.startsWith('image/'));
+    setFotoError(validos.length !== archivos.length ? 'Solo se permiten archivos de imagen (JPG, PNG).' : '');
+    setFotos(prev => [...prev, ...validos]);
+  };
+
+  const quitarFoto = (idx) => setFotos(prev => prev.filter((_, i) => i !== idx));
 
   const toggleUnidad = (u) => {
     setSelectedUnidades(prev =>
@@ -113,53 +138,114 @@ export default function CorrespondenciaAgregarPage() {
             <Toggle value={entregaEnPuerta} onChange={setEntregaEnPuerta} labelRight="Entrega en puerta" />
 
             {/* Torre / Piso */}
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontWeight: theme.fonts.weights.semibold }}>Torre:</span>
-                <select
-                  value={torre}
-                  onChange={e => setTorre(e.target.value)}
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: theme.radius.lg,
-                    border: `1px solid ${theme.colors.border}`,
-                    background: theme.colors.bgCard,
-                    fontFamily: theme.fonts.family,
-                    fontSize: theme.fonts.sizes.sm,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <option value="">-</option>
-                  {torres.map(t => <option key={t} value={t}>{t.replace('Torre ', '')}</option>)}
-                </select>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ flex: 1 }}>
+                <SelectField label="Torre:" value={torre} options={torres} onChange={setTorre} />
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontWeight: theme.fonts.weights.semibold }}>Piso:</span>
-                <select
-                  value={piso}
-                  onChange={e => setPiso(e.target.value)}
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: theme.radius.lg,
-                    border: `1px solid ${theme.colors.border}`,
-                    background: theme.colors.bgCard,
-                    fontFamily: theme.fonts.family,
-                    fontSize: theme.fonts.sizes.sm,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <option value="">-</option>
-                  {pisos.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
+              <div style={{ flex: 1 }}>
+                <SelectField label="Piso:" value={piso} options={pisos} onChange={setPiso} />
               </div>
             </div>
+          </>
+        )}
 
+        {/* Subir una o varias fotos */}
+        <div>
+          <p style={{ textAlign: 'center', fontWeight: theme.fonts.weights.semibold, marginBottom: '8px' }}>Sube una o varias fotos</p>
+          <button
+            type="button"
+            onClick={abrirSelectorFotos}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: theme.colors.bgCard,
+              borderRadius: theme.radius['2xl'],
+              padding: '13px 16px',
+              border: `1.5px dashed ${theme.colors.border}`,
+              cursor: 'pointer',
+              fontFamily: theme.fonts.family,
+            }}
+          >
+            <span style={{ fontSize: theme.fonts.sizes.base, fontWeight: theme.fonts.weights.medium, color: theme.colors.text }}>Elegir Archivo</span>
+            <span style={{ fontSize: '20px' }}>📷</span>
+          </button>
+          <input ref={fotosInputRef} type="file" accept="image/*" multiple onChange={handleFotosChange} style={{ display: 'none' }} />
+
+          {fotoError && (
+            <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.danger, marginTop: '6px' }}>{fotoError}</div>
+          )}
+
+          {fotoPreviews.length > 0 ? (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
+              {fotoPreviews.map((p, i) => (
+                <div key={i} style={{ position: 'relative', width: '64px', height: '64px' }}>
+                  <img
+                    src={p.url}
+                    alt={p.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: theme.radius.lg, border: `1px solid ${theme.colors.border}` }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => quitarFoto(i)}
+                    aria-label="Quitar foto"
+                    style={{
+                      position: 'absolute', top: '-6px', right: '-6px', width: '20px', height: '20px', borderRadius: '50%',
+                      background: theme.colors.text, color: '#fff', fontSize: '11px', display: 'flex', alignItems: 'center',
+                      justifyContent: 'center', border: '2px solid #fff', cursor: 'pointer',
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, textAlign: 'right', marginTop: '6px' }}>
+              Ningún archivo seleccionado
+            </div>
+          )}
+        </div>
+
+        {/* Estado de encomienda */}
+        <SelectField label="Estado de encomienda:" value={estadoEncomienda} options={estadosEncomienda} onChange={setEstadoEncomienda} />
+
+        {/* Descripción */}
+        <div style={{
+          background: theme.colors.bgCard,
+          borderRadius: theme.radius['2xl'],
+          padding: '13px 16px',
+          border: `1px solid ${theme.colors.border}`,
+          position: 'relative',
+        }}>
+          <textarea
+            value={descripcion}
+            onChange={e => setDescripcion(e.target.value)}
+            placeholder="Descripción de la encomienda"
+            rows={3}
+            style={{
+              width: '100%',
+              background: 'none',
+              border: 'none',
+              outline: 'none',
+              fontSize: theme.fonts.sizes.base,
+              fontFamily: theme.fonts.family,
+              color: theme.colors.text,
+              resize: 'none',
+            }}
+          />
+          <span style={{ position: 'absolute', right: '14px', top: '14px', color: theme.colors.textMuted }}>✏️</span>
+        </div>
+
+        {!informarItem && (
+          <>
             {/* Calendar */}
             <Calendar selected={selectedDate} onSelect={setSelectedDate} />
 
             {/* Unit selector */}
             <div>
-              <p style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, marginBottom: '10px', lineHeight: 1.4 }}>
+              <p style={{ textAlign: 'center', fontSize: theme.fonts.sizes.sm, color: theme.colors.text, margin: '6px 0 14px', lineHeight: 1.4 }}>
                 Seleccione el departamento al cual va destinado la correspondencia recibida
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
@@ -198,55 +284,6 @@ export default function CorrespondenciaAgregarPage() {
             </div>
           </>
         )}
-
-        {/* Estado de encomienda (always shown) */}
-        <SelectField label="Estado de encomienda:" value={estadoEncomienda} options={estadosEncomienda} onChange={setEstadoEncomienda} />
-
-        <div style={{
-          background: theme.colors.bgCard,
-          borderRadius: theme.radius['2xl'],
-          padding: '13px 16px',
-          border: `1px solid ${theme.colors.border}`,
-          position: 'relative',
-        }}>
-          <textarea
-            value={descripcion}
-            onChange={e => setDescripcion(e.target.value)}
-            placeholder="Descripción de la encomienda"
-            rows={3}
-            style={{
-              width: '100%',
-              background: 'none',
-              border: 'none',
-              outline: 'none',
-              fontSize: theme.fonts.sizes.base,
-              fontFamily: theme.fonts.family,
-              color: theme.colors.text,
-              resize: 'none',
-            }}
-          />
-          <span style={{ position: 'absolute', right: '14px', top: '14px', color: theme.colors.textMuted }}>✏️</span>
-        </div>
-
-        {/* Photo upload */}
-        <div>
-          <p style={{ textAlign: 'center', fontWeight: theme.fonts.weights.semibold, marginBottom: '8px' }}>Sube una o varias fotos</p>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: theme.colors.bgCard,
-            borderRadius: theme.radius['2xl'],
-            padding: '13px 16px',
-            border: `1px solid ${theme.colors.border}`,
-          }}>
-            <span style={{ fontSize: theme.fonts.sizes.base, fontWeight: theme.fonts.weights.medium }}>Elegir Archivo</span>
-            <span style={{ fontSize: '20px' }}>📷</span>
-          </div>
-          <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, textAlign: 'right', marginTop: '4px' }}>
-            Se adjuntaron img_235, img_859.
-          </div>
-        </div>
 
         <Button variant="primary" fullWidth onClick={handleAgregar}>Agregar</Button>
         <div style={{ height: '16px' }} />

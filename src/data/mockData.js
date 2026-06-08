@@ -233,6 +233,78 @@ export const reservasZona = [
     horario: 'Domingo 14 hs a 19:30 hs.',
     estado: 'No disponible',
   },
+  {
+    id: 4,
+    zonaId: 'piscina',
+    depto: 'Departamento 304 A',
+    reservaNum: '178452',
+    horario: 'Sábado 09 hs a 11 hs.',
+    estado: 'Reservado',
+  },
+  {
+    id: 5,
+    zonaId: 'piscina',
+    depto: 'Departamento 102 B',
+    reservaNum: '178453',
+    horario: 'Sábado 16 hs a 18 hs.',
+    estado: 'Disponible',
+  },
+  {
+    id: 6,
+    zonaId: 'parque',
+    depto: 'Departamento 201 C',
+    reservaNum: '356214',
+    horario: 'Lunes 16 hs a 17 hs.',
+    estado: 'Disponible',
+  },
+  {
+    id: 7,
+    zonaId: 'gym',
+    depto: 'Departamento 405 A',
+    reservaNum: '498321',
+    horario: 'Martes 07 hs a 08 hs.',
+    estado: 'Reservado',
+  },
+  {
+    id: 8,
+    zonaId: 'gym',
+    depto: 'Departamento 110 B',
+    reservaNum: '498322',
+    horario: 'Miércoles 18 hs a 19 hs.',
+    estado: 'No disponible',
+  },
+  {
+    id: 9,
+    zonaId: 'coworking',
+    depto: 'Departamento 506 C',
+    reservaNum: '512873',
+    horario: 'Jueves 09 hs a 13 hs.',
+    estado: 'Reservado',
+  },
+  {
+    id: 10,
+    zonaId: 'tenis',
+    depto: 'Departamento 304 A',
+    reservaNum: '624190',
+    horario: 'Viernes 17 hs a 18 hs.',
+    estado: 'Disponible',
+  },
+  {
+    id: 11,
+    zonaId: 'sala-juegos',
+    depto: 'Departamento 201 C',
+    reservaNum: '731065',
+    horario: 'Sábado 15 hs a 17 hs.',
+    estado: 'Reservado',
+  },
+  {
+    id: 12,
+    zonaId: 'lavanderia',
+    depto: 'Departamento 102 B',
+    reservaNum: '845972',
+    horario: 'Domingo 10 hs a 11 hs.',
+    estado: 'No disponible',
+  },
 ];
 
 export const horasReserva = [
@@ -266,6 +338,31 @@ export const mensajesChat = [
     avatarEmoji: '🏢',
   },
 ];
+
+// ─── NOTIFICACIONES ──────────────────────────────────────────────────────────
+// Datos diferenciados por rol — cada perfil recibe novedades relevantes a su
+// función dentro de la comunidad (Residente / Seguridad / Administrador).
+
+export const notificaciones = {
+  residente: [
+    { id: 1, emoji: '📦', titulo: 'Correspondencia recibida', mensaje: 'Tienes un nuevo paquete esperando en portería.', hora: '09:40', fecha: 'Hoy', leida: false },
+    { id: 2, emoji: '🔑', titulo: 'Visita aprobada', mensaje: 'Tu invitado Mario Gómez fue autorizado a ingresar.', hora: '08:15', fecha: 'Hoy', leida: false },
+    { id: 3, emoji: '🏖️', titulo: 'Reserva confirmada', mensaje: 'Tu reserva en Piscina para mañana quedó confirmada.', hora: '19:22', fecha: 'Ayer', leida: true },
+    { id: 4, emoji: '📢', titulo: 'Aviso de la comunidad', mensaje: 'Corte de agua programado el sábado de 08:00 a 12:00.', hora: '14:05', fecha: 'Ayer', leida: true },
+  ],
+  guardia: [
+    { id: 1, emoji: '🔑', titulo: 'Nueva visita por autorizar', mensaje: 'El Departamento 506 C registró una visita para hoy.', hora: '10:12', fecha: 'Hoy', leida: false },
+    { id: 2, emoji: '🚪', titulo: 'Ingreso de visitante', mensaje: 'Mario Gómez ingresó por la garita Principal.', hora: '09:50', fecha: 'Hoy', leida: false },
+    { id: 3, emoji: '📋', titulo: 'Cambio de turno', mensaje: 'Tu turno de hoy fue actualizado: 14:00 a 20:00.', hora: '07:30', fecha: 'Hoy', leida: true },
+    { id: 4, emoji: '🚗', titulo: 'Vehículo sin registrar', mensaje: 'Se reportó un vehículo sin registro en la cochera de visitas.', hora: '21:48', fecha: 'Ayer', leida: true },
+  ],
+  administrador: [
+    { id: 1, emoji: '🛡️', titulo: 'Nuevo guardia creado', mensaje: 'Se agregó un nuevo guardia al equipo de seguridad.', hora: '11:05', fecha: 'Hoy', leida: false },
+    { id: 2, emoji: '🏗️', titulo: 'Arquitectura actualizada', mensaje: 'Se editó la información de la Torre N°2.', hora: '10:30', fecha: 'Hoy', leida: false },
+    { id: 3, emoji: '🔐', titulo: 'Permisos modificados', mensaje: 'Se guardaron nuevos permisos para las viviendas.', hora: '17:40', fecha: 'Ayer', leida: true },
+    { id: 4, emoji: '💬', titulo: 'Nuevo mensaje en chat', mensaje: 'Un residente envió un mensaje a portería.', hora: '16:02', fecha: 'Ayer', leida: true },
+  ],
+};
 
 // ─── EDIFICIO ────────────────────────────────────────────────────────────────
 

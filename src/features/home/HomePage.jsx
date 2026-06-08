@@ -5,6 +5,15 @@ import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
+import iconCorrespondencia from '../../assets/icons/home/correspondencia.png';
+import iconVisitas from '../../assets/icons/home/visitas.png';
+import iconZonasComunes from '../../assets/icons/home/zonascomunes.png';
+import iconAnuncios from '../../assets/icons/home/anuncios.png';
+import iconRanking from '../../assets/icons/home/ranking.png';
+import iconReglas from '../../assets/icons/home/reglas.png';
+import avatarMessaging from '../../assets/avatars/messaging.png';
+import avatarChat from '../../assets/avatars/chat.png';
+import avatarCall from '../../assets/avatars/call.png';
 
 // Panel de "Configuración" del Administrador — un componente desplegable
 // in-place, no pantallas separadas. Sumar/quitar una sección del flujo de
@@ -17,12 +26,12 @@ const CONFIG_ADMIN_OPCIONES = [
 ];
 
 const modules = [
-  { label: 'Correspondencia', emoji: '📬', bg: '#FEF3C7', path: '/correspondencia' },
-  { label: 'Visitas',         emoji: '🗝️',  bg: '#FEF3C7', path: '/visitas' },
-  { label: 'Zonas Comunes',   emoji: '🏋️', bg: '#FEF3C7', path: '/zonas-comunes' },
-  { label: 'Anuncios',        emoji: '📣',  bg: '#FEF3C7', path: '/anuncios' },
-  { label: 'Ranking',         emoji: '🏆',  bg: '#FEF3C7', path: '/ranking' },
-  { label: 'Reglas',          emoji: null,  bg: '#FEF3C7', path: '/reglas', isReglas: true },
+  { label: 'Correspondencia', emoji: '📬', icon: iconCorrespondencia, bg: '#FEF3C7', path: '/correspondencia' },
+  { label: 'Visitas',         emoji: '🗝️',  icon: iconVisitas,         bg: '#FEF3C7', path: '/visitas' },
+  { label: 'Zonas Comunes',   emoji: '🏋️', icon: iconZonasComunes,    bg: '#FEF3C7', path: '/zonas-comunes' },
+  { label: 'Anuncios',        emoji: '📣',  icon: iconAnuncios,        bg: '#FEF3C7', path: '/anuncios' },
+  { label: 'Ranking',         emoji: '🏆',  icon: iconRanking,         bg: '#FEF3C7', path: '/ranking' },
+  { label: 'Reglas',          emoji: null,  icon: iconReglas,          bg: '#FEF3C7', path: '/reglas', isReglas: true },
 ];
 
 function ReglasThumbnail() {
@@ -50,6 +59,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const [fabOpen, setFabOpen] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
+  const [iconosOriginales, setIconosOriginales] = useState(false);
   const { usuario, mostrarBienvenida, cerrarBienvenida, rolActivo } = useApp();
   const esAdministrador = rolActivo === 'administrador';
 
@@ -131,7 +141,7 @@ export default function HomePage() {
 
           {/* Panel desplegable del Administrador — componente in-place, no rutas nuevas para abrirlo */}
           {esAdministrador && configOpen && (
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', animation: 'slideDown 200ms ease' }}>
+            <div style={{ width: '100%', marginTop: '-12px', display: 'flex', flexDirection: 'column', animation: 'slideDown 200ms ease' }}>
               {CONFIG_ADMIN_OPCIONES.map((op, i) => (
                 <button
                   key={op.key}
@@ -186,16 +196,35 @@ export default function HomePage() {
                 fontFamily: theme.fonts.family,
               }}
             >
-              {mod.isReglas ? (
-                <ReglasThumbnail />
+              {iconosOriginales ? (
+                mod.isReglas ? <ReglasThumbnail /> : <span style={{ fontSize: '52px', lineHeight: 1 }}>{mod.emoji}</span>
               ) : (
-                <span style={{ fontSize: '52px', lineHeight: 1 }}>{mod.emoji}</span>
+                <img src={mod.icon} alt={mod.label} style={{ width: '56px', height: '56px', objectFit: 'contain' }} />
               )}
               <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.medium }}>
                 {mod.label}
               </span>
             </button>
           ))}
+        </div>
+
+        {/* Toggle discreto para comparar el set de iconos nuevo vs. el original */}
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <button
+            onClick={() => setIconosOriginales(o => !o)}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: theme.fonts.sizes.xs,
+              color: theme.colors.textMuted,
+              textDecoration: 'underline',
+              fontFamily: theme.fonts.family,
+              padding: '2px 8px',
+            }}
+          >
+            {iconosOriginales ? 'Ver iconos nuevos' : 'Ver iconos originales'}
+          </button>
         </div>
 
         {/* Bottom spacing for FABs */}
@@ -249,16 +278,16 @@ export default function HomePage() {
                   borderRadius: '50%',
                   background: theme.colors.success,
                   color: '#fff',
-                  fontSize: '22px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   border: 'none',
                   cursor: 'pointer',
                   boxShadow: '0 4px 16px rgba(22,163,74,0.35)',
+                  overflow: 'hidden',
                 }}
               >
-                📞
+                <img src={avatarCall} alt="Llamar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </button>
             </div>
 
@@ -283,16 +312,16 @@ export default function HomePage() {
                   borderRadius: '50%',
                   background: theme.colors.primary,
                   color: '#fff',
-                  fontSize: '22px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   border: 'none',
                   cursor: 'pointer',
                   boxShadow: theme.shadows.fab,
+                  overflow: 'hidden',
                 }}
               >
-                💬
+                <img src={avatarChat} alt="Chat" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </button>
             </div>
           </>
@@ -316,9 +345,10 @@ export default function HomePage() {
             boxShadow: theme.shadows.md,
             transition: 'background 200ms, transform 200ms',
             transform: fabOpen ? 'rotate(45deg)' : 'rotate(0deg)',
+            overflow: 'hidden',
           }}
         >
-          {fabOpen ? '✕' : '📞'}
+          {fabOpen ? '✕' : <img src={avatarMessaging} alt="Mensaje" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
         </button>
       </div>
 

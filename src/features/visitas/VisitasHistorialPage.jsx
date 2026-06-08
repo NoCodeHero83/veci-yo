@@ -10,6 +10,7 @@ import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import QRDisplay from '../../components/ui/QRDisplay';
 import Toggle from '../../components/ui/Toggle';
+import InputField from '../../components/ui/InputField';
 import { useApp } from '../../context/AppContext';
 import theme from '../../config/theme';
 import tipoVisitaIcons from '../../assets/icons/visitas';
@@ -25,13 +26,26 @@ const TIPO_LABELS = {
 
 export default function VisitasHistorialPage() {
   const navigate = useNavigate();
-  const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado } = useApp();
+  const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado, agregarInvitado } = useApp();
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState(null);
   const [tipoFilter, setTipoFilter] = useState('Todos');
   const [menuItem, setMenuItem] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
   const [detalleItem, setDetalleItem] = useState(null);
+  const [showAddInvitado, setShowAddInvitado] = useState(false);
+  const [nuevoInvitado, setNuevoInvitado] = useState('');
+
+  // Snapshot vivo del item en detalle — evita mostrar datos obsoletos cuando
+  // se marca "Llego", se agrega un invitado o se cambia un favorito en caliente.
+  const detalleActual = detalleItem ? visitas.find(v => v.id === detalleItem.id) || null : null;
+
+  const handleAgregarInvitado = () => {
+    if (!nuevoInvitado.trim()) return;
+    agregarInvitado(detalleItem.id, nuevoInvitado.trim());
+    setNuevoInvitado('');
+    setShowAddInvitado(false);
+  };
 
   const filtered = visitas.filter(v => {
     const matchSearch = !search || v.nombre.toLowerCase().includes(search.toLowerCase());
@@ -203,14 +217,18 @@ export default function VisitasHistorialPage() {
       </Modal>
 
       {/* Detail modal */}
-      <Modal isOpen={!!detalleItem} onClose={() => setDetalleItem(null)} title={`Visitas de Evento ${detalleItem?.fechaDesde || ''}`}>
-        {detalleItem && (
+      <Modal
+        isOpen={!!detalleItem}
+        onClose={() => { setDetalleItem(null); setShowAddInvitado(false); setNuevoInvitado(''); }}
+        title={`Visitas de Evento ${detalleItem?.fechaDesde || ''}`}
+      >
+        {detalleActual && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {detalleItem.invitados.length > 0 && (
+            {detalleActual.invitados.length > 0 && (
               <div>
                 <p style={{ fontWeight: theme.fonts.weights.bold, textDecoration: 'underline', marginBottom: '10px' }}>Invitados:</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  {detalleItem.invitados.map((inv, i) => (
+                  {detalleActual.invitados.map((inv, i) => (
                     <div
                       key={i}
                       style={{
@@ -221,9 +239,20 @@ export default function VisitasHistorialPage() {
                         borderBottom: `1px solid ${theme.colors.borderLight}`,
                       }}
                     >
-                      <span style={{ fontSize: theme.fonts.sizes.base }}>{inv.nombre}</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Toggle value={inv.llego} onChange={() => toggleLlegoInvitado(detalleItem.id, i)} />
+                        <button
+                          onClick={() => toggleFavoritoInvitado(detalleActual.id, i)}
+                          aria-label={inv.favorito ? 'Quitar de favoritos' : 'Marcar como favorito'}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', display: 'flex' }}
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill={inv.favorito ? theme.colors.primary : 'none'} stroke={inv.favorito ? theme.colors.primary : theme.colors.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                          </svg>
+                        </button>
+                        <span style={{ fontSize: theme.fonts.sizes.base }}>{inv.nombre}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Toggle value={inv.llego} onChange={() => toggleLlegoInvitado(detalleActual.id, i)} />
                         <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>Llego</span>
                       </div>
                     </div>
@@ -231,7 +260,41 @@ export default function VisitasHistorialPage() {
                 </div>
               </div>
             )}
-            <QRDisplay url={detalleItem.qrUrl} />
+
+            {showAddInvitado ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <InputField value={nuevoInvitado} onChange={setNuevoInvitado} placeholder="Nombre y apellido del invitado" showEditIcon={false} />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button variant="ghost" fullWidth onClick={() => { setShowAddInvitado(false); setNuevoInvitado(''); }}>Cancelar</Button>
+                  <Button variant="primary" fullWidth onClick={handleAgregarInvitado}>Agregar</Button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAddInvitado(true)}
+                style={{
+                  width: '100%',
+                  padding: '14px',
+                  borderRadius: theme.radius.full,
+                  background: 'none',
+                  border: `1.5px dashed ${theme.colors.border}`,
+                  color: theme.colors.text,
+                  fontWeight: theme.fonts.weights.semibold,
+                  fontSize: theme.fonts.sizes.base,
+                  cursor: 'pointer',
+                  fontFamily: theme.fonts.family,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                }}
+              >
+                <span style={{ fontSize: '18px', lineHeight: 1 }}>+</span>
+                Agregar invitado
+              </button>
+            )}
+
+            <QRDisplay url={detalleActual.qrUrl} />
           </div>
         )}
       </Modal>

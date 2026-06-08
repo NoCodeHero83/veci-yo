@@ -13,7 +13,18 @@ import { zonasComunes, horasReserva, cantidadPersonas } from '../../data/mockDat
 import theme from '../../config/theme';
 import zonaIcons from '../../assets/icons/zonas';
 
-const numeros = ['BBQ N°1', 'BBQ N°2', 'BBQ N°3', 'BBQ N°4'];
+// Campos relevantes según el tipo de zona común — evita mostrar
+// selectores de "N° de zona" o "cantidad de personas" donde no aplican.
+const CAMPOS_POR_ZONA = {
+  piscina: { numero: false, personas: true },
+  parque: { numero: false, personas: true },
+  bbq: { numero: true, personas: true },
+  gym: { numero: false, personas: false },
+  coworking: { numero: true, personas: true },
+  tenis: { numero: true, personas: true },
+  'sala-juegos': { numero: false, personas: true },
+  lavanderia: { numero: true, personas: false },
+};
 
 export default function ZonaReservarPage() {
   const { zonaId } = useParams();
@@ -21,6 +32,8 @@ export default function ZonaReservarPage() {
   const { agregarReserva } = useApp();
 
   const zona = zonasComunes.find(z => z.id === zonaId) || { nombre: zonaId, emoji: '🔥' };
+  const campos = CAMPOS_POR_ZONA[zonaId] || { numero: true, personas: true };
+  const numeros = Array.from({ length: zona.total || 4 }, (_, i) => `${zona.nombre} N°${i + 1}`);
 
   const [hora, setHora] = useState('');
   const [numero, setNumero] = useState('');
@@ -77,9 +90,13 @@ export default function ZonaReservarPage() {
         </div>
 
         <SelectField label="Seleccione hora de reserva:" value={hora} options={horasReserva} onChange={setHora} />
-        <SelectField label={`Seleccione N° de ${zona.nombre}:`} value={numero} options={numeros} onChange={setNumero} />
+        {campos.numero && (
+          <SelectField label={`Seleccione N° de ${zona.nombre}:`} value={numero} options={numeros} onChange={setNumero} />
+        )}
         <Calendar selected={selectedDate} onSelect={setSelectedDate} />
-        <SelectField label="Seleccione cantidad de personas:" value={personas} options={cantidadPersonas} onChange={setPersonas} />
+        {campos.personas && (
+          <SelectField label="Seleccione cantidad de personas:" value={personas} options={cantidadPersonas} onChange={setPersonas} />
+        )}
 
         {/* Cost chips */}
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import AppShell from '../../components/layout/AppShell';
 import PageHeader from '../../components/layout/PageHeader';
+import Modal from '../../components/ui/Modal';
 import SelectField from '../../components/ui/SelectField';
 import Toggle from '../../components/ui/Toggle';
 import Button from '../../components/ui/Button';
@@ -58,12 +59,18 @@ function EstanciaCampos({ titulo, valores, onChange }) {
 export default function AdministradorPermisosPage() {
   const { permisos, actualizarPermisos } = useApp();
   const [form, setForm] = useState(permisos);
+  const [showExito, setShowExito] = useState(false);
 
   const setEstancia = (bloque) => (key, value) => {
     setForm(prev => ({ ...prev, [bloque]: { ...prev[bloque], [key]: value } }));
   };
 
   const setFlag = (key) => (value) => setForm(prev => ({ ...prev, [key]: value }));
+
+  const handleGuardar = () => {
+    actualizarPermisos(form);
+    setShowExito(true);
+  };
 
   return (
     <AppShell>
@@ -97,7 +104,7 @@ export default function AdministradorPermisosPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <h3 style={sectionTitleStyle}>Correspondencia</h3>
           <div style={{ ...cardStyle, padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>Permitir entrega directa en vivienda</span>
+            <span style={{ fontSize: theme.fonts.sizes.base, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>Permitir entrega directa en vivienda</span>
             <Toggle value={form.entregaDirecta} onChange={setFlag('entregaDirecta')} />
           </div>
           <div style={{ ...cardStyle, padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -119,10 +126,16 @@ export default function AdministradorPermisosPage() {
         <EstanciaCampos titulo="Estancia corta" valores={form.estanciaCorta} onChange={setEstancia('estanciaCorta')} />
         <EstanciaCampos titulo="Estancia larga" valores={form.estanciaLarga} onChange={setEstancia('estanciaLarga')} />
 
-        <Button variant="primary" fullWidth onClick={() => actualizarPermisos(form)} style={{ marginTop: '4px' }}>
+        <Button variant="primary" fullWidth onClick={handleGuardar} style={{ marginTop: '4px' }}>
           Guardar
         </Button>
       </div>
+
+      <Modal isOpen={showExito} onClose={() => setShowExito(false)} title="Editar Permisos">
+        <p style={{ textAlign: 'center', fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>
+          Sus permisos se guardaron con éxito
+        </p>
+      </Modal>
     </AppShell>
   );
 }

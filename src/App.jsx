@@ -12,6 +12,8 @@ import HomePage from './features/home/HomePage';
 import CallPage from './features/home/CallPage';
 import CallInProgressPage from './features/home/CallInProgressPage';
 import ChatPage from './features/home/ChatPage';
+import NotificacionesPage from './features/home/NotificacionesPage';
+import PerfilPage from './features/home/PerfilPage';
 
 // Correspondencia
 import CorrespondenciaPage from './features/correspondencia/CorrespondenciaPage';
@@ -75,6 +77,7 @@ export default function App() {
         <Route path="/llamar" element={<CallPage />} />
         <Route path="/llamar/en-curso" element={<CallInProgressPage />} />
         <Route path="/chat" element={<ChatPage />} />
+        <Route path="/notificaciones" element={<NotificacionesPage />} />
 
         <Route path="/onboarding/verificacion" element={<VerificacionPage />} />
 
@@ -95,7 +98,7 @@ export default function App() {
 
         <Route path="/comunidad" element={<PlaceholderPage title="Comunidad" />} />
         <Route path="/pagos" element={<PlaceholderPage title="Pagos" />} />
-        <Route path="/perfil" element={<PlaceholderPage title="Perfil" />} />
+        <Route path="/perfil" element={<PerfilPage />} />
         <Route path="/configuracion" element={<PlaceholderPage title="Configuración" />} />
         <Route path="/anuncios" element={<PlaceholderPage title="Anuncios" />} />
         <Route path="/ranking" element={<PlaceholderPage title="Ranking" />} />

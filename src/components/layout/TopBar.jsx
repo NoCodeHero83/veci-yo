@@ -1,12 +1,19 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
-import { edificios } from '../../data/mockData';
+import { edificios, notificaciones } from '../../data/mockData';
 import theme from '../../config/theme';
 import Logo from '../ui/Logo';
 
+const ROL_KEYS = { guardia: 'guardia', administrador: 'administrador' };
+
 export default function TopBar() {
-  const { edificioActivo, setEdificioActivo } = useApp();
+  const navigate = useNavigate();
+  const { edificioActivo, setEdificioActivo, rolActivo } = useApp();
   const [open, setOpen] = useState(false);
+
+  const rolKey = ROL_KEYS[rolActivo] || 'residente';
+  const hayNoLeidas = (notificaciones[rolKey] || []).some(n => !n.leida);
 
   return (
     <div
@@ -98,21 +105,27 @@ export default function TopBar() {
       </div>
 
       {/* Notification bell */}
-      <button style={{ background: 'none', border: 'none', cursor: 'pointer', position: 'relative' }}>
+      <button
+        onClick={() => navigate('/notificaciones')}
+        aria-label="Notificaciones"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', position: 'relative' }}
+      >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={theme.colors.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
           <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
         </svg>
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          width: '8px',
-          height: '8px',
-          borderRadius: '50%',
-          background: theme.colors.danger,
-          border: '2px solid #fff',
-        }} />
+        {hayNoLeidas && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            background: theme.colors.danger,
+            border: '2px solid #fff',
+          }} />
+        )}
       </button>
     </div>
   );

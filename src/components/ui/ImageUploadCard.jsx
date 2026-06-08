@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import theme from '../../config/theme';
 
 const MAX_SIZE_MB = 8;
@@ -17,7 +17,7 @@ function CameraIcon({ color }) {
  * shows a live preview from the chosen file, and allows replacing it.
  * `capture` accepts 'user' | 'environment' to hint front/rear camera on mobile.
  */
-export default function ImageUploadCard({
+const ImageUploadCard = forwardRef(function ImageUploadCard({
   label,
   helperText,
   value,
@@ -27,7 +27,8 @@ export default function ImageUploadCard({
   height = '160px',
   capture,
   error = '',
-}) {
+  onBeforeOpen,
+}, ref) {
   const inputRef = useRef(null);
   const [localError, setLocalError] = useState('');
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -40,6 +41,16 @@ export default function ImageUploadCard({
   }, [value]);
 
   const openPicker = () => inputRef.current?.click();
+
+  // Permite a la pantalla contenedora interceptar el primer toque (p. ej. para
+  // mostrar un popup de ayuda con una imagen de muestra) y disparar la cámara
+  // ella misma cuando corresponda, sin duplicar la lógica del selector nativo.
+  useImperativeHandle(ref, () => ({ abrir: openPicker }));
+
+  const handlePress = () => {
+    if (onBeforeOpen) onBeforeOpen();
+    else openPicker();
+  };
 
   const handleFile = (e) => {
     const file = e.target.files?.[0];
@@ -76,7 +87,7 @@ export default function ImageUploadCard({
 
       <button
         type="button"
-        onClick={openPicker}
+        onClick={handlePress}
         style={{
           width: circular ? height : '100%',
           height,
@@ -149,4 +160,6 @@ export default function ImageUploadCard({
       </div>
     </div>
   );
-}
+});
+
+export default ImageUploadCard;

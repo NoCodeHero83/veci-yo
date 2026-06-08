@@ -129,18 +129,20 @@ export default function AdministradorArquitecturaPage() {
               gap: '10px',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-              <h3 style={{ fontSize: theme.fonts.sizes.md, fontWeight: theme.fonts.weights.bold, color: theme.colors.text }}>
-                Torre N° {torre.numero}
-              </h3>
-              <DotsMenuButton onClick={() => setMenuTorre(torre)} />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px' }}>
-              {CAMPOS_INFO.map(([key, label]) => (
-                <div key={key} style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
-                  {label}: <span style={{ color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>{torre[key]}</span>
-                </div>
-              ))}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+              <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px' }}>
+                {CAMPOS_INFO.map(([key, label]) => (
+                  <div key={key} style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
+                    {label}: <span style={{ color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>{torre[key]}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                <h3 style={{ fontSize: theme.fonts.sizes.md, fontWeight: theme.fonts.weights.bold, color: theme.colors.text, whiteSpace: 'nowrap' }}>
+                  Torre N° {torre.numero}
+                </h3>
+                <DotsMenuButton onClick={() => setMenuTorre(torre)} />
+              </div>
             </div>
           </div>
         ))}

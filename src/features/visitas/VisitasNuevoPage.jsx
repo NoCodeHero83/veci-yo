@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell';
 import PageHeader from '../../components/layout/PageHeader';
 import Calendar from '../../components/ui/Calendar';
+import SelectField from '../../components/ui/SelectField';
 import Toggle from '../../components/ui/Toggle';
 import Button from '../../components/ui/Button';
 import Modal from '../../components/ui/Modal';
@@ -159,20 +160,12 @@ export default function VisitasNuevoPage() {
               <div style={{ fontWeight: theme.fonts.weights.semibold, textAlign: 'center', fontSize: theme.fonts.sizes.base }}>
                 Cantidad de invitados
               </div>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.sm }}>Torre:</span>
-                  <select value={torre} onChange={e => setTorre(e.target.value)} style={{ padding: '6px 10px', borderRadius: theme.radius.lg, border: `1px solid ${theme.colors.border}`, fontFamily: theme.fonts.family, fontSize: theme.fonts.sizes.sm }}>
-                    <option value="">-</option>
-                    {torres.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ flex: 1 }}>
+                  <SelectField label="Torre:" value={torre} options={torres} onChange={setTorre} />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.sm }}>Depto:</span>
-                  <select value={depto} onChange={e => setDepto(e.target.value)} style={{ padding: '6px 10px', borderRadius: theme.radius.lg, border: `1px solid ${theme.colors.border}`, fontFamily: theme.fonts.family, fontSize: theme.fonts.sizes.sm }}>
-                    <option value="">-</option>
-                    {departamentos.map(d => <option key={d} value={d}>{d}</option>)}
-                  </select>
+                <div style={{ flex: 1 }}>
+                  <SelectField label="Depto:" value={depto} options={departamentos} onChange={setDepto} />
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

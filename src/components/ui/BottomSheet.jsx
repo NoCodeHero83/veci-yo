@@ -6,7 +6,7 @@ export default function BottomSheet({ isOpen, onClose, children }) {
   return (
     <div
       style={{
-        position: 'absolute',
+        position: 'fixed',
         inset: 0,
         background: theme.colors.bgOverlay,
         zIndex: 999,

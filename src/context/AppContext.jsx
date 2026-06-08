@@ -77,6 +77,15 @@ export function AppProvider({ children }) {
 
   const cerrarBienvenida = useCallback(() => setMostrarBienvenida(false), []);
 
+  // Cierra la sesión activa (cuenta, incógnito o demo) y devuelve a la
+  // pantalla de ingreso, donde se puede elegir otra demo u otro rol.
+  const cerrarSesion = useCallback(() => {
+    setUsuario(null);
+    setModo(null);
+    setRolActivo(null);
+    setAutenticado(false);
+  }, []);
+
   const completarVerificacion = useCallback(() => {
     setUsuario(prev => prev ? { ...prev, verificado: true } : prev);
   }, []);
@@ -124,6 +133,24 @@ export function AppProvider({ children }) {
       return { ...v, invitados };
     }));
   }, []);
+
+  const toggleFavoritoInvitado = useCallback((visitaId, invitadoIdx) => {
+    setVisitas(prev => prev.map(v => {
+      if (v.id !== visitaId) return v;
+      const invitados = v.invitados.map((inv, i) =>
+        i === invitadoIdx ? { ...inv, favorito: !inv.favorito } : inv
+      );
+      return { ...v, invitados };
+    }));
+  }, []);
+
+  const agregarInvitado = useCallback((visitaId, nombre) => {
+    setVisitas(prev => prev.map(v => {
+      if (v.id !== visitaId) return v;
+      return { ...v, invitados: [...v.invitados, { nombre, llego: false, favorito: false }] };
+    }));
+    addToast('Invitado agregado con éxito');
+  }, [addToast]);
 
   // Reservas
   const agregarReserva = useCallback((reserva) => {
@@ -200,10 +227,11 @@ export function AppProvider({ children }) {
     <AppContext.Provider value={{
       edificioActivo, setEdificioActivo,
       autenticado, modo, usuario, rolActivo,
-      iniciarSesion, registrarUsuario, ingresarIncognito, ingresarComoDemo, completarVerificacion,
+      iniciarSesion, registrarUsuario, ingresarIncognito, ingresarComoDemo, completarVerificacion, cerrarSesion,
       mostrarBienvenida, cerrarBienvenida,
       correspondencia, agregarCorrespondencia, actualizarEstadoCorrespondencia, eliminarCorrespondencia,
       visitas, agregarVisita, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado,
+      toggleFavoritoInvitado, agregarInvitado,
       reservas, agregarReserva, actualizarEstadoReserva, eliminarReserva,
       mensajes, enviarMensaje,
       torres, agregarTorre, actualizarTorre, eliminarTorre,

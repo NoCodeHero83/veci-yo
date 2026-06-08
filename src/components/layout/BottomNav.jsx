@@ -1,5 +1,10 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import theme from '../../config/theme';
+import { useApp } from '../../context/AppContext';
+
+// Tabs habilitados en esta fase — el resto se muestra atenuado y
+// notifica que la funcionalidad está en desarrollo al pulsarlos.
+const TABS_HABILITADOS = ['inicio', 'perfil'];
 
 const ACTIVE_GRADIENT_ID = 'bottomNavActiveGradient';
 const activeStroke = `url(#${ACTIVE_GRADIENT_ID})`;
@@ -68,10 +73,16 @@ const tabs = [
 export default function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { addToast } = useApp();
 
   const isActive = (tab) => {
     if (tab.key === 'viviendas') return ['/', '/correspondencia', '/visitas', '/zonas-comunes', '/llamar', '/chat'].some(p => location.pathname.startsWith(p));
     return location.pathname === tab.path;
+  };
+
+  const handlePress = (tab) => {
+    if (TABS_HABILITADOS.includes(tab.key)) navigate(tab.path);
+    else addToast('Funcionalidad en desarrollo');
   };
 
   return (
@@ -97,10 +108,11 @@ export default function BottomNav() {
 
       {tabs.map(tab => {
         const active = isActive(tab);
+        const habilitado = TABS_HABILITADOS.includes(tab.key);
         return (
           <button
             key={tab.key}
-            onClick={() => navigate(tab.path)}
+            onClick={() => handlePress(tab)}
             style={{
               flex: 1,
               display: 'flex',
@@ -111,6 +123,7 @@ export default function BottomNav() {
               border: 'none',
               cursor: 'pointer',
               padding: '4px 0',
+              opacity: habilitado ? 1 : 0.4,
             }}
           >
             {tab.icon(active)}

@@ -14,6 +14,7 @@ import theme from '../../config/theme';
 import zonaIcons from '../../assets/icons/zonas';
 
 const ESTADOS = ['Reservado', 'No disponible', 'Disponible'];
+const FILTROS = ['Todos', ...ESTADOS];
 
 const borderByEstado = {
   Reservado: theme.colors.primary,
@@ -82,7 +83,11 @@ export default function ZonaDetallesPage() {
         <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '12px', boxShadow: theme.shadows.card }}>
           <SearchBar value={search} onChange={setSearch} />
           <div style={{ marginTop: '10px' }}>
-            <StatusTabs tabs={ESTADOS} active={activeTab} onChange={setActiveTab} />
+            <StatusTabs
+              tabs={FILTROS}
+              active={activeTab || 'Todos'}
+              onChange={tab => setActiveTab(tab && tab !== 'Todos' ? tab : null)}
+            />
           </div>
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: '6px' }}>
             <span style={{ color: theme.colors.textMuted, fontSize: '16px' }}>▾</span>
