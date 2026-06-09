@@ -44,7 +44,7 @@ export default function Modal({ isOpen, onClose, title, children, showClose = tr
               borderBottom: `1px solid ${theme.colors.border}`,
             }}
           >
-            {showClose && (
+            {showClose ? (
               <button
                 onClick={onClose}
                 style={{
@@ -55,10 +55,13 @@ export default function Modal({ isOpen, onClose, title, children, showClose = tr
                   color: theme.colors.textSecondary,
                   marginRight: '12px',
                   lineHeight: 1,
+                  flexShrink: 0,
                 }}
               >
                 ✕
               </button>
+            ) : (
+              <div style={{ width: '32px', marginRight: '12px', flexShrink: 0 }} />
             )}
             <h2
               style={{
@@ -67,11 +70,15 @@ export default function Modal({ isOpen, onClose, title, children, showClose = tr
                 color: theme.colors.text,
                 flex: 1,
                 textAlign: 'center',
-                marginRight: showClose ? '32px' : 0,
               }}
             >
               {title}
             </h2>
+            {headerAction ? (
+              <div style={{ marginLeft: '12px', flexShrink: 0 }}>{headerAction}</div>
+            ) : (
+              showClose ? <div style={{ width: '32px', marginLeft: '12px', flexShrink: 0 }} /> : null
+            )}
           </div>
         )}
         <div style={{ padding: '20px' }}>{children}</div>

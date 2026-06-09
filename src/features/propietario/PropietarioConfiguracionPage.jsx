@@ -105,7 +105,7 @@ export default function PropietarioConfiguracionPage() {
               </svg>
             </button>
             <button
-              onClick={() => setShowAddMenu(true)}
+              onClick={() => navigate('/propietario/configuracion/crear-rol')}
               style={{ width: '36px', height: '36px', borderRadius: theme.radius.md, background: theme.colors.primary, color: theme.colors.text, fontSize: '22px', fontWeight: 'bold', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: theme.fonts.family }}
             >
               +
@@ -145,11 +145,14 @@ export default function PropietarioConfiguracionPage() {
           );
         })}
 
+        <div style={{ height: '16px' }} />
+      </div>
+
+      {/* Botón siempre visible antes de la barra de navegación */}
+      <div style={{ padding: '12px 16px 16px', background: theme.colors.bgApp, borderTop: `1px solid ${theme.colors.borderLight}` }}>
         <Button variant="primary" fullWidth onClick={() => navigate('/propietario/configuracion/huespedes-temporales')}>
           Configuración de huésped temporal
         </Button>
-
-        <div style={{ height: '24px' }} />
       </div>
 
       {/* Menú + */}

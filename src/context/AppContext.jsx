@@ -218,19 +218,16 @@ export function AppProvider({ children }) {
   // Administrador · Permisos
   const actualizarPermisos = useCallback((datos) => {
     setPermisos(prev => ({ ...prev, ...datos }));
-    addToast('Sus permisos se guardaron con éxito');
-  }, [addToast]);
+  }, []);
 
   // Administrador · Seguridad
   const agregarGuardia = useCallback((datos) => {
     setGuardias(prev => [{ id: Date.now(), ...datos }, ...prev]);
-    addToast('Guardia creado con éxito');
-  }, [addToast]);
+  }, []);
 
   const actualizarGuardia = useCallback((guardia) => {
     setGuardias(prev => prev.map(g => g.id === guardia.id ? { ...g, ...guardia } : g));
-    addToast(`Edición del guardia ${guardia.nombre} realizada con éxito`);
-  }, [addToast]);
+  }, []);
 
   const eliminarGuardia = useCallback((guardia) => {
     setGuardias(prev => prev.filter(g => g.id !== guardia.id));

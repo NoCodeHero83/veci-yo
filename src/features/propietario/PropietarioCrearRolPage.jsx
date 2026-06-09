@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell';
 import PageHeader from '../../components/layout/PageHeader';
@@ -10,7 +10,7 @@ import Toggle from '../../components/ui/Toggle';
 import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
 
-const ROLES_OPCIONES = ['Residente Lider', 'Residente'];
+const ROLES_OPCIONES = ['Propietario', 'Alquiler tradicional', 'Huésped temporal', 'Coadministrador'];
 const TIPO_DOC_OPCIONES = ['Cedula', 'Pasaporte', 'DNI'];
 const DURACION_OPCIONES = ['6 meses', '12 meses', '18 meses', '24 meses', '36 meses'];
 const SERVICIOS_INIT = { luz: false, agua: false, gas: false, internet: false, mantenimiento: false, alquiler: false };
@@ -25,27 +25,15 @@ function SeccionHeader({ label }) {
   );
 }
 
-function DocButton({ label, onClick }) {
-  return (
-    <div onClick={onClick} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-      <div style={{ width: '64px', height: '64px', background: theme.colors.iconAmberBg, borderRadius: theme.radius.lg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={theme.colors.iconAmber} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-          <path d="M12 18v-4"/><path d="M9.5 15.5a2.5 2.5 0 0 0 5 0"/>
-        </svg>
-      </div>
-      <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, textAlign: 'center' }}>{label}</span>
-    </div>
-  );
-}
-
 export default function PropietarioCrearRolPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { agregarResidente, actualizarResidente, addToast } = useApp();
   const editData = location.state?.editar;
   const esEdicion = !!editData;
+
+  const contratoInputRef = useRef(null);
+  const [contratoArchivo, setContratoArchivo] = useState(null);
 
   const [form, setForm] = useState({
     rol: editData?.rol || '',
@@ -67,10 +55,15 @@ export default function PropietarioCrearRolPage() {
   const [servicios, setServicios] = useState({ ...SERVICIOS_INIT, ...editData?.servicios });
   const [showServicios, setShowServicios] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [showContrato, setShowContrato] = useState(false);
 
   const setField = (key) => (val) => setForm(p => ({ ...p, [key]: val }));
   const toggleServicio = (key) => setServicios(p => ({ ...p, [key]: !p[key] }));
+
+  const handleContratoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) setContratoArchivo(file);
+    e.target.value = '';
+  };
 
   const handleSubmit = () => {
     if (!form.nombre.trim() || !form.rol) {
@@ -88,11 +81,7 @@ export default function PropietarioCrearRolPage() {
 
   const handleSuccessClose = () => {
     setShowSuccess(false);
-    if (!esEdicion) {
-      setShowContrato(true);
-    } else {
-      navigate(-1);
-    }
+    navigate(-1);
   };
 
   return (
@@ -121,12 +110,66 @@ export default function PropietarioCrearRolPage() {
         </div>
 
         <SeccionHeader label="Contrato" />
-        <InputField value={form.fechaInicio} onChange={setField('fechaInicio')} placeholder="Fecha de inicio" showEditIcon />
-        <SelectField value={form.duracion} options={DURACION_OPCIONES} onChange={setField('duracion')} placeholder="Duración del contrato" />
-        <div style={{ display: 'flex', gap: '24px', justifyContent: 'center', padding: '4px 0' }}>
-          <DocButton label="Adjuntar Contrato" />
-          <DocButton label="Términos y condiciones" />
+
+        {/* Date picker para fecha de inicio */}
+        <div>
+          <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>
+            Fecha de inicio
+          </div>
+          <input
+            type="date"
+            value={form.fechaInicio}
+            onChange={e => setField('fechaInicio')(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              borderRadius: theme.radius['2xl'],
+              border: `1px solid ${theme.colors.border}`,
+              fontSize: theme.fonts.sizes.base,
+              fontFamily: theme.fonts.family,
+              background: theme.colors.bgCard,
+              color: theme.colors.text,
+              outline: 'none',
+              boxSizing: 'border-box',
+              cursor: 'pointer',
+            }}
+          />
         </div>
+
+        <SelectField value={form.duracion} options={DURACION_OPCIONES} onChange={setField('duracion')} placeholder="Duración del contrato" />
+
+        {/* Adjuntar contrato — file input real */}
+        <div style={{ display: 'flex', gap: '24px', justifyContent: 'center', padding: '4px 0' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+            <button
+              type="button"
+              onClick={() => contratoInputRef.current?.click()}
+              style={{ width: '64px', height: '64px', background: contratoArchivo ? theme.colors.primaryLight : theme.colors.iconAmberBg, borderRadius: theme.radius.lg, display: 'flex', alignItems: 'center', justifyContent: 'center', border: contratoArchivo ? `2px solid ${theme.colors.primary}` : 'none', cursor: 'pointer' }}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={theme.colors.iconAmber} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <path d="M12 18v-4"/><path d="M9.5 15.5a2.5 2.5 0 0 0 5 0"/>
+              </svg>
+            </button>
+            <span style={{ fontSize: theme.fonts.sizes.xs, color: contratoArchivo ? theme.colors.text : theme.colors.textSecondary, textAlign: 'center', maxWidth: '72px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {contratoArchivo ? contratoArchivo.name : 'Adjuntar Contrato'}
+            </span>
+            <input ref={contratoInputRef} type="file" accept=".pdf,.doc,.docx" onChange={handleContratoChange} style={{ display: 'none' }} />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+            <div style={{ width: '64px', height: '64px', background: theme.colors.iconAmberBg, borderRadius: theme.radius.lg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={theme.colors.iconAmber} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <path d="M12 18v-4"/><path d="M9.5 15.5a2.5 2.5 0 0 0 5 0"/>
+              </svg>
+            </div>
+            <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, textAlign: 'center' }}>Términos y condiciones</span>
+          </div>
+        </div>
+
         <InputField value={form.montoAlquiler} onChange={setField('montoAlquiler')} placeholder="Monto de alquiler:" showEditIcon />
 
         <button
@@ -172,7 +215,7 @@ export default function PropietarioCrearRolPage() {
         <div style={{ height: '24px' }} />
       </div>
 
-      {/* Configurar servicios modal */}
+      {/* Configurar servicios */}
       <Modal isOpen={showServicios} onClose={() => setShowServicios(false)} title="Configurar servicios del inquilino">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <p style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, lineHeight: theme.fonts.lineHeights.relaxed }}>
@@ -194,33 +237,12 @@ export default function PropietarioCrearRolPage() {
         </div>
       </Modal>
 
-      {/* Success modal */}
+      {/* Success — navega directo sin segundo popup */}
       <Modal isOpen={showSuccess} onClose={handleSuccessClose} title="Configuración">
         <div style={{ textAlign: 'center', padding: '8px 0' }}>
           <p style={{ fontSize: theme.fonts.sizes.base, color: theme.colors.text, lineHeight: theme.fonts.lineHeights.relaxed }}>
             Alquiler tradicional configurado con éxito!
           </p>
-        </div>
-      </Modal>
-
-      {/* Contrato generado modal */}
-      <Modal isOpen={showContrato} onClose={() => { setShowContrato(false); navigate(-1); }} title="Contrato">
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', padding: '8px 0', textAlign: 'center' }}>
-          <p style={{ fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>Contrato Generado con éxito!</p>
-          <div style={{ width: '72px', height: '72px', background: theme.colors.iconAmberBg, borderRadius: theme.radius.lg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke={theme.colors.iconAmber} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <path d="M12 18v-4"/><path d="M9.5 15.5a2.5 2.5 0 0 0 5 0"/>
-            </svg>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-            </svg>
-            Contrato N°: 16548
-          </div>
         </div>
       </Modal>
     </AppShell>

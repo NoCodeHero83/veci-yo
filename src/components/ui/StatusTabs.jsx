@@ -16,7 +16,7 @@ const STATUS_COLORS = {
 
 export default function StatusTabs({ tabs, active, onChange, centered = false }) {
   return (
-    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: centered ? 'center' : 'flex-start' }}>
+    <div style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap', overflowX: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none', justifyContent: centered ? 'center' : 'flex-start' }}>
       {tabs.map(tab => {
         const isActive = active === tab;
         const colors = STATUS_COLORS[tab] || { bg: theme.colors.primary, color: theme.colors.text };

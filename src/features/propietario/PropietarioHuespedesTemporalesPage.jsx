@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import AppShell from '../../components/layout/AppShell';
 import PageHeader from '../../components/layout/PageHeader';
 import Modal from '../../components/ui/Modal';
@@ -47,8 +47,9 @@ function CampoEditable({ label, value, onChange }) {
 }
 
 export default function PropietarioHuespedesTemporalesPage() {
+  const pdfInputRef = useRef(null);
   const [identificacion, setIdentificacion] = useState('1235678567354');
-  const [pdf, setPdf] = useState('archivo.pdf');
+  const [pdfArchivo, setPdfArchivo] = useState(null);
   const [tipoAcomodacion, setTipoAcomodacion] = useState('Apartamento');
 
   const [showTRA, setShowTRA] = useState(false);
@@ -74,7 +75,32 @@ export default function PropietarioHuespedesTemporalesPage() {
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <CampoEditable label="Identificación" value={identificacion} onChange={setIdentificacion} />
-            <CampoEditable label="PDF" value={pdf} onChange={setPdf} />
+
+            {/* PDF — file upload */}
+            <div style={{ paddingBottom: '12px', borderBottom: `1px solid ${theme.colors.borderLight}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>
+                  PDF:{' '}
+                  <span style={{ fontWeight: theme.fonts.weights.normal, color: theme.colors.textSecondary, maxWidth: '160px', display: 'inline-block', verticalAlign: 'bottom', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {pdfArchivo ? pdfArchivo.name : 'archivo.pdf'}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => pdfInputRef.current?.click()}
+                  style={{ background: theme.colors.primary, border: 'none', borderRadius: theme.radius.md, padding: '6px 12px', fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, cursor: 'pointer', fontFamily: theme.fonts.family, whiteSpace: 'nowrap' }}
+                >
+                  Cargar PDF
+                </button>
+                <input
+                  ref={pdfInputRef}
+                  type="file"
+                  accept=".pdf"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) setPdfArchivo(f); e.target.value = ''; }}
+                  style={{ display: 'none' }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 

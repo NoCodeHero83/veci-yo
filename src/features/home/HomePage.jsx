@@ -198,9 +198,9 @@ export default function HomePage() {
               }}
             >
               {iconosOriginales ? (
-                mod.isReglas ? <ReglasThumbnail /> : <span style={{ fontSize: mod.bigIcon ? '80px' : '64px', lineHeight: 1 }}>{mod.emoji}</span>
+                mod.isReglas ? <ReglasThumbnail /> : <span style={{ fontSize: mod.bigIcon ? '96px' : '64px', lineHeight: 1 }}>{mod.emoji}</span>
               ) : (
-                <img src={mod.icon} alt={mod.label} style={{ width: mod.bigIcon ? '88px' : '72px', height: mod.bigIcon ? '88px' : '72px', objectFit: 'contain' }} />
+                <img src={mod.icon} alt={mod.label} style={{ width: mod.bigIcon ? '104px' : '72px', height: mod.bigIcon ? '104px' : '72px', objectFit: 'contain' }} />
               )}
               <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.medium }}>
                 {mod.label}

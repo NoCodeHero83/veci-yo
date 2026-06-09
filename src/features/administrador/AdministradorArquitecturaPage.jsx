@@ -40,8 +40,6 @@ const CAMPOS_INFO = [
   ['entradasVehiculares', 'Entradas vehiculares', entradasOpciones],
 ];
 
-// Pares de campos renderizados en grilla de 2 columnas — agregar o quitar un
-// campo del formulario es solo editar `CAMPOS_INFO`, esta grilla se ajusta sola.
 function CamposArquitectura({ form, setField }) {
   const filas = [];
   for (let i = 0; i < CAMPOS_INFO.length; i += 2) filas.push(CAMPOS_INFO.slice(i, i + 2));
@@ -58,6 +56,31 @@ function CamposArquitectura({ form, setField }) {
           ))}
         </div>
       ))}
+    </div>
+  );
+}
+
+function CampoRow({ label, value }) {
+  return (
+    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, lineHeight: 1.5 }}>
+      {label}: <span style={{ color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>{value || '—'}</span>
+    </div>
+  );
+}
+
+function CheckRow({ label, value }) {
+  const isSi = value === 'Sí' || value === 'Si' || value === 'sí';
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, lineHeight: 1.5 }}>
+      <span style={{
+        width: '16px', height: '16px', borderRadius: '50%',
+        background: isSi ? theme.colors.success : theme.colors.danger,
+        color: '#fff', fontSize: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0, fontWeight: theme.fonts.weights.bold,
+      }}>
+        {isSi ? '✓' : '✗'}
+      </span>
+      {label}
     </div>
   );
 }
@@ -96,18 +119,10 @@ export default function AdministradorArquitecturaPage() {
           <button
             onClick={abrirNueva}
             style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: theme.radius.md,
-              background: theme.colors.primary,
-              color: '#fff',
-              fontSize: '22px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: 'bold',
+              width: '36px', height: '36px', borderRadius: theme.radius.md,
+              background: theme.colors.primary, color: '#fff', fontSize: '22px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: 'none', cursor: 'pointer', fontWeight: 'bold',
             }}
           >
             +
@@ -122,25 +137,34 @@ export default function AdministradorArquitecturaPage() {
             style={{
               background: theme.colors.bgCard,
               borderRadius: theme.radius.xl,
-              padding: '16px',
+              border: `1.5px solid ${theme.colors.success}`,
               boxShadow: theme.shadows.card,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px',
+              overflow: 'hidden',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-              <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px' }}>
-                {CAMPOS_INFO.map(([key, label]) => (
-                  <div key={key} style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
-                    {label}: <span style={{ color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>{torre[key]}</span>
-                  </div>
-                ))}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto' }}>
+              {/* Columna izquierda */}
+              <div style={{ padding: '12px 14px', borderRight: `1px solid ${theme.colors.borderLight}`, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <CampoRow label="Depto" value={torre.depto} />
+                <CampoRow label="Penthouse" value={torre.penthouse} />
+                <CampoRow label="Cocheras V." value={torre.cocherasVisitas} />
+                <CampoRow label="Coch. priv." value={torre.cocherasPrivadas} />
+                <CampoRow label="Almacén" value={torre.almacenPrivados} />
+                <CampoRow label="Ent. veh." value={torre.entradasVehiculares} />
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-                <h3 style={{ fontSize: theme.fonts.sizes.md, fontWeight: theme.fonts.weights.bold, color: theme.colors.text, whiteSpace: 'nowrap' }}>
-                  Torre N° {torre.numero}
-                </h3>
+
+              {/* Columna media */}
+              <div style={{ padding: '12px 14px', borderRight: `1px solid ${theme.colors.borderLight}`, display: 'flex', flexDirection: 'column', gap: '6px', justifyContent: 'center' }}>
+                <CampoRow label="Ent. peat." value={torre.entradasPeatonales} />
+                <CheckRow label="Niños" value={torre.ninos} />
+                <CheckRow label="Mascotas" value={torre.mascotas} />
+              </div>
+
+              {/* Columna derecha — nombre + menú */}
+              <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', minWidth: '72px' }}>
+                <span style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.bold, color: theme.colors.text, textAlign: 'center', whiteSpace: 'nowrap' }}>
+                  Torre{'\n'}N°{torre.numero}
+                </span>
                 <DotsMenuButton onClick={() => setMenuTorre(torre)} />
               </div>
             </div>
@@ -151,11 +175,7 @@ export default function AdministradorArquitecturaPage() {
       {/* Menú "..." */}
       <BottomSheet isOpen={!!menuTorre} onClose={() => setMenuTorre(null)}>
         <BottomSheetOption label="Editar" onPress={() => abrirEditar(menuTorre)} />
-        <BottomSheetOption
-          label="Eliminar"
-          variant="danger"
-          onPress={() => { setDeleteTorre(menuTorre); setMenuTorre(null); }}
-        />
+        <BottomSheetOption label="Eliminar" variant="danger" onPress={() => { setDeleteTorre(menuTorre); setMenuTorre(null); }} />
       </BottomSheet>
 
       {/* Nueva arquitectura */}
@@ -187,16 +207,7 @@ export default function AdministradorArquitecturaPage() {
             ¿Seguro que deseas eliminar esta arquitectura?
           </p>
           {deleteTorre && (
-            <div
-              style={{
-                border: `1.5px solid ${theme.colors.primary}`,
-                borderRadius: theme.radius.xl,
-                padding: '14px 16px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '4px',
-              }}
-            >
+            <div style={{ border: `1.5px solid ${theme.colors.primary}`, borderRadius: theme.radius.xl, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.md }}>
                 Torre N° {deleteTorre.numero}
               </div>

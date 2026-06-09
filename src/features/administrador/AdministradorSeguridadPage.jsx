@@ -42,14 +42,15 @@ const FORM_VACIO = {
 export default function AdministradorSeguridadPage() {
   const { guardias, agregarGuardia, actualizarGuardia, eliminarGuardia } = useApp();
 
-  // 'lista' | 'form' | 'confirmacion'
   const [vista, setVista] = useState('lista');
-  const [modoForm, setModoForm] = useState('agregar'); // 'agregar' | 'editar'
+  const [modoForm, setModoForm] = useState('agregar');
   const [guardiaActivo, setGuardiaActivo] = useState(null);
   const [form, setForm] = useState(FORM_VACIO);
 
   const [menuGuardia, setMenuGuardia] = useState(null);
   const [deleteGuardia, setDeleteGuardia] = useState(null);
+  const [showSuccessGuardia, setShowSuccessGuardia] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const [filterOpen, setFilterOpen] = useState(false);
   const [filtroHorario, setFiltroHorario] = useState('');
@@ -76,6 +77,7 @@ export default function AdministradorSeguridadPage() {
     setModoForm('agregar');
     setGuardiaActivo(null);
     setForm(FORM_VACIO);
+    setErrorMsg('');
     setVista('form');
   };
 
@@ -84,15 +86,22 @@ export default function AdministradorSeguridadPage() {
     setModoForm('editar');
     setGuardiaActivo(guardia);
     setForm({ ...FORM_VACIO, ...guardia, turnos: guardia.turnos.map(t => ({ ...t })) });
+    setErrorMsg('');
     setVista('form');
   };
 
   const volverALista = () => { setVista('lista'); setGuardiaActivo(null); };
 
   const handleSubmitForm = () => {
+    // Validación requerida
+    if (!form.nombre.trim()) { setErrorMsg('El nombre es obligatorio'); return; }
+    if (!form.correo.trim()) { setErrorMsg('El correo es obligatorio'); return; }
+    if (!form.turnos.some(t => t.hora)) { setErrorMsg('Debe ingresar al menos un horario'); return; }
+    setErrorMsg('');
+
     if (modoForm === 'agregar') {
       agregarGuardia(form);
-      volverALista();
+      setShowSuccessGuardia(true);
     } else {
       setVista('confirmacion');
     }
@@ -112,8 +121,8 @@ export default function AdministradorSeguridadPage() {
         <PageHeader title={modoForm === 'agregar' ? 'Agregar seguridad' : 'Editar seguridad'} onBack={volverALista} />
         <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ ...cardStyle, padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <InputField label="Nombre completo" value={form.nombre} onChange={setField('nombre')} placeholder="Ej: Roberto Hornado" showEditIcon={false} />
-            <InputField label="Correo" value={form.correo} onChange={setField('correo')} placeholder="correo@ejemplo.com" type="email" showEditIcon={false} />
+            <InputField label="Nombre completo *" value={form.nombre} onChange={setField('nombre')} placeholder="Ej: Roberto Hornado" showEditIcon={false} />
+            <InputField label="Correo *" value={form.correo} onChange={setField('correo')} placeholder="correo@ejemplo.com" type="email" showEditIcon={false} />
             <InputField label="Cédula" value={form.cedula} onChange={setField('cedula')} placeholder="N° de identificación" showEditIcon={false} />
             <div>
               <span style={labelStyle}>Días del calendario</span>
@@ -124,7 +133,7 @@ export default function AdministradorSeguridadPage() {
           <div style={{ ...cardStyle, padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: theme.fonts.sizes.base, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>
-                Día/hora de la semana
+                Día/hora de la semana *
               </span>
               <button
                 onClick={addTurno}
@@ -171,8 +180,27 @@ export default function AdministradorSeguridadPage() {
             <SelectField value={form.garita} options={garitas} onChange={setField('garita')} placeholder="Seleccionar" />
           </div>
 
+          {errorMsg && (
+            <div style={{ background: theme.colors.dangerLight, border: `1px solid ${theme.colors.danger}`, borderRadius: theme.radius.md, padding: '10px 14px', fontSize: theme.fonts.sizes.sm, color: theme.colors.danger }}>
+              {errorMsg}
+            </div>
+          )}
+
           <Button variant="primary" fullWidth onClick={handleSubmitForm}>Guardar</Button>
         </div>
+
+        {/* Success popup al agregar */}
+        <Modal isOpen={showSuccessGuardia} onClose={() => { setShowSuccessGuardia(false); volverALista(); }} title="Creación de guardia">
+          <div style={{ textAlign: 'center', padding: '8px 0 4px' }}>
+            <div style={{ fontSize: '48px', marginBottom: '12px' }}>👮</div>
+            <p style={{ fontSize: theme.fonts.sizes.base, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, marginBottom: '4px' }}>
+              Guardia creado con éxito
+            </p>
+            <p style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
+              {form.nombre}
+            </p>
+          </div>
+        </Modal>
       </AppShell>
     );
   }
@@ -212,18 +240,10 @@ export default function AdministradorSeguridadPage() {
             onClick={abrirAgregar}
             aria-label="Agregar seguridad"
             style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: theme.radius.md,
-              background: theme.colors.primary,
-              color: '#fff',
-              fontSize: '22px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: 'bold',
+              width: '36px', height: '36px', borderRadius: theme.radius.md,
+              background: theme.colors.primary, color: '#fff', fontSize: '22px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: 'none', cursor: 'pointer', fontWeight: 'bold',
             }}
           >
             +
@@ -295,19 +315,34 @@ export default function AdministradorSeguridadPage() {
         />
       </BottomSheet>
 
-      {/* Eliminar guardia */}
+      {/* Eliminar guardia — diseño con card de datos */}
       <Modal isOpen={!!deleteGuardia} onClose={() => setDeleteGuardia(null)} title="Eliminar guardia">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <p style={{ fontSize: theme.fonts.sizes.base, textAlign: 'center', color: theme.colors.text }}>
             ¿Seguro que deseas eliminar este guardia?
           </p>
           {deleteGuardia && (
-            <div style={{ border: `1.5px solid ${theme.colors.primary}`, borderRadius: theme.radius.xl, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.md }}>{deleteGuardia.nombre}</div>
-              <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>Cédula: {deleteGuardia.cedula}</div>
+            <div style={{ border: `1.5px solid ${theme.colors.primary}`, borderRadius: theme.radius.xl, padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: theme.colors.bgMuted, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>
+                  👤
+                </div>
+                <div>
+                  <div style={{ fontSize: theme.fonts.sizes.base, fontWeight: theme.fonts.weights.bold, color: theme.colors.text }}>
+                    {deleteGuardia.nombre}
+                  </div>
+                  <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
+                    🪪 {deleteGuardia.cedula}
+                  </div>
+                </div>
+              </div>
+              <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, paddingLeft: '4px' }}>
+                Horario: {deleteGuardia.turnos?.map(t => `${t.dia} ${t.hora}`).join(' · ')}
+              </div>
             </div>
           )}
-          <Button variant="danger" fullWidth onClick={confirmarEliminar}>Eliminar</Button>
+          <Button variant="primary" fullWidth onClick={confirmarEliminar}>Aceptar</Button>
+          <Button variant="ghost" fullWidth onClick={() => setDeleteGuardia(null)}>Cancelar</Button>
         </div>
       </Modal>
     </AppShell>
