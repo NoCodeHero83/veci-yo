@@ -2,6 +2,22 @@ import { useNavigate } from 'react-router-dom';
 import theme from '../../../config/theme';
 import { useApp } from '../../../context/AppContext';
 import { inquilinoLiderReputacion, agendaHoyInquilinoLider } from '../../../data/mockData';
+import iconReputacion from '../../../assets/icons/inquilino-lider/reputacion.png';
+import iconGratitud from '../../../assets/icons/inquilino-lider/gratitud.png';
+import iconRegalos from '../../../assets/icons/inquilino-lider/regalos.png';
+import iconReciclador from '../../../assets/icons/inquilino-lider/medalla-reciclador.png';
+import iconAtento from '../../../assets/icons/inquilino-lider/medalla-atento.png';
+import iconLogro3 from '../../../assets/icons/inquilino-lider/medalla-logro3.png';
+import iconLogro4 from '../../../assets/icons/inquilino-lider/medalla-logro4.png';
+import iconLogro5 from '../../../assets/icons/inquilino-lider/medalla-logro5.png';
+
+const LOGRO_ICONS = {
+  reciclador: iconReciclador,
+  atento: iconAtento,
+  logro3: iconLogro3,
+  logro4: iconLogro4,
+  logro5: iconLogro5,
+};
 
 const cardStyle = {
   background: theme.colors.bgCard,
@@ -56,10 +72,10 @@ export default function InquilinoLiderHome() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '40px',
           boxShadow: theme.shadows.fab,
+          overflow: 'hidden',
         }}>
-          🏆
+          <img src={iconReputacion} alt="Reputación" style={{ width: '56px', height: '56px', objectFit: 'contain' }} />
         </div>
 
         <div style={{ textAlign: 'center' }}>
@@ -82,11 +98,11 @@ export default function InquilinoLiderHome() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '24px',
                 opacity: logro.conseguido ? 1 : 0.45,
                 filter: logro.conseguido ? 'none' : 'grayscale(1)',
+                overflow: 'hidden',
               }}>
-                {logro.emoji}
+                <img src={LOGRO_ICONS[logro.key]} alt={logro.label} style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
               </div>
               <span style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textMuted, textAlign: 'center' }}>
                 {logro.label}
@@ -120,9 +136,9 @@ export default function InquilinoLiderHome() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '24px',
+          overflow: 'hidden',
         }}>
-          🙏
+          <img src={iconGratitud} alt="Gratitud" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
         </div>
         <span style={{ fontSize: theme.fonts.sizes.base, fontWeight: theme.fonts.weights.medium, color: theme.colors.text }}>
           Gratitud
@@ -156,10 +172,10 @@ export default function InquilinoLiderHome() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '16px',
             flexShrink: 0,
+            overflow: 'hidden',
           }}>
-            🎁
+            <img src={iconRegalos} alt="Regalos por dar" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
           </span>
         </button>
 

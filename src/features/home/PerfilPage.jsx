@@ -2,6 +2,9 @@ import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell';
 import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
+import avatarDefault from '../../assets/avatars/perfil-default.png';
+import iconSeguridad from '../../assets/icons/perfil/seguridad.png';
+import iconSOS from '../../assets/icons/perfil/sos.png';
 
 const ROL_NOMBRES = {
   guardia: 'Demo Seguridad',
@@ -22,7 +25,7 @@ function nombreUsuario(usuario, rolActivo, modo) {
   return 'Usuario';
 }
 
-function TarjetaAccion({ emoji, label, onPress }) {
+function TarjetaAccion({ icon, label, onPress }) {
   return (
     <button
       type="button"
@@ -48,9 +51,9 @@ function TarjetaAccion({ emoji, label, onPress }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: '22px',
+        overflow: 'hidden',
       }}>
-        {emoji}
+        <img src={icon} alt={label} style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
       </span>
       <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.medium }}>
         {label}
@@ -114,9 +117,8 @@ export default function PerfilPage() {
               alignItems: 'center',
               justifyContent: 'center',
               background: '#E8E4DC',
-              fontSize: '52px',
             }}>
-              👤
+              <img src={avatarDefault} alt={nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
             <button
               type="button"
@@ -169,13 +171,13 @@ export default function PerfilPage() {
 
         {/* Seguridad / S.O.S */}
         <div style={{ display: 'flex', gap: '12px' }}>
-          <TarjetaAccion emoji="🛡️" label="Seguridad" onPress={enDesarrollo} />
-          <TarjetaAccion emoji="🔔" label="S.O.S" onPress={enDesarrollo} />
+          <TarjetaAccion icon={iconSeguridad} label="Seguridad" onPress={() => navigate('/perfil/seguridad')} />
+          <TarjetaAccion icon={iconSOS} label="S.O.S" onPress={() => navigate('/perfil/sos')} />
         </div>
 
         {/* Soporte / Cerrar sesión */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <FilaOpcion emoji="🎧" label="Soporte" onPress={enDesarrollo} />
+          <FilaOpcion emoji="🎧" label="Soporte" onPress={() => navigate('/perfil/soporte')} />
           <FilaOpcion emoji="🚪" label="Cerrar sesión" onPress={handleCerrarSesion} />
         </div>
 

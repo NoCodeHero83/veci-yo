@@ -5,10 +5,10 @@ import Modal from '../../components/ui/Modal';
 import SelectField from '../../components/ui/SelectField';
 import InputField from '../../components/ui/InputField';
 import Button from '../../components/ui/Button';
-import Logo from '../../components/ui/Logo';
 import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
 import { distritosUbicacion, urbanizacionesUbicacion } from '../../data/mockData';
+import bannerUbicacion from '../../assets/branding/banner-ubicacion.png';
 
 const CAMPOS_VACIOS = { distrito: '', urbanizacion: '', condominio: '', correoAdm: '' };
 
@@ -68,7 +68,7 @@ export default function AdministracionUbicacionPage() {
           <p style={{ textAlign: 'center', fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, lineHeight: theme.fonts.lineHeights.relaxed }}>
             En esta ventana verás las ubicaciones que cargues para utilizarlas de forma más fácil y ágil.
           </p>
-          <Logo size={120} />
+          <img src={bannerUbicacion} alt="Administración de ubicación" style={{ width: '100%', maxWidth: '320px', objectFit: 'contain' }} />
         </div>
 
         {/* Lista de ubicaciones */}

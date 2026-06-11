@@ -16,6 +16,16 @@ import ChatPage from './features/home/ChatPage';
 import NotificacionesPage from './features/home/NotificacionesPage';
 import PerfilPage from './features/home/PerfilPage';
 
+// Perfil · Seguridad y Soporte
+import SeguridadPage from './features/perfil/SeguridadPage';
+import SOSPage from './features/perfil/SOSPage';
+import SoportePage from './features/perfil/SoportePage';
+import PreguntasFrecuentesPage from './features/perfil/PreguntasFrecuentesPage';
+import ContactoSoportePage from './features/perfil/ContactoSoportePage';
+import ReclamosPage from './features/perfil/ReclamosPage';
+import ReclamoNuevoPage from './features/perfil/ReclamoNuevoPage';
+import ReclamoDetallePage from './features/perfil/ReclamoDetallePage';
+
 // Correspondencia
 import CorrespondenciaPage from './features/correspondencia/CorrespondenciaPage';
 import CorrespondenciaAgregarPage from './features/correspondencia/CorrespondenciaAgregarPage';
@@ -121,6 +131,14 @@ export default function App() {
         <Route path="/comunidad" element={<ComunidadPage />} />
         <Route path="/pagos" element={<PlaceholderPage title="Pagos" />} />
         <Route path="/perfil" element={<PerfilPage />} />
+        <Route path="/perfil/seguridad" element={<SeguridadPage />} />
+        <Route path="/perfil/sos" element={<SOSPage />} />
+        <Route path="/perfil/soporte" element={<SoportePage />} />
+        <Route path="/perfil/soporte/preguntas-frecuentes" element={<PreguntasFrecuentesPage />} />
+        <Route path="/perfil/soporte/contacto" element={<ContactoSoportePage />} />
+        <Route path="/perfil/soporte/reclamos" element={<ReclamosPage />} />
+        <Route path="/perfil/soporte/reclamos/nuevo" element={<ReclamoNuevoPage />} />
+        <Route path="/perfil/soporte/reclamos/:id" element={<ReclamoDetallePage />} />
         <Route path="/configuracion" element={<PlaceholderPage title="Configuración" />} />
         <Route path="/anuncios" element={<PlaceholderPage title="Anuncios" />} />
         <Route path="/ranking" element={<PlaceholderPage title="Ranking" />} />

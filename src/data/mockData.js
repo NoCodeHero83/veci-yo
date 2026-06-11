@@ -484,3 +484,93 @@ export const ubicacionesInquilinoLiderInit = [
 
 export const distritosUbicacion = ['Mira Flores', 'San Isidro', 'San Borja', 'Surco', 'San Blas'];
 export const urbanizacionesUbicacion = ['San Antonio', 'La Flor', 'Unión', 'Wanchaq', 'Santa Mónica'];
+
+// ─── PERFIL · SEGURIDAD Y SOPORTE ───────────────────────────────────────────
+
+export const seguridadInit = {
+  correoRespaldo: 'marialalu@gmail.com',
+  faceId: false,
+  huellaDactilar: false,
+  f2a: false,
+  pausarCuenta: false,
+};
+
+export const categoriasReclamo = ['Pregunta', 'Queja', 'Sugerencia', 'Reclamo', 'Ideas'];
+export const tiposReclamo = ['Mantenimiento', 'Seguridad', 'Convivencia', 'Pagos', 'Otro'];
+export const estadosReclamo = ['Pendiente', 'En curso', 'Completo'];
+
+export const reclamosInit = [
+  {
+    id: 1234,
+    numero: '1234',
+    nombre: 'Ana Flores',
+    ci: '1782753581',
+    titulo: 'Ruido excesivo en área común',
+    descripcion: 'Se reportan reuniones con música a alto volumen en el salón de eventos pasada la medianoche, varios residentes no pueden descansar.',
+    modelo: 'iPhone 14',
+    categoria: 'Queja',
+    tipo: 'Convivencia',
+    estado: 'Completo',
+    fechaCreacion: '15/05/2024',
+    fechaRevision: '18/05/2024',
+  },
+  {
+    id: 5463,
+    numero: '5463',
+    nombre: 'Ana Flores',
+    ci: '1782753581',
+    titulo: 'Fuga de agua en la cocina perdida constante',
+    descripcion: 'Fuga de agua en la cocina perdida constante\nFuga de agua en la cocina perdida constante\nFuga de agua en la cocina perdida constante\nFuga de agua en la cocina perdida constante',
+    modelo: 'iPhone 16 pro max',
+    categoria: 'Reclamo',
+    tipo: 'Mantenimiento',
+    estado: 'En curso',
+    fechaCreacion: '22/10/2024',
+    fechaRevision: '24/10/2024',
+  },
+  {
+    id: 2535,
+    numero: '2535',
+    nombre: 'Anuel Flores',
+    ci: '1785643581',
+    titulo: 'Cámara de seguridad del lobby apagada',
+    descripcion: 'La cámara de seguridad ubicada en el lobby principal lleva varios días apagada, lo que genera preocupación entre los residentes.',
+    modelo: 'Samsung Galaxy S23',
+    categoria: 'Reclamo',
+    tipo: 'Seguridad',
+    estado: 'Pendiente',
+    fechaCreacion: '15/05/2024',
+    fechaRevision: '15/05/2024',
+  },
+  {
+    id: 5679,
+    numero: '5679',
+    nombre: 'Anuel Flores',
+    ci: '1785643581',
+    titulo: 'Cobro duplicado en cuota de mantenimiento',
+    descripcion: 'En el último estado de cuenta aparece el cobro de la cuota de mantenimiento dos veces para la misma unidad.',
+    modelo: 'Motorola Edge 40',
+    categoria: 'Reclamo',
+    tipo: 'Pagos',
+    estado: 'Pendiente',
+    fechaCreacion: '15/05/2024',
+    fechaRevision: '15/05/2024',
+  },
+];
+
+export const faqItems = [
+  { id: 1, categoria: 'Seguridad', pregunta: '¿Cómo cambio mi contraseña?', respuesta: 'Ingresa a Perfil > Seguridad > Cambiar Contraseña. Te enviaremos un enlace de restablecimiento a tu correo de respaldo, válido por 15 minutos.' },
+  { id: 2, categoria: 'Seguridad', pregunta: '¿Cómo configuro mi F2A?', respuesta: 'En Perfil > Seguridad > Usabilidad, activa el interruptor "Factor F2A" y sigue los pasos para vincular tu app de autenticación.' },
+  { id: 3, categoria: 'Comunidad', pregunta: '¿Cómo uso el chat?', respuesta: 'Desde el inicio, toca el ícono de mensaje flotante para abrir el chat con portería o administración.' },
+  { id: 4, categoria: 'Comunidad', pregunta: '¿Me puede escribir el portero?', respuesta: 'Sí, el personal de portería puede iniciar una conversación contigo a través del chat de la app cuando sea necesario.' },
+  { id: 5, categoria: 'Puntos', pregunta: '¿Cómo sumo puntos?', respuesta: 'Sumas puntos al participar en actividades de la comunidad, reciclar y completar tu agenda de tareas como Inquilino Líder.' },
+  { id: 6, categoria: 'Puntos', pregunta: '¿Se vencen los puntos?', respuesta: 'Sí, los puntos acumulados vencen a los 12 meses de haber sido otorgados si no se canjean.' },
+  { id: 7, categoria: 'Puntos', pregunta: '¿Qué beneficio me dan los puntos?', respuesta: 'Los puntos pueden canjearse por descuentos en cuotas, beneficios con comercios aliados y reconocimientos dentro de tu nivel de reputación.' },
+];
+
+export const contactoSoporte = {
+  telefono: '+593 952507151',
+  email: 'VeciYomanda@gmail.com',
+  ubicacion: 'Peru, Miraflores, san salvador 123',
+  horarios: '10am → 18:00pm',
+};

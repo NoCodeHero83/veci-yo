@@ -1,29 +1,29 @@
+import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell';
 import PageHeader from '../../components/layout/PageHeader';
 import theme from '../../config/theme';
-import { useApp } from '../../context/AppContext';
-import iconOfertas from '../../assets/icons/comunidad/ofertas.png';
-import iconVentaGaraje from '../../assets/icons/comunidad/venta-garaje.png';
-import iconPaginasAmarillas from '../../assets/icons/comunidad/paginas-amarillas.png';
+import iconFaq from '../../assets/icons/soporte/preguntas-frecuentes.png';
+import iconReclamos from '../../assets/icons/soporte/reclamos.png';
+import iconContacto from '../../assets/icons/soporte/contacto.png';
 
 const SECCIONES = [
-  { key: 'ofertas', label: 'Ofertas', icon: iconOfertas },
-  { key: 'venta-garaje', label: 'Venta de garaje', icon: iconVentaGaraje },
-  { key: 'paginas-amarillas', label: 'Páginas amarillas', icon: iconPaginasAmarillas },
+  { key: 'faq', label: 'Preguntas frecuentes', icon: iconFaq, ruta: '/perfil/soporte/preguntas-frecuentes' },
+  { key: 'reclamos', label: 'Reclamos', icon: iconReclamos, ruta: '/perfil/soporte/reclamos' },
+  { key: 'contacto', label: 'Contacto', icon: iconContacto, ruta: '/perfil/soporte/contacto' },
 ];
 
-export default function ComunidadPage() {
-  const { addToast } = useApp();
+export default function SoportePage() {
+  const navigate = useNavigate();
 
   return (
     <AppShell>
-      <PageHeader title="Comunidad" />
+      <PageHeader title="Soporte" />
       <div style={{ padding: '16px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           {SECCIONES.map(sec => (
             <button
               key={sec.key}
-              onClick={() => addToast('Funcionalidad en desarrollo')}
+              onClick={() => navigate(sec.ruta)}
               style={{
                 background: theme.colors.bgCard,
                 borderRadius: theme.radius.xl,
@@ -52,7 +52,7 @@ export default function ComunidadPage() {
               }}>
                 <img src={sec.icon} alt={sec.label} style={{ width: '38px', height: '38px', objectFit: 'contain' }} />
               </span>
-              <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>
+              <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, fontWeight: theme.fonts.weights.medium, textAlign: 'center' }}>
                 {sec.label}
               </span>
             </button>

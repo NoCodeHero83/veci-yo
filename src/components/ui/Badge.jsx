@@ -9,6 +9,9 @@ const statusMap = {
   'Aceptado':     { bg: theme.colors.secondary,    color: '#fff' },
   'Pendiente':    { bg: theme.colors.statusGray,   color: theme.colors.textSecondary },
   'Rechazado':    { bg: theme.colors.primary,      color: theme.colors.text },
+  // Reclamos
+  'En curso':     { bg: theme.colors.secondary,    color: '#fff' },
+  'Completo':     { bg: theme.colors.success,      color: '#fff' },
   // Zonas
   'Reservado':    { bg: theme.colors.primary,      color: theme.colors.text },
   'No disponible':{ bg: theme.colors.statusGray,   color: theme.colors.textSecondary },

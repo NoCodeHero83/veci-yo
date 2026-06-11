@@ -9,6 +9,8 @@ import {
   permisosViviendas as initialPermisos,
   residentesPropietarioInit,
   ubicacionesInquilinoLiderInit as initialUbicaciones,
+  seguridadInit as initialSeguridad,
+  reclamosInit as initialReclamos,
 } from '../data/mockData';
 
 const AppContext = createContext(null);
@@ -24,6 +26,8 @@ export function AppProvider({ children }) {
   const [permisos, setPermisos] = useState(initialPermisos);
   const [residentesPropietario, setResidentesPropietario] = useState(residentesPropietarioInit);
   const [ubicaciones, setUbicaciones] = useState(initialUbicaciones);
+  const [seguridad, setSeguridad] = useState(initialSeguridad);
+  const [reclamos, setReclamos] = useState(initialReclamos);
   const [toasts, setToasts] = useState([]);
 
   // ─── Onboarding / Autenticación ──────────────────────────────────────────
@@ -251,6 +255,39 @@ export function AppProvider({ children }) {
     addToast('Ubicación eliminada');
   }, [addToast]);
 
+  // Perfil · Seguridad
+  const actualizarSeguridad = useCallback((datos) => {
+    setSeguridad(prev => ({ ...prev, ...datos }));
+  }, []);
+
+  const pausarCuenta = useCallback(() => {
+    setSeguridad(prev => ({ ...prev, pausarCuenta: true }));
+    addToast('Cuenta pausada. Vuelve a iniciar sesión para reactivarla');
+  }, [addToast]);
+
+  // Perfil · Soporte · Reclamos
+  const agregarReclamo = useCallback((datos) => {
+    const numero = String(Math.floor(100000000000 + Math.random() * 900000000000));
+    const fecha = new Date().toLocaleDateString('es-PE');
+    const nuevo = {
+      id: Date.now(),
+      numero,
+      nombre: usuario?.nombre ? `${usuario.nombre} ${usuario.apellido || ''}`.trim() : 'Guillermo Paredes',
+      ci: '1782753581',
+      estado: 'Pendiente',
+      fechaCreacion: fecha,
+      fechaRevision: fecha,
+      ...datos,
+    };
+    setReclamos(prev => [nuevo, ...prev]);
+    return nuevo;
+  }, [usuario]);
+
+  const actualizarEstadoReclamo = useCallback((id, estado) => {
+    setReclamos(prev => prev.map(r => r.id === id ? { ...r, estado } : r));
+    addToast(`Estado actualizado: ${estado}`);
+  }, [addToast]);
+
   return (
     <AppContext.Provider value={{
       edificioActivo, setEdificioActivo,
@@ -267,6 +304,8 @@ export function AppProvider({ children }) {
       guardias, agregarGuardia, actualizarGuardia, eliminarGuardia,
       residentesPropietario, agregarResidente, actualizarResidente, eliminarResidente,
       ubicaciones, agregarUbicacion, toggleFavoritoUbicacion, eliminarUbicacion,
+      seguridad, actualizarSeguridad, pausarCuenta,
+      reclamos, agregarReclamo, actualizarEstadoReclamo,
       toasts, addToast,
     }}>
       {children}
