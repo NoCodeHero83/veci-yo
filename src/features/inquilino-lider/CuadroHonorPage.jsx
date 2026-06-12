@@ -28,8 +28,8 @@ import iconDepartamento from '../../assets/icons/inquilino-lider/reconocimiento-
 import iconRegalo from '../../assets/icons/inquilino-lider/regalos.png';
 
 const MEDALLAS = [
-  { key: 'reciclador', label: 'Reciclador', icon: iconReciclador, scale: 1 },
-  { key: 'atento', label: 'Atento', icon: iconAtento, scale: 1 },
+  { key: 'reciclador', label: 'Reciclador', icon: iconReciclador, scale: 1.19 },
+  { key: 'atento', label: 'Atento', icon: iconAtento, scale: 1.15 },
   { key: 'bronce', label: 'Medalla Bronce', icon: iconMedallaBronce, scale: 1 },
   { key: 'plata', label: 'Medalla Plata', icon: iconMedallaPlata, scale: 1 },
   { key: 'oro', label: 'Medalla Oro', icon: iconMedallaOro, scale: 1 },

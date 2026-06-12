@@ -12,11 +12,11 @@ import iconLogro4 from '../../../assets/icons/inquilino-lider/medalla-logro4.png
 import iconLogro5 from '../../../assets/icons/inquilino-lider/medalla-logro5.png';
 
 const LOGRO_ICONS = {
-  reciclador: iconReciclador,
-  atento: iconAtento,
-  logro3: iconLogro3,
-  logro4: iconLogro4,
-  logro5: iconLogro5,
+  reciclador: { src: iconReciclador, scale: 1.19 },
+  atento: { src: iconAtento, scale: 1.15 },
+  logro3: { src: iconLogro3, scale: 1.15 },
+  logro4: { src: iconLogro4, scale: 1.15 },
+  logro5: { src: iconLogro5, scale: 1 },
 };
 
 const cardStyle = {
@@ -102,7 +102,7 @@ export default function InquilinoLiderHome() {
                 filter: logro.conseguido ? 'none' : 'grayscale(1)',
                 overflow: 'hidden',
               }}>
-                <img src={LOGRO_ICONS[logro.key]} alt={logro.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={LOGRO_ICONS[logro.key].src} alt={logro.label} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: `scale(${LOGRO_ICONS[logro.key].scale})` }} />
               </div>
               <span style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textMuted, textAlign: 'center' }}>
                 {logro.label}

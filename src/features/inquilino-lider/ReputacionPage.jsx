@@ -14,11 +14,11 @@ import iconLogro4 from '../../assets/icons/inquilino-lider/medalla-logro4.png';
 import iconReciclador from '../../assets/icons/inquilino-lider/medalla-reciclador.png';
 
 const ICONOS = {
-  logro5: { src: iconLogro5, scale: 2.1 },
+  logro5: { src: iconLogro5, scale: 1 },
   oro: { src: iconOro, scale: 1 },
-  logro3: { src: iconLogro3, scale: 1 },
-  logro4: { src: iconLogro4, scale: 1 },
-  reciclador: { src: iconReciclador, scale: 1 },
+  logro3: { src: iconLogro3, scale: 1.15 },
+  logro4: { src: iconLogro4, scale: 1.15 },
+  reciclador: { src: iconReciclador, scale: 1.19 },
 };
 
 const cardStyle = {

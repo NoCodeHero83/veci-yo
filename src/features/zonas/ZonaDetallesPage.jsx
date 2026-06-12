@@ -79,6 +79,30 @@ export default function ZonaDetallesPage() {
       />
 
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {/* Zone photo */}
+        <div
+          style={{
+            width: '100%',
+            height: '140px',
+            borderRadius: theme.radius.xl,
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'linear-gradient(135deg, #D4C5A9 0%, #B8A98C 100%)',
+          }}
+        >
+          {zonaIcons[zona.id] ? (
+            <img
+              src={zonaIcons[zona.id]}
+              alt={zona.nombre}
+              style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', boxShadow: theme.shadows.card }}
+            />
+          ) : (
+            <span style={{ fontSize: '48px' }}>{zona.emoji}</span>
+          )}
+        </div>
+
         {/* Filter card */}
         <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '12px', boxShadow: theme.shadows.card }}>
           <SearchBar value={search} onChange={setSearch} />
