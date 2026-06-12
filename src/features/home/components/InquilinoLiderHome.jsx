@@ -49,7 +49,7 @@ export default function InquilinoLiderHome() {
       <div style={{ ...cardStyle, padding: '20px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
         <button
           type="button"
-          onClick={() => navigate('/ranking')}
+          onClick={() => navigate('/reputacion')}
           style={{
             background: 'none',
             border: 'none',
@@ -75,7 +75,7 @@ export default function InquilinoLiderHome() {
           boxShadow: theme.shadows.fab,
           overflow: 'hidden',
         }}>
-          <img src={iconReputacion} alt="Reputación" style={{ width: '56px', height: '56px', objectFit: 'contain' }} />
+          <img src={iconReputacion} alt="Reputación" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
 
         <div style={{ textAlign: 'center' }}>
@@ -102,7 +102,7 @@ export default function InquilinoLiderHome() {
                 filter: logro.conseguido ? 'none' : 'grayscale(1)',
                 overflow: 'hidden',
               }}>
-                <img src={LOGRO_ICONS[logro.key]} alt={logro.label} style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
+                <img src={LOGRO_ICONS[logro.key]} alt={logro.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
               <span style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textMuted, textAlign: 'center' }}>
                 {logro.label}
@@ -138,7 +138,7 @@ export default function InquilinoLiderHome() {
           justifyContent: 'center',
           overflow: 'hidden',
         }}>
-          <img src={iconGratitud} alt="Gratitud" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
+          <img src={iconGratitud} alt="Gratitud" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
         <span style={{ fontSize: theme.fonts.sizes.base, fontWeight: theme.fonts.weights.medium, color: theme.colors.text }}>
           Gratitud
@@ -175,7 +175,7 @@ export default function InquilinoLiderHome() {
             flexShrink: 0,
             overflow: 'hidden',
           }}>
-            <img src={iconRegalos} alt="Regalos por dar" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
+            <img src={iconRegalos} alt="Regalos por dar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </span>
         </button>
 

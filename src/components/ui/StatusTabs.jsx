@@ -17,6 +17,8 @@ const STATUS_COLORS = {
   'Atrasado':      { bg: theme.colors.primary,      color: theme.colors.text },
   'Deudor':        { bg: theme.colors.statusGray,   color: theme.colors.textSecondary },
   'Al día':        { bg: theme.colors.secondary,    color: '#fff' },
+  'Inscripto':     { bg: theme.colors.primary,      color: theme.colors.text },
+  'No inscripto':  { bg: theme.colors.statusGray,   color: theme.colors.textSecondary },
 };
 
 export default function StatusTabs({ tabs, active, onChange, centered = false }) {

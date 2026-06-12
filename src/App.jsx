@@ -54,6 +54,15 @@ import PropietarioAgregarServicioPage from './features/propietario/PropietarioAg
 // Inquilino Líder
 import AdministracionUbicacionPage from './features/inquilino-lider/AdministracionUbicacionPage';
 import CuadroHonorPage from './features/inquilino-lider/CuadroHonorPage';
+import ReputacionPage from './features/inquilino-lider/ReputacionPage';
+
+// Anuncios
+import AnunciosPage from './features/anuncios/AnunciosPage';
+import AnuncioDetallePage from './features/anuncios/AnuncioDetallePage';
+
+// Reglas
+import ReglasPage from './features/reglas/ReglasPage';
+import ReglaDetallePage from './features/reglas/ReglaDetallePage';
 
 // Comunidad
 import ComunidadPage from './features/comunidad/ComunidadPage';
@@ -102,6 +111,7 @@ export default function App() {
         <Route path="/vivienda" element={<ViviendaPage />} />
         <Route path="/administracion-ubicacion" element={<AdministracionUbicacionPage />} />
         <Route path="/cuadro-honor" element={<CuadroHonorPage />} />
+        <Route path="/reputacion" element={<ReputacionPage />} />
         <Route path="/llamar" element={<CallPage />} />
         <Route path="/llamar/en-curso" element={<CallInProgressPage />} />
         <Route path="/chat" element={<ChatPage />} />
@@ -142,9 +152,11 @@ export default function App() {
         <Route path="/perfil/soporte/reclamos/nuevo" element={<ReclamoNuevoPage />} />
         <Route path="/perfil/soporte/reclamos/:id" element={<ReclamoDetallePage />} />
         <Route path="/configuracion" element={<PlaceholderPage title="Configuración" />} />
-        <Route path="/anuncios" element={<PlaceholderPage title="Anuncios" />} />
+        <Route path="/anuncios" element={<AnunciosPage />} />
+        <Route path="/anuncios/:id" element={<AnuncioDetallePage />} />
         <Route path="/ranking" element={<PlaceholderPage title="Ranking" />} />
-        <Route path="/reglas" element={<PlaceholderPage title="Reglas" />} />
+        <Route path="/reglas" element={<ReglasPage />} />
+        <Route path="/reglas/:tipo" element={<ReglaDetallePage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

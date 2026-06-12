@@ -471,6 +471,22 @@ export const inquilinoLiderReputacion = {
   ],
 };
 
+// Reputación: insignias acumuladas por nivel de cumplimiento (Inquilino y Propietario)
+export const reputacionInsignias = {
+  inquilino: [
+    { key: 'animal-lover', icono: 'logro5', label: 'Animal Lover', progreso: 1, total: 3, nivel: 2, nivelTotal: 3 },
+    { key: 'deportista', icono: 'oro', label: 'Deportista', progreso: 2, total: 3, nivel: 3, nivelTotal: 3 },
+    { key: 'inovador-1', icono: 'logro3', label: 'Inovador', progreso: 1, total: 3, nivel: 1, nivelTotal: 3 },
+    { key: 'inovador-2', icono: 'logro4', label: 'Inovador', progreso: 1, total: 3, nivel: 1, nivelTotal: 3 },
+    { key: 'inovador-3', icono: 'reciclador', label: 'Inovador', progreso: 1, total: 3, nivel: 1, nivelTotal: 3 },
+  ],
+  propietario: [
+    { key: 'animal-lover-prop', icono: 'logro5', label: 'Animal Lover', progreso: 1, total: 3, nivel: 2, nivelTotal: 3 },
+    { key: 'deportista-prop', icono: 'oro', label: 'Deportista', progreso: 2, total: 3, nivel: 3, nivelTotal: 3 },
+    { key: 'inovador-prop-1', icono: 'logro3', label: 'Inovador', progreso: 1, total: 3, nivel: 1, nivelTotal: 3 },
+  ],
+};
+
 export const agendaHoyInquilinoLider = [
   { id: 1, titulo: 'Niñera', hora: '14:30hs' },
   { id: 2, titulo: 'Parquero', hora: '15:30hs' },
@@ -506,6 +522,114 @@ export const ubicacionesInquilinoLiderInit = [
 
 export const distritosUbicacion = ['Mira Flores', 'San Isidro', 'San Borja', 'Surco', 'San Blas'];
 export const urbanizacionesUbicacion = ['San Antonio', 'La Flor', 'Unión', 'Wanchaq', 'Santa Mónica'];
+
+// Anuncios: comunicados publicados a los residentes, con votación opcional.
+export const anunciosCategorias = ['Servicios', 'Eventos', 'Mantenimiento', 'Seguridad', 'Administración'];
+export const anunciosDestinatarios = ['Todos los residentes', 'Propietarios', 'Inquilinos', 'Administración'];
+
+export const anuncios = [
+  {
+    id: 697,
+    categoria: 'Servicios',
+    titulo: 'Corte de Gas',
+    descripcion: 'Se plantean mejoras para el espacio compartido para que todos podamos disfrutar en familia, anexando juegos para menores con seguridad, mas tachos de basura y un baño con cambiador. $50 por departamento para el mes de julio.',
+    fechaPublicada: '10/04/2025',
+    fechaFinalizacion: '16/04/2025',
+    fechaCorta: '22/10/2024',
+    votacion: true,
+    progreso: 50,
+    umbral: 70,
+    votosSi: ['A100', 'B100', 'C100', 'A101', 'B101', 'C101', 'A102', 'B102', 'C102', 'A103', 'B103', 'C103'],
+    votosNo: ['A101', 'B120', 'C103', 'A158', 'B991', 'C108', 'A177', 'B102', 'C102', 'A138', 'B143', 'C183'],
+  },
+  {
+    id: 698,
+    categoria: 'Servicios',
+    titulo: 'Corte de Gas',
+    descripcion: 'Se informa a todos los residentes que el día 24/10/2024 se realizará un corte programado del suministro de gas para tareas de mantenimiento preventivo en la red del condominio.',
+    fechaPublicada: '08/04/2025',
+    fechaFinalizacion: '14/04/2025',
+    fechaCorta: '22/10/2024',
+    votacion: false,
+  },
+  {
+    id: 699,
+    categoria: 'Servicios',
+    titulo: 'Corte de Gas',
+    descripcion: 'Recordatorio: durante el corte de gas programado, los ascensores y bombas de agua funcionarán con normalidad gracias al generador de emergencia.',
+    fechaPublicada: '06/04/2025',
+    fechaFinalizacion: '12/04/2025',
+    fechaCorta: '22/10/2024',
+    votacion: false,
+  },
+];
+
+// Reglamentos: estado de inscripción al programa "VeciYo Huésped Temporal" por departamento.
+export const reglasEstados = ['Inscripto', 'No inscripto', 'Pendiente'];
+
+export const reglasDepartamentos = [
+  { id: 1, departamento: 'Dpto 100 A', responsable: 'Maria Perez', estado: 'Inscripto' },
+  { id: 2, departamento: 'Dpto 101 A', responsable: 'Maria Perez', estado: 'No inscripto' },
+  { id: 3, departamento: 'Dpto 102 B', responsable: 'Maria Perez', estado: 'Pendiente' },
+];
+
+export const reglasTorres = ['A', 'B', 'C'];
+export const reglasDepartamentosFiltro = ['100', '101', '102'];
+export const reglasPisos = ['1', '2', '3', '4'];
+export const reglasPuntuaciones = ['Nivel 1', 'Nivel 2', 'Nivel 3', 'Nivel 4'];
+
+const REGLAS_SECCIONES_BASE = [
+  {
+    titulo: null,
+    items: [
+      'Vivir en paz y sin interrupciones, lo que se conoce como "uso tranquilo"',
+      'Quejarse con el propietario si otros inquilinos lo molestan',
+      'Suspender el pago del alquiler si el propietario no cumple con sus obligaciones de mantenimiento',
+    ],
+  },
+  {
+    titulo: 'Obligaciones del inquilino',
+    items: [
+      'Pagar la renta y otros gastos pactados en tiempo y forma',
+      'Cuidar y mantener el inmueble',
+      'Permitir el acceso al propietario para reparaciones',
+      'No realizar obras sin consentimiento',
+      'Respetar las normas de la comunidad',
+      'Devolver el inmueble en buen estado',
+      'Responder por los daños en el inmueble cuando son causados por él mismo, familiares o sus visitas',
+    ],
+  },
+  {
+    titulo: 'Plazos del contrato',
+    items: [
+      'El plazo máximo de contrato es de 20 años para viviendas y 50 años para locales comerciales',
+    ],
+  },
+];
+
+export const reglasContenido = {
+  'residente-permanente': {
+    titulo: 'Residente Permanente',
+    archivo: 'ResidentesPermanentes.pdf',
+    encabezado: 'Reglas a repetir',
+    mostrarDescarga: true,
+    secciones: REGLAS_SECCIONES_BASE,
+  },
+  'huesped-temporal': {
+    titulo: 'Huéspedes Temporales',
+    archivo: 'ResidentesTemporales.pdf',
+    encabezado: 'Reglas a repetir',
+    mostrarDescarga: true,
+    secciones: REGLAS_SECCIONES_BASE,
+  },
+  'veciyo-huesped-temporal': {
+    titulo: 'Reglamentos',
+    archivo: 'ResidentesTemporales.pdf',
+    encabezado: 'Información suscripción VeciYo Huésped Temporal',
+    mostrarDescarga: false,
+    secciones: REGLAS_SECCIONES_BASE,
+  },
+};
 
 // ─── PERFIL · SEGURIDAD Y SOPORTE ───────────────────────────────────────────
 

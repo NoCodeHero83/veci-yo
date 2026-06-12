@@ -22,9 +22,9 @@ const CONFIG_ADMIN_OPCIONES = [
 const modules = [
   { label: 'Correspondencia', emoji: '📬', icon: iconCorrespondencia, bg: '#FEF3C7', path: '/correspondencia' },
   { label: 'Visitas',         emoji: '🗝️',  icon: iconVisitas,         bg: '#FEF3C7', path: '/visitas' },
-  { label: 'Zonas Comunes',   emoji: '🏋️', icon: iconZonasComunes,    bg: '#FEF3C7', path: '/zonas-comunes', bigIcon: true },
+  { label: 'Zonas Comunes',   emoji: '🏋️', icon: iconZonasComunes,    bg: '#FEF3C7', path: '/zonas-comunes', bigIcon: true, iconSize: '128px' },
   { label: 'Anuncios',        emoji: '📣',  icon: iconAnuncios,        bg: '#FEF3C7', path: '/anuncios',      bigIcon: true },
-  { label: 'Ranking',         emoji: '🏆',  icon: iconRanking,         bg: '#FEF3C7', path: '/ranking',       bigIcon: true },
+  { label: 'Ranking',         emoji: '🏆',  icon: iconRanking,         bg: '#FEF3C7', path: '/cuadro-honor',  bigIcon: true },
   { label: 'Reglas',          emoji: null,  icon: iconReglas,          bg: '#FEF3C7', path: '/reglas', isReglas: true },
 ];
 
@@ -190,7 +190,7 @@ export default function ViviendaResumen() {
             {iconosOriginales ? (
               mod.isReglas ? <ReglasThumbnail /> : <span style={{ fontSize: mod.bigIcon ? '96px' : '64px', lineHeight: 1 }}>{mod.emoji}</span>
             ) : (
-              <img src={mod.icon} alt={mod.label} style={{ width: mod.bigIcon ? '104px' : '72px', height: mod.bigIcon ? '104px' : '72px', objectFit: 'contain' }} />
+              <img src={mod.icon} alt={mod.label} style={{ width: mod.iconSize || (mod.bigIcon ? '104px' : '72px'), height: mod.iconSize || (mod.bigIcon ? '104px' : '72px'), objectFit: 'contain' }} />
             )}
             <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.medium }}>
               {mod.label}

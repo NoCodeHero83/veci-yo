@@ -28,14 +28,16 @@ import iconDepartamento from '../../assets/icons/inquilino-lider/reconocimiento-
 import iconRegalo from '../../assets/icons/inquilino-lider/regalos.png';
 
 const MEDALLAS = [
-  { key: 'reciclador', label: 'Reciclador', icon: iconReciclador },
-  { key: 'atento', label: 'Atento', icon: iconAtento },
-  { key: 'bronce', label: 'Medalla Bronce', icon: iconMedallaBronce },
-  { key: 'plata', label: 'Medalla Plata', icon: iconMedallaPlata },
-  { key: 'oro', label: 'Medalla Oro', icon: iconMedallaOro },
+  { key: 'reciclador', label: 'Reciclador', icon: iconReciclador, scale: 1 },
+  { key: 'atento', label: 'Atento', icon: iconAtento, scale: 1 },
+  { key: 'bronce', label: 'Medalla Bronce', icon: iconMedallaBronce, scale: 1 },
+  { key: 'plata', label: 'Medalla Plata', icon: iconMedallaPlata, scale: 2.1 },
+  { key: 'oro', label: 'Medalla Oro', icon: iconMedallaOro, scale: 1 },
 ];
 
 const MEDALLA_LABELS = MEDALLAS.map(m => m.label);
+
+const TABS = ['Todos', ...cuadroHonorEstados];
 
 const ESTADO_BORDER = {
   Atrasado: theme.colors.primary,
@@ -63,6 +65,18 @@ const pillButtonStyle = {
   width: '100%',
 };
 
+function MedallaIcon({ medalla, size }) {
+  return (
+    <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
+      <img
+        src={medalla.icon}
+        alt={medalla.label}
+        style={{ width: '100%', height: '100%', objectFit: 'contain', transform: `scale(${medalla.scale || 1})` }}
+      />
+    </div>
+  );
+}
+
 function FilaMedallas({ medallas, conseguidas }) {
   return (
     <div style={{ display: 'flex', gap: '8px' }}>
@@ -72,16 +86,11 @@ function FilaMedallas({ medallas, conseguidas }) {
           <div
             key={medalla.key}
             style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              overflow: 'hidden',
-              flexShrink: 0,
               opacity: conseguida ? 1 : 0.35,
               filter: conseguida ? 'none' : 'grayscale(1)',
             }}
           >
-            <img src={medalla.icon} alt={medalla.label} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <MedallaIcon medalla={medalla} size="32px" />
           </div>
         );
       })}
@@ -99,7 +108,7 @@ export default function CuadroHonorPage() {
   const { addToast } = useApp();
 
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState(null);
+  const [activeTab, setActiveTab] = useState('Todos');
   const [filterOpen, setFilterOpen] = useState(false);
   const [torreFiltro, setTorreFiltro] = useState('');
   const [deptoFiltro, setDeptoFiltro] = useState('');
@@ -117,7 +126,7 @@ export default function CuadroHonorPage() {
     const matchSearch = !search
       || d.departamento.toLowerCase().includes(search.toLowerCase())
       || d.responsable.toLowerCase().includes(search.toLowerCase());
-    const matchTab = !activeTab || d.estado === activeTab;
+    const matchTab = activeTab === 'Todos' || d.estado === activeTab;
     return matchSearch && matchTab;
   });
 
@@ -185,7 +194,7 @@ export default function CuadroHonorPage() {
 
         <div style={{ ...cardStyle, padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <SearchBar value={search} onChange={setSearch} />
-          <StatusTabs tabs={cuadroHonorEstados} active={activeTab} onChange={setActiveTab} centered />
+          <StatusTabs tabs={TABS} active={activeTab} onChange={tab => setActiveTab(tab || 'Todos')} centered />
 
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <button
@@ -323,17 +332,25 @@ export default function CuadroHonorPage() {
                   position: 'relative',
                   width: '40px',
                   height: '40px',
-                  borderRadius: '50%',
-                  background: theme.colors.dangerLight,
                   border: 'none',
+                  background: 'none',
+                  padding: 0,
                   cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <img src={iconRegalo} alt="Reconocer" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
+                <div style={{
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  background: theme.colors.dangerLight,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <img src={iconRegalo} alt="Reconocer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
                 <span style={{
                   position: 'absolute',
                   bottom: '-4px',
@@ -426,7 +443,7 @@ export default function CuadroHonorPage() {
               </span>
               <span style={{ display: 'flex', gap: '6px' }}>
                 {MEDALLAS.map(medalla => (
-                  <img key={medalla.key} src={medalla.icon} alt={medalla.label} style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
+                  <MedallaIcon key={medalla.key} medalla={medalla} size="26px" />
                 ))}
               </span>
             </button>
