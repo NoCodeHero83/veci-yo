@@ -42,6 +42,7 @@ export default function ReglaDetallePage() {
   const [exitoOpen, setExitoOpen] = useState(false);
   const [descargaOpen, setDescargaOpen] = useState(false);
   const [archivo, setArchivo] = useState('');
+  const [solicitudOpen, setSolicitudOpen] = useState(false);
 
   if (!contenido) {
     return (
@@ -103,6 +104,10 @@ export default function ReglaDetallePage() {
           ))}
         </div>
 
+        <Button variant="primary" fullWidth onClick={() => setSolicitudOpen(true)}>
+          Solicitar documentos antiguos
+        </Button>
+
         <div style={{ height: '24px' }} />
       </div>
 
@@ -154,6 +159,17 @@ export default function ReglaDetallePage() {
             🏠
           </span>
           <Button variant="primary" fullWidth onClick={cerrarExito}>Aceptar</Button>
+        </div>
+      </Modal>
+
+      {/* Solicitar documentos antiguos */}
+      <Modal isOpen={solicitudOpen} onClose={() => setSolicitudOpen(false)} title="Solicitar documentos antiguos">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', textAlign: 'center' }}>
+          <p style={{ fontSize: theme.fonts.sizes.base, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, margin: 0 }}>
+            ¿Deseas solicitar los documentos antiguos no vigentes?
+          </p>
+          <Button variant="primary" fullWidth onClick={() => { setSolicitudOpen(false); addToast('Solicitud enviada con éxito'); }}>Aceptar</Button>
+          <Button variant="ghost" fullWidth onClick={() => setSolicitudOpen(false)}>Cancelar</Button>
         </div>
       </Modal>
 

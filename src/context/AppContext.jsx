@@ -10,6 +10,7 @@ import {
   residentesPropietarioInit,
   ubicacionesInquilinoLiderInit as initialUbicaciones,
   seguridadInit as initialSeguridad,
+  configuracionAppInit as initialConfiguracionApp,
   reclamosInit as initialReclamos,
 } from '../data/mockData';
 
@@ -27,6 +28,7 @@ export function AppProvider({ children }) {
   const [residentesPropietario, setResidentesPropietario] = useState(residentesPropietarioInit);
   const [ubicaciones, setUbicaciones] = useState(initialUbicaciones);
   const [seguridad, setSeguridad] = useState(initialSeguridad);
+  const [configuracionApp, setConfiguracionApp] = useState(initialConfiguracionApp);
   const [reclamos, setReclamos] = useState(initialReclamos);
   const [toasts, setToasts] = useState([]);
 
@@ -265,6 +267,11 @@ export function AppProvider({ children }) {
     addToast('Cuenta pausada. Vuelve a iniciar sesión para reactivarla');
   }, [addToast]);
 
+  // Perfil · Configuración de App
+  const actualizarConfiguracionApp = useCallback((datos) => {
+    setConfiguracionApp(prev => ({ ...prev, ...datos }));
+  }, []);
+
   // Perfil · Soporte · Reclamos
   const agregarReclamo = useCallback((datos) => {
     const numero = String(Math.floor(100000000000 + Math.random() * 900000000000));
@@ -305,6 +312,7 @@ export function AppProvider({ children }) {
       residentesPropietario, agregarResidente, actualizarResidente, eliminarResidente,
       ubicaciones, agregarUbicacion, toggleFavoritoUbicacion, eliminarUbicacion,
       seguridad, actualizarSeguridad, pausarCuenta,
+      configuracionApp, actualizarConfiguracionApp,
       reclamos, agregarReclamo, actualizarEstadoReclamo,
       toasts, addToast,
     }}>

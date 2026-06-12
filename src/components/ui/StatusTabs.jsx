@@ -21,12 +21,12 @@ const STATUS_COLORS = {
   'No inscripto':  { bg: theme.colors.statusGray,   color: theme.colors.textSecondary },
 };
 
-export default function StatusTabs({ tabs, active, onChange, centered = false }) {
+export default function StatusTabs({ tabs, active, onChange, centered = false, statusColors = {} }) {
   return (
     <div style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap', overflowX: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none', justifyContent: centered ? 'center' : 'flex-start' }}>
       {tabs.map(tab => {
         const isActive = active === tab;
-        const colors = STATUS_COLORS[tab] || { bg: theme.colors.primary, color: theme.colors.text };
+        const colors = statusColors[tab] || STATUS_COLORS[tab] || { bg: theme.colors.primary, color: theme.colors.text };
         return (
           <button
             key={tab}

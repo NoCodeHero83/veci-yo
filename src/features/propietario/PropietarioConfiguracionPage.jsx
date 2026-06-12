@@ -11,6 +11,8 @@ import BottomSheet, { BottomSheetOption } from '../../components/ui/BottomSheet'
 import DotsMenuButton from '../administrador/components/DotsMenuButton';
 import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
+import iconAdjuntarDocumento from '../../assets/icons/shared/adjuntar-documento.png';
+import iconAdjuntarImagen from '../../assets/icons/shared/adjuntar-imagen.png';
 
 const ROL_COLORES = {
   'Residente Lider': { bg: '#FEF9C3', color: '#854D0E' },
@@ -22,27 +24,11 @@ const CATEGORIAS = ['Mantenimiento', 'Seguridad', 'Administración', 'Comunidad'
 const DESTINATARIOS = ['Todos los residentes', 'Residentes activos', 'Administración', 'Propietarios'];
 
 function IconoDocumento() {
-  return (
-    <div style={{ width: '60px', height: '60px', background: theme.colors.iconAmberBg, borderRadius: theme.radius.lg, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={theme.colors.iconAmber} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <path d="M12 18v-4"/><path d="M9.5 15.5a2.5 2.5 0 0 0 5 0"/>
-      </svg>
-    </div>
-  );
+  return <img src={iconAdjuntarDocumento} alt="Adjuntar Documento" style={{ width: '60px', height: '60px', borderRadius: theme.radius.lg, objectFit: 'cover', cursor: 'pointer' }} />;
 }
 
 function IconoImagen() {
-  return (
-    <div style={{ width: '60px', height: '60px', background: theme.colors.iconAmberBg, borderRadius: theme.radius.lg, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={theme.colors.iconAmber} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-        <circle cx="8.5" cy="8.5" r="1.5"/>
-        <polyline points="21 15 16 10 5 21"/>
-      </svg>
-    </div>
-  );
+  return <img src={iconAdjuntarImagen} alt="Adjuntar Imagen" style={{ width: '60px', height: '60px', borderRadius: theme.radius.lg, objectFit: 'cover', cursor: 'pointer' }} />;
 }
 
 export default function PropietarioConfiguracionPage() {

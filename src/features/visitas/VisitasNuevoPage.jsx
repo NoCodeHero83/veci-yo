@@ -14,11 +14,13 @@ import theme from '../../config/theme';
 import { torres, departamentos } from '../../data/mockData';
 import tipoVisitaIcons, { visitavalida, visitanovalida } from '../../assets/icons/visitas';
 
-const TIPOS = [
+const TIPOS_BASE = [
   { id: 'amigos',    label: 'Amigos Familiares',     hasEvento: true },
   { id: 'temporal',  label: 'Profesional Temporal',  hasEvento: false },
   { id: 'permanente',label: 'Profesional Permanente',hasEvento: true },
 ];
+
+const TIPO_HUESPED_TEMPORAL = { id: 'huesped-temporal', label: 'Huésped Temporal', hasEvento: false };
 
 const PACKS = [
   { id: 1, label: 'Pack de 10 verificaciones', precio: '$10' },
@@ -41,7 +43,9 @@ const inputStyle = {
 
 export default function VisitasNuevoPage() {
   const navigate = useNavigate();
-  const { agregarVisita } = useApp();
+  const { agregarVisita, rolActivo } = useApp();
+  const esInquilinoLider = rolActivo === 'inquilino-lider';
+  const TIPOS = esInquilinoLider ? [...TIPOS_BASE, TIPO_HUESPED_TEMPORAL] : TIPOS_BASE;
 
   const [tipoSeleccionado, setTipoSeleccionado] = useState(null);
   const [esEvento, setEsEvento] = useState(false);

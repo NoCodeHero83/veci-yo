@@ -8,6 +8,8 @@ import Modal from '../../components/ui/Modal';
 import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
 import { categoriasReclamo } from '../../data/mockData';
+import iconAdjuntarDocumento from '../../assets/icons/shared/adjuntar-documento.png';
+import iconAdjuntarImagen from '../../assets/icons/shared/adjuntar-imagen.png';
 
 const CAMPOS_VACIOS = { titulo: '', descripcion: '', modelo: '', categoria: '' };
 
@@ -113,8 +115,8 @@ export default function ReclamoNuevoPage() {
 
         <div style={{ display: 'flex', gap: '24px', justifyContent: 'center', marginTop: '4px' }}>
           {[
-            { key: 'documento', label: 'Adjuntar Documento', emoji: '📄' },
-            { key: 'imagen', label: 'Adjuntar Imagen', emoji: '🖼️' },
+            { key: 'documento', label: 'Adjuntar Documento', icon: iconAdjuntarDocumento },
+            { key: 'imagen', label: 'Adjuntar Imagen', icon: iconAdjuntarImagen },
           ].map(adj => (
             <button
               key={adj.key}
@@ -130,18 +132,7 @@ export default function ReclamoNuevoPage() {
                 fontFamily: theme.fonts.family,
               }}
             >
-              <span style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: theme.radius.lg,
-                background: theme.colors.iconAmberBg,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '28px',
-              }}>
-                {adj.emoji}
-              </span>
+              <img src={adj.icon} alt={adj.label} style={{ width: '64px', height: '64px', borderRadius: theme.radius.lg, objectFit: 'cover' }} />
               <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, textAlign: 'center' }}>
                 {adj.label}
               </span>

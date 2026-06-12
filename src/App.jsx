@@ -17,6 +17,7 @@ import NotificacionesPage from './features/home/NotificacionesPage';
 import PerfilPage from './features/home/PerfilPage';
 
 // Perfil · Seguridad y Soporte
+import ConfiguracionPage from './features/perfil/ConfiguracionPage';
 import SeguridadPage from './features/perfil/SeguridadPage';
 import SOSPage from './features/perfil/SOSPage';
 import SoportePage from './features/perfil/SoportePage';
@@ -151,7 +152,7 @@ export default function App() {
         <Route path="/perfil/soporte/reclamos" element={<ReclamosPage />} />
         <Route path="/perfil/soporte/reclamos/nuevo" element={<ReclamoNuevoPage />} />
         <Route path="/perfil/soporte/reclamos/:id" element={<ReclamoDetallePage />} />
-        <Route path="/configuracion" element={<PlaceholderPage title="Configuración" />} />
+        <Route path="/configuracion" element={<ConfiguracionPage />} />
         <Route path="/anuncios" element={<AnunciosPage />} />
         <Route path="/anuncios/:id" element={<AnuncioDetallePage />} />
         <Route path="/ranking" element={<PlaceholderPage title="Ranking" />} />

@@ -12,6 +12,8 @@ import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
 import { anuncios, anunciosCategorias, anunciosDestinatarios } from '../../data/mockData';
 import iconAnuncios from '../../assets/icons/home/anuncios.png';
+import iconAdjuntarDocumento from '../../assets/icons/shared/adjuntar-documento.png';
+import iconAdjuntarImagen from '../../assets/icons/shared/adjuntar-imagen.png';
 
 const cardStyle = {
   background: theme.colors.bgCard,
@@ -222,8 +224,8 @@ export default function AnunciosPage() {
 
           <div style={{ display: 'flex', gap: '24px', justifyContent: 'center', marginTop: '4px' }}>
             {[
-              { key: 'documento', label: 'Adjuntar Documento', emoji: '📄' },
-              { key: 'imagen', label: 'Adjuntar Imagen', emoji: '🖼️' },
+              { key: 'documento', label: 'Adjuntar Documento', icon: iconAdjuntarDocumento },
+              { key: 'imagen', label: 'Adjuntar Imagen', icon: iconAdjuntarImagen },
             ].map(adj => (
               <button
                 key={adj.key}
@@ -231,9 +233,7 @@ export default function AnunciosPage() {
                 onClick={() => addToast('Funcionalidad en desarrollo')}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: theme.fonts.family }}
               >
-                <span style={{ width: '64px', height: '64px', borderRadius: theme.radius.lg, background: theme.colors.iconAmberBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px' }}>
-                  {adj.emoji}
-                </span>
+                <img src={adj.icon} alt={adj.label} style={{ width: '64px', height: '64px', borderRadius: theme.radius.lg, objectFit: 'cover' }} />
                 <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, textAlign: 'center' }}>{adj.label}</span>
               </button>
             ))}

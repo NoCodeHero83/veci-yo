@@ -17,6 +17,9 @@ import {
   reglasPuntuaciones,
 } from '../../data/mockData';
 import iconDepartamento from '../../assets/icons/inquilino-lider/reconocimiento-hero.png';
+import iconResidentePermanente from '../../assets/icons/reglas/residente-permanente.png';
+import iconResidenteTemporal from '../../assets/icons/reglas/residente-temporal.png';
+import iconRnt from '../../assets/icons/shared/rnt.png';
 
 const TABS = ['Todos', ...reglasEstados];
 
@@ -54,7 +57,7 @@ const badgeStyle = {
   color: theme.colors.text,
 };
 
-function TipoCard({ emoji, label, onClick }) {
+function TipoCard({ icon, label, onClick }) {
   return (
     <button
       type="button"
@@ -71,8 +74,8 @@ function TipoCard({ emoji, label, onClick }) {
         gap: '10px',
       }}
     >
-      <span style={{ width: '56px', height: '56px', borderRadius: '50%', background: theme.colors.iconAmberBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px' }}>
-        {emoji}
+      <span style={{ width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <img src={icon} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       </span>
       <span style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, textAlign: 'center' }}>
         {label}
@@ -120,8 +123,8 @@ export default function ReglasPage() {
 
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-          <TipoCard emoji="🏠" label="Residente Permanente" onClick={() => navigate('/reglas/residente-permanente')} />
-          <TipoCard emoji="🧳" label="Huésped Temporal" onClick={() => navigate('/reglas/huesped-temporal')} />
+          <TipoCard icon={iconResidentePermanente} label="Residente Permanente" onClick={() => navigate('/reglas/residente-permanente')} />
+          <TipoCard icon={iconResidenteTemporal} label="Huésped Temporal" onClick={() => navigate('/reglas/huesped-temporal')} />
         </div>
 
         <button
@@ -154,7 +157,13 @@ export default function ReglasPage() {
 
         <div style={{ ...cardStyle, padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <SearchBar value={search} onChange={setSearch} />
-          <StatusTabs tabs={TABS} active={activeTab} onChange={tab => setActiveTab(tab || 'Todos')} centered />
+          <StatusTabs
+            tabs={TABS}
+            active={activeTab}
+            onChange={tab => setActiveTab(tab || 'Todos')}
+            centered
+            statusColors={{ Pendiente: { bg: theme.colors.secondary, color: '#fff' } }}
+          />
 
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <button
@@ -207,9 +216,9 @@ export default function ReglasPage() {
               <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px' }}>
                 Responsable: {dept.responsable}
               </div>
-              <div style={{ display: 'flex', gap: '6px' }}>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                 <span style={{ ...badgeStyle, background: dept.estado === 'Inscripto' ? theme.colors.successLight : theme.colors.iconAmberBg }}>📣</span>
-                <span style={badgeStyle}>RNT</span>
+                <img src={iconRnt} alt="RNT" style={{ height: '22px', borderRadius: theme.radius.full, objectFit: 'cover' }} />
               </div>
             </div>
             <button

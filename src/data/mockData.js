@@ -641,6 +641,18 @@ export const seguridadInit = {
   pausarCuenta: false,
 };
 
+// ─── PERFIL · CONFIGURACIÓN DE APP ──────────────────────────────────────────
+
+export const configuracionAppInit = {
+  codigoPais: '+59',
+  telefono: '946376164',
+  correo: 'guillermix@gmail.com',
+  alias: 'Guilleelpeluca',
+  modoDaltonico: false,
+  fuenteAumentada: false,
+  modoOscuro: false,
+};
+
 export const categoriasReclamo = ['Pregunta', 'Queja', 'Sugerencia', 'Reclamo', 'Ideas'];
 export const tiposReclamo = ['Mantenimiento', 'Seguridad', 'Convivencia', 'Pagos', 'Otro'];
 export const estadosReclamo = ['Pendiente', 'En curso', 'Completo'];

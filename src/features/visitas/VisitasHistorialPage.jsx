@@ -16,12 +16,13 @@ import theme from '../../config/theme';
 import tipoVisitaIcons from '../../assets/icons/visitas';
 
 const TABS = ['Todas', 'Rechazado', 'Pendiente', 'Aceptado'];
-const TIPOS = ['Todos', 'Amigos Familiares', 'Profesional Temporal', 'Profesional Permanente'];
+const TIPOS = ['Todos', 'Amigos Familiares', 'Profesional Temporal', 'Profesional Permanente', 'Huésped Temporal'];
 
 const TIPO_LABELS = {
   amigos: 'Amigos Familiares',
   temporal: 'Profesional Temporal',
   permanente: 'Profesional Permanente',
+  'huesped-temporal': 'Huésped Temporal',
 };
 
 export default function VisitasHistorialPage() {

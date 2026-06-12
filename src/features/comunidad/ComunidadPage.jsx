@@ -44,13 +44,12 @@ export default function ComunidadPage() {
                 width: '56px',
                 height: '56px',
                 borderRadius: '50%',
-                background: theme.colors.iconAmberBg,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 overflow: 'hidden',
               }}>
-                <img src={sec.icon} alt={sec.label} style={{ width: '38px', height: '38px', objectFit: 'contain' }} />
+                <img src={sec.icon} alt={sec.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </span>
               <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>
                 {sec.label}
