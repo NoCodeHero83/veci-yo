@@ -53,7 +53,7 @@ function TarjetaAccion({ icon, label, onPress }) {
         justifyContent: 'center',
         overflow: 'hidden',
       }}>
-        <img src={icon} alt={label} style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+        <img src={icon} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       </span>
       <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.medium }}>
         {label}

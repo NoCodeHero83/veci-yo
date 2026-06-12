@@ -8,6 +8,7 @@ import Badge from '../../components/ui/Badge';
 import BottomSheet, { BottomSheetOption } from '../../components/ui/BottomSheet';
 import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
+import SelectField from '../../components/ui/SelectField';
 import QRDisplay from '../../components/ui/QRDisplay';
 import Toggle from '../../components/ui/Toggle';
 import { useApp } from '../../context/AppContext';
@@ -28,6 +29,7 @@ export default function VisitasHistorialPage() {
   const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado } = useApp();
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('Todas');
+  const [filterOpen, setFilterOpen] = useState(false);
   const [tipoFilter, setTipoFilter] = useState('Todos');
   const [menuItem, setMenuItem] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
@@ -91,24 +93,28 @@ export default function VisitasHistorialPage() {
               centered
             />
           </div>
-          <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium, color: theme.colors.textSecondary }}>Tipo:</span>
-            <select
-              value={tipoFilter}
-              onChange={e => setTipoFilter(e.target.value)}
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
+            <button
+              onClick={() => setFilterOpen(o => !o)}
               style={{
-                padding: '6px 12px',
-                borderRadius: theme.radius.lg,
-                border: `1px solid ${theme.colors.border}`,
-                background: theme.colors.bgCard,
-                fontFamily: theme.fonts.family,
-                fontSize: theme.fonts.sizes.sm,
+                background: 'none',
+                border: 'none',
                 cursor: 'pointer',
+                color: theme.colors.textSecondary,
+                fontSize: '16px',
+                transform: filterOpen ? 'rotate(180deg)' : 'none',
+                transition: 'transform 200ms',
               }}
             >
-              {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
+              ▾
+            </button>
           </div>
+
+          {filterOpen && (
+            <div style={{ animation: 'slideDown 200ms ease', marginTop: '8px' }}>
+              <SelectField label="Tipo" value={tipoFilter === 'Todos' ? '' : tipoFilter} options={TIPOS} onChange={setTipoFilter} />
+            </div>
+          )}
         </div>
 
         {/* List */}

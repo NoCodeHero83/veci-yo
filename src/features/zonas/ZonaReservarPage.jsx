@@ -24,18 +24,6 @@ const CAMPOS_POR_ZONA = {
   lavanderia:  { numero: true,  personas: false },
 };
 
-// Imágenes de fondo temáticas por zona (picsum con seed fijo para consistencia)
-const ZONA_BG = {
-  bbq:           'https://picsum.photos/seed/bbq-fire/800/300',
-  piscina:       'https://picsum.photos/seed/swimming-pool/800/300',
-  gym:           'https://picsum.photos/seed/fitness-gym/800/300',
-  parque:        'https://picsum.photos/seed/green-park/800/300',
-  coworking:     'https://picsum.photos/seed/coworking-office/800/300',
-  tenis:         'https://picsum.photos/seed/tennis-court/800/300',
-  'sala-juegos': 'https://picsum.photos/seed/game-room/800/300',
-  lavanderia:    'https://picsum.photos/seed/laundry-room/800/300',
-};
-
 export default function ZonaReservarPage() {
   const { zonaId } = useParams();
   const navigate = useNavigate();
@@ -69,8 +57,6 @@ export default function ZonaReservarPage() {
     setShowSuccess(true);
   };
 
-  const bgUrl = ZONA_BG[zonaId] || `https://picsum.photos/seed/${zonaId}/800/300`;
-
   return (
     <AppShell>
       <PageHeader title={`Reserva ${zona.nombre}`} />
@@ -83,30 +69,20 @@ export default function ZonaReservarPage() {
             height: '140px',
             borderRadius: theme.radius.xl,
             overflow: 'hidden',
-            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             background: 'linear-gradient(135deg, #D4C5A9 0%, #B8A98C 100%)',
           }}
         >
-          <img
-            src={bgUrl}
-            alt={zona.nombre}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            onError={e => { e.target.style.display = 'none'; }}
-          />
-          {zonaIcons[zona.id] && (
-            <div style={{
-              position: 'absolute',
-              bottom: '10px',
-              right: '10px',
-              width: '48px',
-              height: '48px',
-              borderRadius: '50%',
-              overflow: 'hidden',
-              border: '2px solid #fff',
-              boxShadow: theme.shadows.card,
-            }}>
-              <img src={zonaIcons[zona.id]} alt={zona.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            </div>
+          {zonaIcons[zona.id] ? (
+            <img
+              src={zonaIcons[zona.id]}
+              alt={zona.nombre}
+              style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', boxShadow: theme.shadows.card }}
+            />
+          ) : (
+            <span style={{ fontSize: '48px' }}>{zona.emoji}</span>
           )}
         </div>
 
