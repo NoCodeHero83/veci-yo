@@ -31,7 +31,7 @@ function IconoImagen() {
   return <img src={iconAdjuntarImagen} alt="Adjuntar Imagen" style={{ width: '60px', height: '60px', borderRadius: theme.radius.lg, objectFit: 'cover', cursor: 'pointer' }} />;
 }
 
-export default function PropietarioConfiguracionPage() {
+export default function PropietarioConfiguracionPage({ basePath = '/propietario/configuracion' } = {}) {
   const navigate = useNavigate();
   const { residentesPropietario, eliminarResidente, agregarResidente, addToast } = useApp();
 
@@ -80,7 +80,7 @@ export default function PropietarioConfiguracionPage() {
         action={
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
-              onClick={() => navigate('/propietario/configuracion/historial-contrato')}
+              onClick={() => navigate(`${basePath}/historial-contrato`)}
               style={{ width: '36px', height: '36px', borderRadius: theme.radius.md, background: theme.colors.primary, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={theme.colors.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -91,7 +91,7 @@ export default function PropietarioConfiguracionPage() {
               </svg>
             </button>
             <button
-              onClick={() => navigate('/propietario/configuracion/crear-rol')}
+              onClick={() => navigate(`${basePath}/crear-rol`)}
               style={{ width: '36px', height: '36px', borderRadius: theme.radius.md, background: theme.colors.primary, color: theme.colors.text, fontSize: '22px', fontWeight: 'bold', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: theme.fonts.family }}
             >
               +
@@ -136,22 +136,22 @@ export default function PropietarioConfiguracionPage() {
 
       {/* Botón siempre visible antes de la barra de navegación */}
       <div style={{ padding: '12px 16px 16px', background: theme.colors.bgApp, borderTop: `1px solid ${theme.colors.borderLight}` }}>
-        <Button variant="primary" fullWidth onClick={() => navigate('/propietario/configuracion/huespedes-temporales')}>
+        <Button variant="primary" fullWidth onClick={() => navigate(`${basePath}/huespedes-temporales`)}>
           Configuración de huésped temporal
         </Button>
       </div>
 
       {/* Menú + */}
       <BottomSheet isOpen={showAddMenu} onClose={() => setShowAddMenu(false)}>
-        <BottomSheetOption label="Agregar residente / lider" onPress={() => { setShowAddMenu(false); navigate('/propietario/configuracion/crear-rol'); }} />
+        <BottomSheetOption label="Agregar residente / lider" onPress={() => { setShowAddMenu(false); navigate(`${basePath}/crear-rol`); }} />
         <BottomSheetOption label="Agregar familiar" onPress={() => { setShowAddMenu(false); setShowFamiliar(true); }} />
-        <BottomSheetOption label="Agregar servicio" onPress={() => { setShowAddMenu(false); navigate('/propietario/configuracion/agregar-servicio'); }} />
+        <BottomSheetOption label="Agregar servicio" onPress={() => { setShowAddMenu(false); navigate(`${basePath}/agregar-servicio`); }} />
         <BottomSheetOption label="Crear votación" onPress={() => { setShowAddMenu(false); setShowVotacion(true); }} />
       </BottomSheet>
 
       {/* Menú ⋮ */}
       <BottomSheet isOpen={!!menuResidente} onClose={() => setMenuResidente(null)}>
-        <BottomSheetOption label="Editar" onPress={() => { const r = menuResidente; setMenuResidente(null); navigate('/propietario/configuracion/crear-rol', { state: { editar: r } }); }} />
+        <BottomSheetOption label="Editar" onPress={() => { const r = menuResidente; setMenuResidente(null); navigate(`${basePath}/crear-rol`, { state: { editar: r } }); }} />
         <BottomSheetOption label="Eliminar" variant="danger" onPress={() => { setDeleteResidente(menuResidente); setMenuResidente(null); }} />
       </BottomSheet>
 

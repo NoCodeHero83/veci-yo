@@ -62,6 +62,7 @@ export default function ViviendaResumen() {
   const handleConfiguracion = () => {
     if (esAdministrador) setConfigOpen(o => !o);
     else if (rolActivo === 'propietario') navigate('/propietario/configuracion');
+    else if (rolActivo === 'inquilino-lider') navigate('/inquilino-lider/configuracion');
     else navigate('/configuracion');
   };
 

@@ -139,6 +139,13 @@ export default function App() {
         <Route path="/propietario/configuracion/historial-contrato" element={<PropietarioHistorialContratoPage />} />
         <Route path="/propietario/configuracion/huespedes-temporales" element={<PropietarioHuespedesTemporalesPage />} />
         <Route path="/propietario/configuracion/agregar-servicio" element={<PropietarioAgregarServicioPage />} />
+
+        {/* Inquilino líder · Configuración (misma pantalla y funcionalidades que Propietario) */}
+        <Route path="/inquilino-lider/configuracion" element={<PropietarioConfiguracionPage basePath="/inquilino-lider/configuracion" />} />
+        <Route path="/inquilino-lider/configuracion/crear-rol" element={<PropietarioCrearRolPage />} />
+        <Route path="/inquilino-lider/configuracion/historial-contrato" element={<PropietarioHistorialContratoPage />} />
+        <Route path="/inquilino-lider/configuracion/huespedes-temporales" element={<PropietarioHuespedesTemporalesPage />} />
+        <Route path="/inquilino-lider/configuracion/agregar-servicio" element={<PropietarioAgregarServicioPage />} />
         <Route path="/integracion-externa" element={<PlaceholderPage title="Integración externa" />} />
 
         <Route path="/comunidad" element={<ComunidadPage />} />
