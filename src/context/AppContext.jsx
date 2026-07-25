@@ -329,6 +329,31 @@ export function AppProvider({ children }) {
     }));
   }, []);
 
+  // Timeline steps for HT guests
+  const actualizarTimeline = useCallback((visitaId, invitadoIdx, campo, valor) => {
+    setVisitas(prev => prev.map(v => {
+      if (v.id !== visitaId) return v;
+      const invitados = v.invitados.map((inv, i) => {
+        if (i !== invitadoIdx) return inv;
+        const timeline = { ...(inv.timeline || {}), [campo]: valor };
+        return { ...inv, timeline };
+      });
+      return { ...v, invitados };
+    }));
+  }, []);
+
+  const aprobarTerminosManual = useCallback((visitaId, invitadoIdx) => {
+    setVisitas(prev => prev.map(v => {
+      if (v.id !== visitaId) return v;
+      const invitados = v.invitados.map((inv, i) => {
+        if (i !== invitadoIdx) return inv;
+        const timeline = { ...(inv.timeline || {}), terminosAceptados: true, terminosAprobadoPor: 'anfitrion' };
+        return { ...inv, timeline };
+      });
+      return { ...v, invitados };
+    }));
+  }, []);
+
   // TRA/SIRE reporting
   const reportarTraSire = useCallback((visitaId, invitadoIdx) => {
     setVisitas(prev => prev.map(v => {
@@ -340,10 +365,40 @@ export function AppProvider({ children }) {
     }));
   }, []);
 
-  // Reservas
+  // Reservas — with persona-level state (partial exits, tipo, nombres editables)
   const agregarReserva = useCallback((reserva) => {
-    const newReserva = { ...reserva, id: Date.now() };
+    const personasConTipo = (reserva.personas || []).map(p => ({
+      nombre: p.nombre || '',
+      llego: p.llego || false,
+      tipoParticipante: p.tipoParticipante || (rolActivo === 'huesped-temporal' ? 'Huésped Temporal' : 'Residente'),
+    }));
+    const newReserva = { ...reserva, personas: personasConTipo, id: Date.now() };
     setReservas(prev => [...prev, newReserva]);
+  }, [rolActivo]);
+
+  const actualizarPersonaReserva = useCallback((reservaId, personaIdx, datos) => {
+    setReservas(prev => prev.map(r => {
+      if (r.id !== reservaId) return r;
+      const personas = r.personas.map((p, i) =>
+        i === personaIdx ? { ...p, ...datos } : p
+      );
+      // Liberar cupo cuando alguien sale
+      const cuposPrevios = r.personas.filter(p => p.llego !== 'salio').length;
+      const cuposNuevos = personas.filter(p => p.llego !== 'salio').length;
+      const diferencia = cuposPrevios - cuposNuevos;
+      if (diferencia > 0) {
+        const zonaId = r.zonaId;
+        setZonasComunesConfig(prev => {
+          const zona = prev[zonaId];
+          if (!zona) return prev;
+          return {
+            ...prev,
+            [zonaId]: { ...zona, disponibles: Math.max(0, (zona.disponibles || 0) + diferencia) },
+          };
+        });
+      }
+      return { ...r, personas };
+    }));
   }, []);
 
   const actualizarEstadoReserva = useCallback((id, estado) => {
@@ -702,8 +757,8 @@ export function AppProvider({ children }) {
       actualizarInstruccionDocumento, actualizarTipoNotificacion, toggleInstruccionCumplida,
       ubicacionActiva, suscripcionActiva, suscripciones, activarSuscripcion,
       configHuespedesTemporales, actualizarConfigHuespedTemporal,
-      verificaciones, actualizarVerificacion, reportarTraSire,
-      reservas, agregarReserva, actualizarEstadoReserva, actualizarReserva, eliminarReserva,
+      verificaciones, actualizarVerificacion, actualizarTimeline, aprobarTerminosManual, reportarTraSire,
+      reservas, agregarReserva, actualizarEstadoReserva, actualizarReserva, eliminarReserva, actualizarPersonaReserva,
       zonasComunesConfig, actualizarZonaComun, agregarZonaComun, eliminarZonaComun,
       gestionZonas, actualizarGestionZona, agregarGestionZona, eliminarGestionZona,
       mensajes, enviarMensaje, marcarMensajesLeidos, gruposChat, enviarMensajeGrupo, marcarMensajesGrupoLeidos, historialLlamadas, registrarLlamada,

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Share, Upload, Download, Phone } from 'lucide-react';
 import AppShell from '../../components/layout/AppShell';
 import PageHeader from '../../components/layout/PageHeader';
@@ -32,6 +32,7 @@ const iconButtonStyle = {
 
 export default function ReglaDetallePage() {
   const { tipo } = useParams();
+  const navigate = useNavigate();
   const { addToast, rolActivo } = useApp();
   const esHT = rolActivo === 'huesped-temporal';
   const contenido = reglasContenido[tipo];
@@ -41,7 +42,6 @@ export default function ReglaDetallePage() {
   const [exitoOpen, setExitoOpen] = useState(false);
   const [descargaOpen, setDescargaOpen] = useState(false);
   const [archivo, setArchivo] = useState('');
-  const [solicitudOpen, setSolicitudOpen] = useState(false);
   const [accionesOpen, setAccionesOpen] = useState(false);
 
   if (!contenido) {
@@ -124,7 +124,7 @@ export default function ReglaDetallePage() {
         </div>
 
         {!esHT && (
-          <Button variant="primary" fullWidth onClick={() => setSolicitudOpen(true)}>
+          <Button variant="primary" fullWidth onClick={() => navigate('/perfil/soporte/reclamos/nuevo', { state: { categoriaPreseleccionada: 'Documentos antiguos' } })}>
             Solicitar documentos antiguos
           </Button>
         )}
@@ -255,17 +255,6 @@ export default function ReglaDetallePage() {
             🏠
           </span>
           <Button variant="primary" fullWidth onClick={cerrarExito}>Aceptar</Button>
-        </div>
-      </Modal>
-
-      {/* Solicitar documentos antiguos */}
-      <Modal isOpen={solicitudOpen} onClose={() => setSolicitudOpen(false)} title="Solicitar documentos antiguos">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', textAlign: 'center' }}>
-          <p style={{ fontSize: theme.fonts.sizes.base, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, margin: 0 }}>
-            ¿Deseas solicitar los documentos antiguos no vigentes?
-          </p>
-          <Button variant="primary" fullWidth onClick={() => { setSolicitudOpen(false); }}>Aceptar</Button>
-          <Button variant="ghost" fullWidth onClick={() => setSolicitudOpen(false)}>Cancelar</Button>
         </div>
       </Modal>
 

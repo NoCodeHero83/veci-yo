@@ -65,7 +65,7 @@ const estilosPersona = {
 export default function ZonaDetallesPage() {
   const { zonaId } = useParams();
   const navigate = useNavigate();
-  const { reservas, actualizarEstadoReserva, eliminarReserva, addToast, rolActivo } = useApp();
+  const { reservas, actualizarEstadoReserva, eliminarReserva, addToast, rolActivo, actualizarPersonaReserva } = useApp();
 
   const zona = zonasComunes.find(z => z.id === zonaId) || { nombre: zonaId, emoji: '🏢' };
   const zonasReservas = reservas.filter(r => r.zonaId === zonaId);
@@ -119,10 +119,15 @@ export default function ZonaDetallesPage() {
   };
 
   const guardarPersonas = () => {
+    editPersonasList.forEach((p, idx) => {
+      actualizarPersonaReserva(editPersonasItem.id, idx, { nombre: p.nombre, llego: p.llego, tipoParticipante: p.tipoParticipante });
+    });
     addToast('Asistencia registrada correctamente');
     setEditPersonasOpen(false);
     setEditPersonasItem(null);
   };
+
+  const TIPOS_PARTICIPANTE = ['Residente', 'Visitante', 'Huésped Temporal'];
 
   const statusColorsGuardia = {
     Todos: { bg: theme.colors.success, color: '#fff' },
@@ -402,67 +407,101 @@ export default function ZonaDetallesPage() {
             {/* Person count selector */}
             <SelectField label="Modificar cantidad de personas:" value={String(editPersonasCount)} options={cantidadPersonas} onChange={v => setEditPersonasCount(Number(v.split(' ')[0]))} />
 
-            {/* Person list with check-in */}
+            {/* Person list with check-in, type, and editable names */}
             <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>Registro de asistentes</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '400px', overflowY: 'auto' }}>
               {editPersonasList.map((p, idx) => (
                 <div key={idx} style={{
                   ...estilosPersona.container,
                   background: p.llego === true ? theme.colors.successLight : (p.llego === 'salio' ? theme.colors.bgMuted : theme.colors.secondaryLight),
+                  flexDirection: 'column',
+                  gap: '8px',
+                  alignItems: 'stretch',
                 }}>
-                  <span style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium, color: theme.colors.text, flex: 1 }}>
-                    {idx === 0 ? '👤 ' : '👥 '}{p.nombre}
-                    {idx === 0 && <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginLeft: '6px' }}>(Titular)</span>}
-                  </span>
-                  {esGuardia ? (
-                    /* 3-step slider: Reservado → Llegó → Salió */
-                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                      {['Reservado', 'Llegó', 'Salió'].map((paso, pi) => {
-                        const estados = [null, true, 'salio'];
-                        const activo = p.llego === estados[pi];
-                        const colores = ['secondary', 'success', 'textMuted'];
-                        return (
-                          <button
-                            key={paso}
-                            type="button"
-                            onClick={() => setPersonaLlego(idx, estados[pi])}
-                            style={{
-                              padding: '4px 10px',
-                              borderRadius: theme.radius.full,
-                              fontSize: theme.fonts.sizes['2xs'],
-                              fontWeight: theme.fonts.weights.semibold,
-                              fontFamily: theme.fonts.family,
-                              background: activo ? theme.colors[colores[pi]] : theme.colors.bgCard,
-                              color: activo ? '#fff' : theme.colors.textSecondary,
-                              border: activo ? 'none' : `1px solid ${theme.colors.border}`,
-                              cursor: 'pointer',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {paso}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    /* Classic Llegó / No llegó */
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button
-                        type="button"
-                        onClick={() => setPersonaLlego(idx, true)}
-                        style={estilosPersona.botonLlego(p.llego === true)}
-                      >
-                        Llegó
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPersonaLlego(idx, false)}
-                        style={estilosPersona.botonNoLlego(p.llego === false)}
-                      >
-                        No llegó
-                      </button>
-                    </div>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {/* Editable name */}
+                    <input
+                      type="text"
+                      value={p.nombre}
+                      onChange={e => {
+                        setEditPersonasList(prev => prev.map((pp, i) => i === idx ? { ...pp, nombre: e.target.value } : pp));
+                      }}
+                      placeholder={idx === 0 ? 'Nombre del titular' : `Nombre del asistente ${idx + 1}`}
+                      style={{
+                        flex: 1, padding: '6px 10px', borderRadius: theme.radius.md,
+                        border: `1px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.sm,
+                        fontFamily: theme.fonts.family, outline: 'none',
+                        background: theme.colors.bgCard, color: theme.colors.text,
+                      }}
+                    />
+                    {/* Participant type selector */}
+                    <select
+                      value={p.tipoParticipante || 'Residente'}
+                      onChange={e => setEditPersonasList(prev => prev.map((pp, i) => i === idx ? { ...pp, tipoParticipante: e.target.value } : pp))}
+                      style={{
+                        padding: '6px 10px', borderRadius: theme.radius.md,
+                        border: `1px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes['2xs'],
+                        fontFamily: theme.fonts.family, outline: 'none',
+                        background: theme.colors.bgCard, color: theme.colors.text,
+                      }}
+                    >
+                      {TIPOS_PARTICIPANTE.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>
+                      {idx === 0 ? 'Titular' : `Asistente ${idx + 1}`}
+                    </span>
+                    {esGuardia ? (
+                      /* 3-step slider: Reservado → Llegó → Salió */
+                      <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                        {['Reservado', 'Llegó', 'Salió'].map((paso, pi) => {
+                          const estados = [null, true, 'salio'];
+                          const activo = p.llego === estados[pi];
+                          const colores = ['secondary', 'success', 'textMuted'];
+                          return (
+                            <button
+                              key={paso}
+                              type="button"
+                              onClick={() => setPersonaLlego(idx, estados[pi])}
+                              style={{
+                                padding: '4px 10px',
+                                borderRadius: theme.radius.full,
+                                fontSize: theme.fonts.sizes['2xs'],
+                                fontWeight: theme.fonts.weights.semibold,
+                                fontFamily: theme.fonts.family,
+                                background: activo ? theme.colors[colores[pi]] : theme.colors.bgCard,
+                                color: activo ? '#fff' : theme.colors.textSecondary,
+                                border: activo ? 'none' : `1px solid ${theme.colors.border}`,
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {paso}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      /* Classic Llegó / No llegó */
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          type="button"
+                          onClick={() => setPersonaLlego(idx, true)}
+                          style={estilosPersona.botonLlego(p.llego === true)}
+                        >
+                          Llegó
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPersonaLlego(idx, false)}
+                          style={estilosPersona.botonNoLlego(p.llego === false)}
+                        >
+                          No llegó
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

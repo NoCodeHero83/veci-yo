@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell';
 import PageHeader from '../../components/layout/PageHeader';
@@ -24,8 +24,18 @@ const HUESPEDES_TABS = ['Todas', 'Pendiente', 'Aceptado', 'Ingresado'];
 const TIPO_TABS = [
   { value: 'visitas', label: 'Visitas' },
   { value: 'huespedes', label: 'Huéspedes' },
+  { value: 'calendario', label: 'Calendario' },
 ];
 const TIPOS = ['Todos', 'Amigos Familiares', 'Profesional Temporal', 'Profesional Permanente'];
+
+const TIMELINE_STEPS = [
+  { key: 'preregistroEnviado', label: 'Link de preregistro enviado' },
+  { key: 'documentacionCompleta', label: 'Documentación completada' },
+  { key: 'terminosAceptados', label: 'Términos y Condiciones aceptados' },
+  { key: 'verificacionPasada', label: 'Verificación superada' },
+  { key: 'trasideEntrada', label: 'Ingreso al edificio (TRASIDE entrada)' },
+  { key: 'trasideSalida', label: 'Salida del edificio (TRASIDE salida)' },
+];
 
 const TIPO_LABELS = {
   amigos: 'Amigos Familiares',
@@ -38,7 +48,7 @@ export default function VisitasHistorialPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const fromHome = location.state?.fromHome || false;
-  const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado, aprobarInvitado, rolActivo, addToast, verificaciones, actualizarVerificacion, actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion, toggleInstruccionCumplida, estacionamientosVisitantes, configHuespedesTemporales, ubicacionActiva, reportarTraSire, usuario, actualizarConfigHuespedTemporal, esResidente } = useApp();
+  const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado, aprobarInvitado, rolActivo, addToast, verificaciones, actualizarVerificacion, actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion, toggleInstruccionCumplida, estacionamientosVisitantes, configHuespedesTemporales, ubicacionActiva, reportarTraSire, usuario, actualizarConfigHuespedTemporal, esResidente, actualizarTimeline, aprobarTerminosManual } = useApp();
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('Todas');
   const [tipoTab, setTipoTab] = useState('visitas');
@@ -66,8 +76,54 @@ export default function VisitasHistorialPage() {
   const [selectedTraSire, setSelectedTraSire] = useState([]);
   const [showAsignarEstacionamiento, setShowAsignarEstacionamiento] = useState(false);
   const [parkingSpot, setParkingSpot] = useState('');
+  const [reservaDetail, setReservaDetail] = useState(null);
+  const [calendarioMonth, setCalendarioMonth] = useState(new Date());
 
   const algunFiltroActivo = search || fechaDesdeFilter || fechaHastaFilter || torreFilter || deptoFilter || tipoFilter !== 'Todos';
+
+  const diasRestantes = (fechaStr) => {
+    if (!fechaStr) return Infinity;
+    const [day, month, year] = fechaStr.split('/');
+    const fecha = new Date(+year, +month - 1, +day);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    return Math.ceil((fecha - hoy) / (1000 * 60 * 60 * 24));
+  };
+
+  const colorReserva = (reserva) => {
+    if (!reserva.invitados || reserva.invitados.length === 0) return theme.colors.textMuted;
+    const todosCompletos = reserva.invitados.every(inv => {
+      const t = inv.timeline || {};
+      return t.preregistroEnviado && t.documentacionCompleta && t.terminosAceptados && t.verificacionPasada && t.trasideEntrada && t.trasideSalida;
+    });
+    if (todosCompletos) return theme.colors.success;
+    const dias = diasRestantes(reserva.fechaDesde);
+    if (dias <= 3) return theme.colors.danger;
+    return '#F59E0B';
+  };
+
+  const progresoInvitado = (inv) => {
+    const t = inv.timeline || {};
+    const pasos = [t.preregistroEnviado, t.documentacionCompleta, t.terminosAceptados, t.verificacionPasada, t.trasideEntrada, t.trasideSalida];
+    return pasos.filter(Boolean).length;
+  };
+
+  const notificados = useRef(new Set());
+
+  useEffect(() => {
+    const htReservas = visitas.filter(v => v.tipo === 'huesped-temporal');
+    htReservas.forEach(r => {
+      if (notificados.current.has(r.id)) return;
+      const color = colorReserva(r);
+      if (color === '#F59E0B') {
+        addToast(`Recordatorio: La reserva de ${r.nombre} tiene pasos pendientes (${diasRestantes(r.fechaDesde)} días para el ingreso)`, 'warning');
+        notificados.current.add(r.id);
+      } else if (color === theme.colors.danger) {
+        addToast(`URGENTE: La reserva de ${r.nombre} tiene pasos pendientes y faltan ${diasRestantes(r.fechaDesde)} días o menos`, 'warning');
+        notificados.current.add(r.id);
+      }
+    });
+  }, [visitas, tipoTab]);
 
   const detalleActual = detalleItem ? visitas.find(v => v.id === detalleItem.id) || null : null;
 
@@ -274,8 +330,76 @@ export default function VisitasHistorialPage() {
           )}
         </div>
 
+        {/* Calendar tab */}
+        {tipoTab === 'calendario' && (() => {
+          const hoy = new Date(calendarioMonth);
+          const año = hoy.getFullYear();
+          const mes = hoy.getMonth();
+          const primerDia = new Date(año, mes, 1).getDay();
+          const diasEnMes = new Date(año, mes + 1, 0).getDate();
+          const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+          const htReservas = visitas.filter(v => v.tipo === 'huesped-temporal');
+          const reservasEnMes = htReservas.filter(v => {
+            if (!v.fechaDesde) return false;
+            const [d, m, y] = v.fechaDesde.split('/');
+            const fecha = new Date(+y, +m - 1, +d);
+            return fecha.getMonth() === mes && fecha.getFullYear() === año;
+          });
+          return (
+            <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, boxShadow: theme.shadows.card, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px' }}>
+                <button onClick={() => setCalendarioMonth(new Date(año, mes - 1, 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: theme.colors.text }}>‹</button>
+                <span style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base }}>{hoy.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</span>
+                <button onClick={() => setCalendarioMonth(new Date(año, mes + 1, 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: theme.colors.text }}>›</button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px', background: theme.colors.borderLight, padding: '0 8px 8px' }}>
+                {diasSemana.map(d => (
+                  <div key={d} style={{ textAlign: 'center', fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textMuted, padding: '6px 0', fontWeight: theme.fonts.weights.semibold }}>{d}</div>
+                ))}
+                {Array.from({ length: primerDia }, (_, i) => <div key={`empty-${i}`} />)}
+                {Array.from({ length: diasEnMes }, (_, i) => {
+                  const dia = i + 1;
+                  const fechaStr = `${String(dia).padStart(2, '0')}/${String(mes + 1).padStart(2, '0')}/${año}`;
+                  const reservasDia = reservasEnMes.filter(v => {
+                    const [d, m, y] = v.fechaDesde.split('/');
+                    return parseInt(d) === dia && parseInt(m) === mes + 1 && parseInt(y) === año;
+                  });
+                  return (
+                    <div key={dia} style={{ minHeight: '70px', padding: '4px', border: 'none', position: 'relative' }}>
+                      <div style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.text, fontWeight: theme.fonts.weights.medium, marginBottom: '2px' }}>{dia}</div>
+                      {reservasDia.map(r => {
+                        const color = colorReserva(r);
+                        const [d2, m2, y2] = r.fechaHasta ? r.fechaHasta.split('/') : [dia, mes + 1, año];
+                        const hasta = new Date(+y2, +m2 - 1, +d2);
+                        const desde = new Date(año, mes, dia);
+                        const diff = Math.ceil((hasta - desde) / (1000 * 60 * 60 * 24)) + 1;
+                        return (
+                          <div
+                            key={r.id}
+                            onClick={() => setReservaDetail(r)}
+                            style={{
+                              background: color, borderRadius: '4px', padding: '2px 4px',
+                              fontSize: theme.fonts.sizes['2xs'], color: '#fff',
+                              cursor: 'pointer', marginBottom: '2px',
+                              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                              gridColumn: `span ${Math.min(diff, 7)}`,
+                            }}
+                            title={r.nombre}
+                          >
+                            {r.nombre}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* List — guardia: compact person cards */}
-        {rolActivo === 'guardia' && filtered.flatMap(item => {
+        {tipoTab !== 'calendario' && rolActivo === 'guardia' && filtered.flatMap(item => {
           const persons = item.invitados && item.invitados.length > 0
             ? item.invitados.map((inv, idx) => ({ base: item, persona: inv, idx }))
             : [{ base: item, persona: { nombre: item.nombre, llego: false, horaIngreso: '', horaSalida: '' }, idx: -1 }];
@@ -447,103 +571,83 @@ export default function VisitasHistorialPage() {
           ));
         })}
 
-        {/* List — normal roles: individual cards per person for huesped-temporal */}
-        {rolActivo !== 'guardia' && filtered.flatMap(item => {
+        {/* List — normal roles: card per reservation for huesped-temporal */}
+        {tipoTab !== 'calendario' && rolActivo !== 'guardia' && filtered.flatMap(item => {
           if (item.tipo === 'huesped-temporal') {
-            const persons = item.invitados && item.invitados.length > 0
-              ? item.invitados.map((inv, idx) => ({ base: item, persona: inv, idx }))
-              : [{ base: item, persona: { nombre: item.nombre }, idx: -1 }];
-            return persons.map((p, pi) => {
-              const personStatus = p.idx === -1
-                ? p.base.estado
-                : p.persona.aprobado === 'rechazado' ? 'Rechazado'
-                : p.persona.aprobado === 'pendiente' ? 'Pendiente'
-                : p.persona.llego ? 'Ingresado'
-                : 'Aceptado';
-              const personLabel = ['Pendiente', 'Aceptado'].includes(personStatus) ? `Precheckin: ${personStatus}` : personStatus;
-              const hallazgosVerif = p.idx >= 0 && verificaciones[item.id]?.[p.idx]?.estado === 'no-coincide';
-              const isSelected = selectedTraSire.includes(`${item.id}-${p.idx}`);
-              return (
-                <div
-                  key={`${item.id}-${pi}`}
-                  onClick={() => { setDetalleItem(item); setDetallePersonaIdx(p.idx); }}
-                  style={{
-                    background: theme.colors.bgCard,
-                    borderRadius: theme.radius.xl,
-                    padding: '14px 16px',
-                    boxShadow: theme.shadows.card,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                      {rolActivo !== 'guardia' && (
-                        <div onClick={e => e.stopPropagation()} style={{ flexShrink: 0 }}>
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => {
-                              setSelectedTraSire(prev => {
-                                const key = `${item.id}-${p.idx}`;
-                                return prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key];
-                              });
-                            }}
-                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                          />
-                        </div>
-                      )}
-                      <img
-                        src={tipoVisitaIcons[item.tipo]}
-                        alt={TIPO_LABELS[item.tipo]}
-                        style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-                      />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>
-                          {p.persona.nombre}
-                        </div>
-                        <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginTop: '1px' }}>
-                          {item.torre} - {item.depto} · {TIPO_LABELS[item.tipo]}
-                        </div>
-                        <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, marginTop: '2px' }}>
-                          Huésped responsable: {item.nombre}
-                        </div>
+            const color = colorReserva(item);
+            return [(
+              <div
+                key={item.id}
+                onClick={() => setReservaDetail(item)}
+                style={{
+                  background: theme.colors.bgCard,
+                  borderRadius: theme.radius.xl,
+                  padding: '14px 16px',
+                  boxShadow: theme.shadows.card,
+                  cursor: 'pointer',
+                  borderLeft: `4px solid ${color}`,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                    <img
+                      src={tipoVisitaIcons[item.tipo]}
+                      alt={TIPO_LABELS[item.tipo]}
+                      style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>
+                        Reserva de {item.nombre}
+                      </div>
+                      <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginTop: '1px' }}>
+                        {item.torre} - {item.depto} · {TIPO_LABELS[item.tipo]}
+                      </div>
+                      <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, marginTop: '2px' }}>
+                        {item.fechaDesde} a {item.fechaHasta} · {item.invitados?.length || 0} huéspedes
                       </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                      {hallazgosVerif && (
-                        <span style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.warning, fontWeight: theme.fonts.weights.semibold, background: '#FEF3C7', padding: '2px 6px', borderRadius: theme.radius.full }}>
-                          Con hallazgos
-                        </span>
-                      )}
-                      <Badge status={personStatus}>{personLabel}</Badge>
-                      <button
-                        onClick={e => { e.stopPropagation(); setMenuItem(item); }}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.colors.textSecondary, fontSize: '20px', padding: '4px' }}
-                      >
-                        ⋮
-                      </button>
-                    </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
-                      <span>{item.fechaDesde} a {item.fechaHasta}</span>
-                    </div>
-                    {hallazgosVerif && (
-                      <button
-                        onClick={e => { e.stopPropagation(); setHallazgosPopup({ item, persona: p.persona, idx: p.idx }); }}
-                        style={{
-                          background: 'none', border: `1px solid ${theme.colors.border}`, borderRadius: theme.radius.full,
-                          padding: '4px 10px', cursor: 'pointer', fontSize: theme.fonts.sizes.xs,
-                          fontFamily: theme.fonts.family, color: theme.colors.primary,
-                        }}
-                      >
-                        Ver resumen
-                      </button>
-                    )}
-                  </div>
+                  <button
+                    onClick={e => { e.stopPropagation(); setMenuItem(item); }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.colors.textSecondary, fontSize: '20px', padding: '4px', flexShrink: 0 }}
+                  >
+                    ⋮
+                  </button>
                 </div>
-              );
-            });
+                {/* Progress summary per group member */}
+                {item.invitados && item.invitados.length > 0 && (
+                  <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {item.invitados.map((inv, idx) => {
+                        const completados = progresoInvitado(inv);
+                        return (
+                          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div style={{ display: 'flex', gap: '3px', flex: 1 }}>
+                              {TIMELINE_STEPS.map((step, si) => {
+                                const t = inv.timeline || {};
+                                const done = si < 4 ? !!t[step.key] : !!t[step.key];
+                                const isSpecial = step.key === 'terminosAceptados' && t.terminosAprobadoPor === 'anfitrion';
+                                return (
+                                  <div
+                                    key={step.key}
+                                    title={`${step.label}${isSpecial ? ' (aprobado por anfitrión)' : ''}`}
+                                    style={{
+                                      width: '14px', height: '14px', borderRadius: '50%',
+                                      background: done ? (isSpecial ? theme.colors.secondary : theme.colors.success) : theme.colors.border,
+                                      flexShrink: 0,
+                                    }}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )];
           }
           return [(
             <div
@@ -697,9 +801,11 @@ export default function VisitasHistorialPage() {
         )}
 
         {/* Row counter */}
-        <div style={{ textAlign: 'center', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, padding: '8px 0' }}>
-          Mostrando {filtered.length} de {visitas.length} visitas
-        </div>
+        {tipoTab !== 'calendario' && (
+          <div style={{ textAlign: 'center', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, padding: '8px 0' }}>
+            Mostrando {filtered.length} de {visitas.length} visitas
+          </div>
+        )}
       </div>
       </ModuloGate>
 
@@ -808,202 +914,92 @@ export default function VisitasHistorialPage() {
                 </div>
               )}
 
-            {/* Invitados list — solo para huésped-temporal (4 bloques) */}
+            {/* Invitados list — solo para huésped-temporal (6 pasos) */}
             {detalleActual.tipo === 'huesped-temporal' && detalleActual.invitados.length > 0 && (
               <div>
-                {!(detallePersonaIdx !== null && detalleActual.tipo === 'huesped-temporal') && (
-                  <p style={{ fontWeight: theme.fonts.weights.bold, textDecoration: 'underline', marginBottom: '10px' }}>Huéspedes:</p>
-                )}
+                <p style={{ fontWeight: theme.fonts.weights.bold, textDecoration: 'underline', marginBottom: '10px' }}>Huéspedes:</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {(detallePersonaIdx !== null && detalleActual.tipo === 'huesped-temporal'
-                    ? [detalleActual.invitados[detallePersonaIdx]].map((inv, _i) => ({ ...{ inv, i: detallePersonaIdx } }))
-                    : detalleActual.invitados.map((inv, i) => ({ inv, i }))
-                  ).map(({ inv, i }) => {
-                    const esHuespedTemp = detalleActual.tipo === 'huesped-temporal';
-                    const verif = esHuespedTemp ? verificaciones[detalleActual.id]?.[i] : null;
-                    const esGuardia = rolActivo === 'guardia';
+                  {detalleActual.invitados.map((inv, i) => {
+                    const t = inv.timeline || {};
                     const esAdmin = rolActivo === 'administrador';
                     const esAnfitrion = rolActivo === 'propietario' || rolActivo === 'inquilino-lider';
-                    const puedeVerVerificacion = (esAdmin || esAnfitrion) && esHuespedTemp && verif;
-                    const puedeVerificar = esGuardia && esHuespedTemp;
-                    const docLabels = {
-                      'cedula-anverso': { label: 'Cédula (anv.)' },
-                      'cedula-reverso': { label: 'Cédula (rev.)' },
-                      'pasaporte': { label: 'Pasaporte' },
-                      'tutela': { label: 'Tutela' },
+                    const stepStatus = (key) => {
+                      if (key === 'terminosAceptados') {
+                        if (t.terminosAceptados === true) return t.terminosAprobadoPor === 'anfitrion' ? 'aprobado-manual' : true;
+                        if (t.terminosAceptados === false) return false;
+                        return null;
+                      }
+                      return !!t[key];
                     };
                     return (
                       <div key={i} style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <button
-                              onClick={() => toggleFavoritoInvitado(detalleActual.id, i)}
-                              aria-label={inv.favorito ? 'Quitar de favoritos' : 'Marcar como favorito'}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', display: 'flex' }}
-                            >
-                              <svg width="18" height="18" viewBox="0 0 24 24" fill={inv.favorito ? theme.colors.primary : 'none'} stroke={inv.favorito ? theme.colors.primary : theme.colors.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                              </svg>
-                            </button>
-                            <span style={{ fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.base }}>{inv.nombre}</span>
-                          </div>
+                        <div style={{ fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.base, marginBottom: '10px' }}>
+                          {inv.nombre}
                         </div>
-
-                        {/* Block 1 — Precheckin */}
-                        <div style={{ padding: '10px', background: theme.colors.bgCard, borderRadius: theme.radius.md, marginBottom: '8px' }}>
-                          <div style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.textSecondary, marginBottom: '6px' }}>1. Precheckin</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                            <Badge status={inv.aprobado === 'aprobado' ? 'Aceptado' : (inv.aprobado === 'rechazado' ? 'Rechazado' : 'Pendiente')}>
-                              {inv.aprobado === 'aprobado' ? 'Precheckin: Aceptado' : (inv.aprobado === 'rechazado' ? 'Rechazado' : 'Precheckin: Pendiente')}
-                            </Badge>
-                            {inv.aprobado === 'pendiente' && (esAdmin || esAnfitrion) && (
-                              <button
-                                onClick={() => aprobarInvitado(detalleActual.id, i, 'aprobado')}
-                                style={{
-                                  padding: '6px 14px', borderRadius: theme.radius.full,
-                                  background: theme.colors.success, color: '#fff', border: 'none',
-                                  cursor: 'pointer', fontSize: theme.fonts.sizes.xs,
-                                  fontWeight: theme.fonts.weights.semibold, fontFamily: theme.fonts.family,
-                                  display: 'flex', alignItems: 'center', gap: '6px',
-                                }}
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                Aprobar
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Block 2 — Ingreso al condominio */}
-                        <div style={{ padding: '10px', background: theme.colors.bgCard, borderRadius: theme.radius.md, marginBottom: '8px' }}>
-                          <div style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.textSecondary, marginBottom: '6px' }}>2. Ingreso al condominio</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Badge status={inv.llego ? 'Ingresado' : 'Pendiente'} />
-                            <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
-                              {inv.llego ? 'Ingresó' : 'No ingresado'}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Block 3 — Verificación de documento */}
-                        <div style={{ padding: '10px', background: theme.colors.bgCard, borderRadius: theme.radius.md, marginBottom: '8px' }}>
-                          <div style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.textSecondary, marginBottom: '6px' }}>3. Verificación de documento</div>
-                          {verif ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                              <Badge status={verif.estado === 'verificado' ? 'Verificado' : (verif.estado === 'no-coincide' ? 'No coincide' : 'Pendiente')} />
-                              {verif.fechaVerificacion && (
-                                <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>{verif.fechaVerificacion}</span>
-                              )}
-                              {verif.documentoTomado && (
+                        {TIMELINE_STEPS.map((step, si) => {
+                          const st = stepStatus(step.key);
+                          const isCompleted = st === true || st === 'aprobado-manual';
+                          const isPending = st === null;
+                          const isRejected = st === false && step.key === 'terminosAceptados';
+                          const isAprobadoManual = st === 'aprobado-manual';
+                          const icon = isCompleted ? '✅' : (isPending ? '⏳' : (isRejected ? '❌' : '⏳'));
+                          return (
+                            <div key={step.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: theme.colors.bgCard, borderRadius: theme.radius.md, marginBottom: '4px' }}>
+                              <span style={{ fontSize: '14px', flexShrink: 0 }}>{icon}</span>
+                              <span style={{ flex: 1, fontSize: theme.fonts.sizes.xs, color: theme.colors.text }}>
+                                {si + 1}. {step.label}
+                                {isAprobadoManual && (
+                                  <span style={{ color: theme.colors.secondary, fontWeight: theme.fonts.weights.semibold, marginLeft: '4px' }}>
+                                    (aprobado por anfitrión)
+                                  </span>
+                                )}
+                              </span>
+                              {step.key === 'terminosAceptados' && isRejected && (esAdmin || esAnfitrion) && (
                                 <button
-                                  onClick={undefined}
+                                  onClick={() => aprobarTerminosManual(detalleActual.id, i)}
                                   style={{
                                     padding: '4px 10px', borderRadius: theme.radius.full,
-                                    background: theme.colors.bgCard, border: `1px solid ${theme.colors.border}`,
-                                    cursor: 'pointer', fontSize: theme.fonts.sizes.xs,
-                                    fontFamily: theme.fonts.family, color: theme.colors.text,
-                                    display: 'flex', alignItems: 'center', gap: '4px',
+                                    background: theme.colors.secondary, color: '#fff', border: 'none',
+                                    cursor: 'pointer', fontSize: theme.fonts.sizes['2xs'],
+                                    fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
                                   }}
                                 >
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                                    <circle cx="12" cy="13" r="4"/>
-                                  </svg>
-                                  Doc. Ingreso
+                                  Aprobar manualmente
                                 </button>
                               )}
                             </div>
+                          );
+                        })}
+                        {/* TRA/SIRE */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
+                          {inv.traSireReported ? (
+                            <Badge status="Aceptado">TRA/SIRE reportado</Badge>
                           ) : (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <Badge status="Pendiente" />
-                              <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>No verificado</span>
-                            </div>
-                          )}
-                          {inv.documentos && inv.documentos.length > 0 && (
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
-                              <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginRight: '2px', alignSelf: 'center' }}>📄</span>
-                              {inv.documentos.map((doc, di) => {
-                                const info = docLabels[doc] || { label: doc };
+                            <>
+                              <Badge status="Pendiente">TRA/SIRE pendiente</Badge>
+                              {inv.llego && (rolActivo === 'propietario' || rolActivo === 'inquilino-lider') && (() => {
+                                const rntCompleto = ubicacionActiva ? configHuespedesTemporales[ubicacionActiva.id]?.legal?.rnt?.trim()?.length > 0 : false;
                                 return (
                                   <button
-                                    key={di}
-                                    onClick={undefined}
+                                    onClick={() => {
+                                      if (!rntCompleto) { addToast('Completa tu RNT en la configuración de Huéspedes Temporales', 'warning'); return; }
+                                      reportarTraSire(detalleActual.id, i);
+                                      addToast('Reporte TRA/SIRE enviado exitosamente', 'success');
+                                    }}
                                     style={{
                                       padding: '4px 10px', borderRadius: theme.radius.full,
-                                      background: theme.colors.bgCard, border: `1px solid ${theme.colors.border}`,
-                                      cursor: 'pointer', fontSize: theme.fonts.sizes.xs,
-                                      fontFamily: theme.fonts.family, color: theme.colors.text,
-                                      display: 'flex', alignItems: 'center', gap: '4px',
+                                      background: theme.colors.secondary, color: '#fff', border: 'none',
+                                      cursor: 'pointer', fontSize: theme.fonts.sizes['2xs'],
+                                      fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
                                     }}
                                   >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                      <polyline points="14 2 14 8 20 8"/>
-                                    </svg>
-                                    {info.label}
+                                    Reportar TRA/SIRE
                                   </button>
                                 );
-                              })}
-                            </div>
+                              })()}
+                            </>
                           )}
                         </div>
-
-                        {/* Block 4 — TRA/SIRE */}
-                        <div style={{ padding: '10px', background: theme.colors.bgCard, borderRadius: theme.radius.md }}>
-                          <div style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.textSecondary, marginBottom: '6px' }}>4. TRA/SIRE</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                            {inv.traSireReported ? (
-                              <>
-                                <Badge status="Aceptado" />
-                                <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>Reportado</span>
-                              </>
-                            ) : (
-                              <>
-                                <Badge status="Pendiente" />
-                                <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>No reportado</span>
-                                {inv.llego && (rolActivo === 'propietario' || rolActivo === 'inquilino-lider') && (() => {
-                                  const rntCompleto = ubicacionActiva ? configHuespedesTemporales[ubicacionActiva.id]?.legal?.rnt?.trim()?.length > 0 : false;
-                                  return (
-                                    <button
-                                      onClick={() => {
-                                        if (!rntCompleto) {
-                                          addToast('Completa tu RNT en la configuración de Huéspedes Temporales', 'warning');
-                                          return;
-                                        }
-                                        reportarTraSire(detalleActual.id, i);
-                                        addToast('Reporte TRA/SIRE enviado exitosamente', 'success');
-                                      }}
-                                      style={{
-                                        padding: '6px 14px', borderRadius: theme.radius.full,
-                                        background: theme.colors.secondary, color: '#fff', border: 'none',
-                                        cursor: 'pointer', fontSize: theme.fonts.sizes.xs,
-                                        fontWeight: theme.fonts.weights.semibold, fontFamily: theme.fonts.family,
-                                        display: 'flex', alignItems: 'center', gap: '6px',
-                                      }}
-                                    >
-                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                                      </svg>
-                                      {rntCompleto ? 'Reportar TRA/SIRE' : 'Reportar TRA/SIRE (completa tu RNT)'}
-                                    </button>
-                                  );
-                                })()}
-                              </>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Minor alert for minors without tutela */}
-                        {esHuespedTemp && inv.esMenor && !inv.tieneTutela && (
-                          <div style={{ padding: '8px 12px', marginTop: '8px', background: '#FFF8E1', borderRadius: theme.radius.md, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={theme.colors.warning} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                            </svg>
-                            <span style={{ fontSize: theme.fonts.sizes.xs, color: '#8D6E00' }}>
-                              Este huésped no está en capacidad de aceptar los Términos y Condiciones
-                            </span>
-                          </div>
-                        )}
                       </div>
                     );
                   })}
@@ -1098,6 +1094,55 @@ export default function VisitasHistorialPage() {
                 </button>
               </div>
             )}
+          </div>
+        )}
+      </Modal>
+
+      {/* Reservation detail modal */}
+      <Modal
+        isOpen={!!reservaDetail}
+        onClose={() => setReservaDetail(null)}
+        title={`Reserva de ${reservaDetail?.nombre || ''}`}
+      >
+        {reservaDetail && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img src={tipoVisitaIcons[reservaDetail.tipo]} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base }}>{reservaDetail.nombre}</div>
+                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{reservaDetail.torre} - {reservaDetail.depto}</div>
+                <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>{reservaDetail.fechaDesde} a {reservaDetail.fechaHasta}</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {reservaDetail.invitados?.map((inv, i) => {
+                const t = inv.timeline || {};
+                return (
+                  <div key={i} style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '12px' }}>
+                    <div style={{ fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.base, marginBottom: '8px' }}>{inv.nombre}</div>
+                    {TIMELINE_STEPS.map((step, si) => {
+                      const st = step.key === 'terminosAceptados'
+                        ? (t.terminosAceptados === true ? (t.terminosAprobadoPor === 'anfitrion' ? 'aprobado-manual' : true) : t.terminosAceptados === false ? false : null)
+                        : !!t[step.key];
+                      const isCompleted = st === true || st === 'aprobado-manual';
+                      const isPending = st === null;
+                      const isRejected = st === false;
+                      const icon = isCompleted ? '✅' : (isPending ? '⏳' : '❌');
+                      return (
+                        <div key={step.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 8px' }}>
+                          <span style={{ fontSize: '12px', flexShrink: 0 }}>{icon}</span>
+                          <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.text }}>
+                            {si + 1}. {step.label}
+                            {st === 'aprobado-manual' && <span style={{ color: theme.colors.secondary, fontWeight: theme.fonts.weights.semibold }}> (aprobado por anfitrión)</span>}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+            <Button variant="ghost" fullWidth onClick={() => setReservaDetail(null)}>Volver</Button>
           </div>
         )}
       </Modal>

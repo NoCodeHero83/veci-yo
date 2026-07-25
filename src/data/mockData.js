@@ -231,9 +231,9 @@ export const visitasItems = [
     fechaHasta: '20/07/2026',
     esEvento: false,
     invitados: [
-      { nombre: 'Carlos Mendoza', llego: true, aprobado: 'aprobado', esMenor: false, documentos: ['cedula-anverso', 'cedula-reverso'], traSireReported: false },
-      { nombre: 'Lucía Torres', llego: true, aprobado: 'aprobado', esMenor: false, documentos: ['cedula-anverso'], traSireReported: false },
-      { nombre: 'Pedro Ramírez', llego: true, aprobado: 'aprobado', esMenor: false, documentos: ['cedula-anverso', 'cedula-reverso'], traSireReported: false },
+      { nombre: 'Carlos Mendoza', llego: true, aprobado: 'aprobado', esMenor: false, documentos: ['cedula-anverso', 'cedula-reverso'], traSireReported: false, timeline: { preregistroEnviado: true, documentacionCompleta: true, terminosAceptados: true, verificacionPasada: true, trasideEntrada: '15/07/2026 14:30', trasideSalida: '20/07/2026 10:00' } },
+      { nombre: 'Lucía Torres', llego: true, aprobado: 'aprobado', esMenor: false, documentos: ['cedula-anverso'], traSireReported: false, timeline: { preregistroEnviado: true, documentacionCompleta: true, terminosAceptados: true, verificacionPasada: true, trasideEntrada: '15/07/2026 14:35', trasideSalida: '20/07/2026 10:15' } },
+      { nombre: 'Pedro Ramírez', llego: true, aprobado: 'aprobado', esMenor: false, documentos: ['cedula-anverso', 'cedula-reverso'], traSireReported: false, timeline: { preregistroEnviado: true, documentacionCompleta: true, terminosAceptados: true, verificacionPasada: true, trasideEntrada: '15/07/2026 14:40', trasideSalida: '20/07/2026 10:30' } },
     ],
     qrUrl: 'wwww.veciyolink/reserva-656591',
     reserva: 'N°: 656591',
@@ -254,8 +254,8 @@ export const visitasItems = [
     fechaHasta: '28/07/2026',
     esEvento: false,
     invitados: [
-      { nombre: 'Ana María Silva', llego: false, aprobado: 'pendiente', esMenor: false, documentos: ['cedula-anverso', 'cedula-reverso'], traSireReported: false },
-      { nombre: 'Luis Fernando Soto', llego: false, aprobado: 'pendiente', esMenor: false, documentos: ['pasaporte'], traSireReported: false },
+      { nombre: 'Ana María Silva', llego: false, aprobado: 'pendiente', esMenor: false, documentos: ['cedula-anverso', 'cedula-reverso'], traSireReported: false, timeline: { preregistroEnviado: true, documentacionCompleta: true, terminosAceptados: null, verificacionPasada: false, trasideEntrada: null, trasideSalida: null } },
+      { nombre: 'Luis Fernando Soto', llego: false, aprobado: 'pendiente', esMenor: false, documentos: ['pasaporte'], traSireReported: false, timeline: { preregistroEnviado: true, documentacionCompleta: false, terminosAceptados: null, verificacionPasada: false, trasideEntrada: null, trasideSalida: null } },
     ],
     qrUrl: 'wwww.veciyolink/reserva-656592',
     reserva: 'N°: 656592',
@@ -276,9 +276,9 @@ export const visitasItems = [
     fechaHasta: '10/08/2026',
     esEvento: false,
     invitados: [
-      { nombre: 'Diego Villalobos', llego: false, aprobado: 'pendiente', esMenor: true, documentos: ['cedula-anverso', 'tutela'], tieneTutela: true, traSireReported: false },
-      { nombre: 'Sofía Villalobos', llego: false, aprobado: 'pendiente', esMenor: true, documentos: [], tieneTutela: false, traSireReported: false },
-      { nombre: 'Miguel Torres', llego: false, aprobado: 'pendiente', esMenor: false, documentos: ['cedula-anverso', 'cedula-reverso'], traSireReported: false },
+      { nombre: 'Diego Villalobos', llego: false, aprobado: 'pendiente', esMenor: true, documentos: ['cedula-anverso', 'tutela'], tieneTutela: true, traSireReported: false, timeline: { preregistroEnviado: true, documentacionCompleta: true, terminosAceptados: null, verificacionPasada: false, trasideEntrada: null, trasideSalida: null } },
+      { nombre: 'Sofía Villalobos', llego: false, aprobado: 'pendiente', esMenor: true, documentos: [], tieneTutela: false, traSireReported: false, timeline: { preregistroEnviado: true, documentacionCompleta: false, terminosAceptados: false, terminosAprobadoPor: null, verificacionPasada: false, trasideEntrada: null, trasideSalida: null } },
+      { nombre: 'Miguel Torres', llego: false, aprobado: 'pendiente', esMenor: false, documentos: ['cedula-anverso', 'cedula-reverso'], traSireReported: false, timeline: { preregistroEnviado: true, documentacionCompleta: false, terminosAceptados: null, verificacionPasada: false, trasideEntrada: null, trasideSalida: null } },
     ],
     qrUrl: 'wwww.veciyolink/reserva-656593',
     reserva: 'N°: 656593',
@@ -299,7 +299,7 @@ export const visitasItems = [
     fechaHasta: '07/06/2026',
     esEvento: false,
     invitados: [
-      { nombre: 'Bob Esponja', llego: false, aprobado: 'rechazado', esMenor: false, documentos: ['cedula-anverso'], traSireReported: false },
+      { nombre: 'Bob Esponja', llego: false, aprobado: 'rechazado', esMenor: false, documentos: ['cedula-anverso'], traSireReported: false, timeline: { preregistroEnviado: true, documentacionCompleta: true, terminosAceptados: false, terminosAprobadoPor: 'anfitrion', verificacionPasada: false, trasideEntrada: null, trasideSalida: null } },
     ],
     qrUrl: 'wwww.veciyolink/reserva-656594',
     reserva: 'N°: 656594',
@@ -1129,6 +1129,7 @@ export const CATEGORIAS_PQRS = [
   { id: 'Condominio', subcategorias: ['Pregunta', 'Queja', 'Reclamo', 'Sugerencia'] },
   { id: 'Aplicación VeciYo', subcategorias: ['Idea', 'Soporte'] },
   { id: 'Constructora TyC', subcategorias: [] },
+  { id: 'Documentos antiguos', subcategorias: [] },
 ];
 
 export const categoriasReclamo = CATEGORIAS_PQRS.map(c => c.id);

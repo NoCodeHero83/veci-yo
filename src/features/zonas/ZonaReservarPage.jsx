@@ -23,10 +23,13 @@ const CAMPOS_POR_ZONA = {
   lavanderia:  { numero: true,  personas: false },
 };
 
+const TIPOS_PARTICIPANTE = ['Residente', 'Visitante', 'Huésped Temporal'];
+
 export default function ZonaReservarPage() {
   const { zonaId } = useParams();
   const navigate = useNavigate();
-  const { agregarReserva, zonasComunesConfig } = useApp();
+  const { agregarReserva, zonasComunesConfig, rolActivo } = useApp();
+  const tipoPorDefecto = rolActivo === 'huesped-temporal' ? 'Huésped Temporal' : 'Residente';
 
   const zona = zonasComunes.find(z => z.id === zonaId) || { nombre: zonaId, emoji: '🔥' };
   const zonaConfig = zonasComunesConfig[zonaId] || {};
@@ -39,6 +42,7 @@ export default function ZonaReservarPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [personas, setPersonas] = useState('');
   const [nombresPersonas, setNombresPersonas] = useState([]);
+  const [tiposPersonas, setTiposPersonas] = useState([]);
   const [comentarios, setComentarios] = useState('');
   const [depto, setDepto] = useState('506 C');
   const [cargoCuota, setCargoCuota] = useState(false);
@@ -55,12 +59,18 @@ export default function ZonaReservarPage() {
       while (newArr.length > count) newArr.pop();
       return newArr;
     });
+    setTiposPersonas(prev => {
+      const newArr = [...prev];
+      while (newArr.length < count) newArr.push(tipoPorDefecto);
+      while (newArr.length > count) newArr.pop();
+      return newArr;
+    });
   };
 
   const handleAceptar = () => {
     if (!hora) return;
     const estado = requiereAprobacion ? 'Pendiente' : 'Aprobado';
-    const personasList = nombresPersonas.filter(Boolean).map(n => ({ nombre: n, llego: false }));
+    const personasList = nombresPersonas.map((n, i) => ({ nombre: n, llego: false, tipoParticipante: tiposPersonas[i] || tipoPorDefecto }));
     const reserva = {
       zonaId,
       depto: `Departamento ${depto}`,
@@ -124,30 +134,53 @@ export default function ZonaReservarPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '2px' }}>Nombres de los asistentes</div>
             {nombresPersonas.map((nom, idx) => (
-              <input
-                key={idx}
-                type="text"
-                value={nom}
-                onChange={e => {
-                  const newNoms = [...nombresPersonas];
-                  newNoms[idx] = e.target.value;
-                  setNombresPersonas(newNoms);
-                }}
-                placeholder={`Nombre del asistente ${idx + 1}${idx === 0 ? ' (Titular)' : ''}`}
-                style={{
-                  width: '100%',
-                  padding: '13px 16px',
-                  borderRadius: theme.radius['2xl'],
-                  border: `1px solid ${theme.colors.border}`,
-                  background: theme.colors.bgCard,
-                  boxShadow: theme.shadows.card,
-                  fontSize: theme.fonts.sizes.base,
-                  fontFamily: theme.fonts.family,
-                  color: theme.colors.text,
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
+              <div key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  value={nom}
+                  onChange={e => {
+                    const newNoms = [...nombresPersonas];
+                    newNoms[idx] = e.target.value;
+                    setNombresPersonas(newNoms);
+                  }}
+                  placeholder={`Nombre del asistente ${idx + 1}${idx === 0 ? ' (Titular)' : ''}`}
+                  style={{
+                    flex: 1,
+                    padding: '13px 16px',
+                    borderRadius: theme.radius['2xl'],
+                    border: `1px solid ${theme.colors.border}`,
+                    background: theme.colors.bgCard,
+                    boxShadow: theme.shadows.card,
+                    fontSize: theme.fonts.sizes.base,
+                    fontFamily: theme.fonts.family,
+                    color: theme.colors.text,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+                <select
+                  value={tiposPersonas[idx] || tipoPorDefecto}
+                  onChange={e => {
+                    const newTipos = [...tiposPersonas];
+                    newTipos[idx] = e.target.value;
+                    setTiposPersonas(newTipos);
+                  }}
+                  style={{
+                    padding: '13px 12px',
+                    borderRadius: theme.radius['2xl'],
+                    border: `1px solid ${theme.colors.border}`,
+                    background: theme.colors.bgCard,
+                    boxShadow: theme.shadows.card,
+                    fontSize: theme.fonts.sizes.sm,
+                    fontFamily: theme.fonts.family,
+                    color: theme.colors.text,
+                    outline: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {TIPOS_PARTICIPANTE.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
             ))}
           </div>
         )}

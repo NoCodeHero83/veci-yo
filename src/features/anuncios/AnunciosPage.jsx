@@ -12,7 +12,7 @@ import Modal from '../../components/ui/Modal';
 import { ModuloGate, ModuloHeaderInfo } from '../../components/ui/ModuloEstado';
 import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
-import { anuncios, anunciosCategorias, anunciosDestinatarios } from '../../data/mockData';
+import { anuncios, anunciosCategorias } from '../../data/mockData';
 import iconAnuncios from '../../assets/icons/home/anuncios.png';
 import iconAdjuntarDocumento from '../../assets/icons/shared/adjuntar-documento.png';
 import iconAdjuntarImagen from '../../assets/icons/shared/adjuntar-imagen.png';
@@ -41,7 +41,7 @@ const dateInputStyle = {
 };
 
 const TIPOS_ANUNCIO = ['Anuncio', 'Encuesta'];
-const FORM_VACIO = { tipo: 'Anuncio', titulo: '', descripcion: '', categoria: '', destinatario: '', urlVideo: '', votacion: false, umbral: '', tiempoMaximo: '', fechaPublicada: '', fechaFinalizacion: '', opcionesVotacion: ['', ''], ocultarResultados: false };
+const FORM_VACIO = { tipo: 'Anuncio', titulo: '', descripcion: '', categoria: '', paraPropietarios: false, paraResidentes: false, paraHuespedes: false, urlVideo: '', votacion: false, umbral: '', tiempoMaximo: '', fechaPublicada: '', fechaFinalizacion: '', opcionesVotacion: ['', ''], ocultarResultados: false };
 
 // Pantalla "2-Anuncios": listado de comunicados del condominio con filtros
 // (búsqueda, fechas, categoría, encuesta), creación de nuevos anuncios
@@ -90,7 +90,7 @@ export default function AnunciosPage() {
         action={
           <ModuloHeaderInfo
             helpKey="anuncios"
-            action={rolActivo !== 'guardia' ? (
+            action={rolActivo === 'administrador' ? (
               <button
                 type="button"
                 onClick={() => setCrearOpen(true)}
@@ -218,7 +218,28 @@ export default function AnunciosPage() {
           <Tabs tabs={TIPOS_ANUNCIO} active={form.tipo} onChange={v => setField('tipo')(v || 'Anuncio')} variant="chip" allowDeselect={false} />
 
           <SelectField value={form.categoria} options={anunciosCategorias} onChange={setField('categoria')} placeholder="Categoria" />
-          <SelectField value={form.destinatario} options={anunciosDestinatarios} onChange={setField('destinatario')} placeholder="Destinatario" />
+          <div>
+            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '8px', fontWeight: theme.fonts.weights.medium }}>
+              Dirigido a:
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {[
+                { key: 'paraPropietarios', label: 'Propietarios' },
+                { key: 'paraResidentes', label: 'Residentes' },
+                { key: 'paraHuespedes', label: 'Huéspedes Temporales' },
+              ].map(opt => (
+                <label key={opt.key} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontFamily: theme.fonts.family, userSelect: 'none' }}>
+                  <input
+                    type="checkbox"
+                    checked={form[opt.key]}
+                    onChange={e => setField(opt.key)(e.target.checked)}
+                    style={{ width: '18px', height: '18px', accentColor: theme.colors.primary }}
+                  />
+                  <span style={{ fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>{opt.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
 
           <InputField label="Titulo*" value={form.titulo} onChange={setField('titulo')} placeholder="Título del anuncio" multiline rows={2} />
           <InputField label="Descripción*" value={form.descripcion} onChange={setField('descripcion')} placeholder="Describa con el mayor detalle posible" multiline rows={3} />

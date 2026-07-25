@@ -12,7 +12,7 @@ import Badge from '../../components/ui/Badge';
 import { useApp } from '../../context/AppContext';
 import theme from '../../config/theme';
 import { torres, departamentos } from '../../data/mockData';
-import tipoVisitaIcons, { visitavalida, visitanovalida } from '../../assets/icons/visitas';
+import tipoVisitaIcons from '../../assets/icons/visitas';
 
 const TIPOS_BASE = [
   { id: 'amigos',    label: 'Amigos Familiares' },
@@ -28,12 +28,6 @@ const TIPO_LABELS = {
   permanente: 'Profesional Permanente',
   'huesped-temporal': 'Huésped Temporal',
 };
-
-const PACKS = [
-  { id: 1, label: 'Pack de 10 verificaciones', precio: '$10' },
-  { id: 2, label: 'Pack de 15 verificaciones', precio: '$15' },
-  { id: 3, label: 'Pack de 20 verificaciones', precio: '$20' },
-];
 
 const inputStyle = {
   width: '100%',
@@ -174,32 +168,10 @@ export default function VisitasNuevoPage() {
     }, 1500);
   };
 
-  const [showVerifModal, setShowVerifModal] = useState(false);
-  const [packSeleccionado, setPackSeleccionado] = useState(null);
-  const [verifStep, setVerifStep] = useState(1);
-  const [verifResult, setVerifResult] = useState(null);
-
   const [tipoNotificacion, setTipoNotificacion] = useState('notificar-y-anunciar');
   const [showSuccess, setShowSuccess] = useState(false);
-  const [aceptaTerminos, setAceptaTerminos] = useState(false);
 
   const selectedTipo = TIPOS.find(t => t.id === tipoSeleccionado);
-
-  const handleVerificacion = () => {
-    setVerifStep(1);
-    setVerifResult(null);
-    setShowVerifModal(true);
-  };
-
-  const handleVerifNext = () => {
-    if (verifStep === 1) {
-      if (!packSeleccionado) return;
-      setVerifStep(2);
-    } else if (verifStep === 2) {
-      setVerifStep(3);
-      setVerifResult(Math.random() > 0.4 ? 'success' : 'error');
-    }
-  };
 
   const generarCodigoAcceso = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -560,30 +532,6 @@ export default function VisitasNuevoPage() {
               </div>
             </div>
 
-            {/* Verificación policial button */}
-            <button
-              onClick={handleVerificacion}
-              style={{
-                width: '100%',
-                padding: '14px',
-                borderRadius: theme.radius.full,
-                background: '#374151',
-                color: '#fff',
-                fontWeight: theme.fonts.weights.semibold,
-                fontSize: theme.fonts.sizes.base,
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: theme.fonts.family,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '10px',
-              }}
-            >
-              Verificación Policial
-              <span style={{ fontSize: '20px' }}>🔢</span>
-            </button>
-
             <Button variant="primary" fullWidth onClick={handleAceptar}>Aceptar</Button>
           </>
         )}
@@ -625,79 +573,6 @@ export default function VisitasNuevoPage() {
           <Button variant="primary" fullWidth onClick={handleSubscribeAndPay} disabled={paymentLoading}>
             {paymentLoading ? 'Procesando pago...' : 'Pagar $15.00 y suscribirse'}
           </Button>
-        </div>
-      </Modal>
-
-      {/* Verificación policial — step 1 */}
-      <Modal isOpen={showVerifModal && verifStep === 1} onClose={() => setShowVerifModal(false)} title="Verificación policial">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <p style={{ textAlign: 'center', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, lineHeight: 1.5 }}>
-            Escoge un pack de verificaciones y utilízalas cuando las necesites no caducan
-          </p>
-          {PACKS.map(pack => (
-            <button
-              key={pack.id}
-              onClick={() => setPackSeleccionado(pack)}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '16px',
-                borderRadius: theme.radius.xl,
-                border: `2px solid ${packSeleccionado?.id === pack.id ? theme.colors.primary : theme.colors.border}`,
-                background: packSeleccionado?.id === pack.id ? theme.colors.primaryLight : theme.colors.bgMuted,
-                cursor: 'pointer',
-                fontFamily: theme.fonts.family,
-              }}
-            >
-              <span style={{ fontWeight: theme.fonts.weights.semibold }}>{pack.label}</span>
-              <span style={{ fontWeight: theme.fonts.weights.bold }}>{pack.precio}</span>
-            </button>
-          ))}
-          <Button variant="primary" fullWidth onClick={handleVerifNext}>Siguiente</Button>
-        </div>
-      </Modal>
-
-      {/* Verificación policial — step 2 */}
-      <Modal isOpen={showVerifModal && verifStep === 2} onClose={() => setShowVerifModal(false)} title="Verificación policial">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <p style={{ textAlign: 'center', fontSize: theme.fonts.sizes.sm }}>{packSeleccionado?.label} de antecedentes</p>
-          <p style={{ textAlign: 'center', fontSize: theme.fonts.sizes['4xl'], fontWeight: theme.fonts.weights.bold }}>{packSeleccionado?.precio}</p>
-          <p style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>Seleccione el medio de pago:</p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: theme.colors.bgMuted, borderRadius: theme.radius.xl, padding: '14px 16px', border: `1.5px solid ${theme.colors.border}` }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ background: '#1A56DB', color: '#fff', fontSize: '10px', fontWeight: 'bold', padding: '4px 6px', borderRadius: '4px' }}>VISA</div>
-              <span style={{ fontWeight: theme.fonts.weights.medium, fontSize: theme.fonts.sizes.sm }}>5647XXXXXX4567</span>
-            </div>
-            <span style={{ fontWeight: theme.fonts.weights.bold }}>$15</span>
-          </div>
-          <Toggle value={aceptaTerminos} onChange={setAceptaTerminos} labelRight="Acepta términos y condiciones 🔗" />
-          <Button variant="primary" fullWidth onClick={handleVerifNext} disabled={!aceptaTerminos}>Siguiente</Button>
-        </div>
-      </Modal>
-
-      {/* Verificación policial — step 3: resultado con íconos locales */}
-      <Modal isOpen={showVerifModal && verifStep === 3} onClose={() => setShowVerifModal(false)} title="Verificación Policial">
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '8px 0' }}>
-          {verifResult === 'success' ? (
-            <>
-              <p style={{ textAlign: 'center', fontSize: theme.fonts.sizes.base, color: theme.colors.text, lineHeight: 1.5 }}>
-                La persona es apta<br/>para la visita. (sin antecedentes)
-              </p>
-              <div style={{ background: '#dcfce7', borderRadius: theme.radius.xl, padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img src={visitavalida} alt="Visita válida" style={{ width: '120px', height: '120px', objectFit: 'contain' }} />
-              </div>
-            </>
-          ) : (
-            <>
-              <p style={{ textAlign: 'center', fontSize: theme.fonts.sizes.base, color: theme.colors.text, lineHeight: 1.5 }}>
-                La persona NO es apta para la visita<br/>(Con antecedentes) se notifico a las<br/>autoridades pertinentes
-              </p>
-              <div style={{ background: '#fee2e2', borderRadius: theme.radius.xl, padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img src={visitanovalida} alt="Visita no válida" style={{ width: '120px', height: '120px', objectFit: 'contain' }} />
-              </div>
-            </>
-          )}
         </div>
       </Modal>
 
@@ -776,7 +651,7 @@ export default function VisitasNuevoPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'center' }}>
           <div style={{ fontSize: '40px' }}>⚠️</div>
           <p style={{ fontSize: theme.fonts.sizes.base, color: theme.colors.text, lineHeight: 1.5, margin: 0 }}>
-            Recuerda pedirle el documento al invitado. Si el invitado es menor de edad, debe ingresar con su padre/madre/tutor legal con la documentación respectiva. Este edificio está comprometido con la prevención del abuso sexual de menores y la trata de personas.
+            Al registrar la visita, ingresa el número de documento del invitado en el sistema. El invitado debe traer su documento físico (cédula, pasaporte o DNI) al ingresar al edificio. Si el invitado es menor de edad, debe ingresar con su padre/madre/tutor legal con la documentación respectiva. Este edificio está comprometido con la prevención del abuso sexual de menores y la trata de personas.
           </p>
           <Button variant="primary" fullWidth onClick={() => { setShowWarningRegistro(false); handleAceptarContinuar(); }}>Entendido, continuar</Button>
           <Button variant="ghost" fullWidth onClick={() => setShowWarningRegistro(false)}>Cancelar</Button>
