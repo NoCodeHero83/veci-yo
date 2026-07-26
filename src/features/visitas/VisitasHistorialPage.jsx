@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell';
 import PageHeader from '../../components/layout/PageHeader';
@@ -78,6 +78,7 @@ export default function VisitasHistorialPage() {
   const [showAsignarEstacionamiento, setShowAsignarEstacionamiento] = useState(false);
   const [parkingSpot, setParkingSpot] = useState('');
   const [reservaDetail, setReservaDetail] = useState(null);
+  const [accionGuest, setAccionGuest] = useState(null);
   const [calendarioMonth, setCalendarioMonth] = useState(new Date());
 
   const algunFiltroActivo = search || fechaDesdeFilter || fechaHastaFilter || torreFilter || deptoFilter || tipoFilter !== 'Todos';
@@ -110,29 +111,20 @@ export default function VisitasHistorialPage() {
     return '#F59E0B';
   };
 
+  const btnStyle = (bg, color = '#fff') => ({
+    padding: '4px 10px', borderRadius: theme.radius.full,
+    background: bg, color, border: 'none',
+    cursor: 'pointer', fontSize: theme.fonts.sizes['2xs'],
+    fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
+    whiteSpace: 'nowrap',
+  });
+
   const progresoInvitado = (inv) => {
     const t = inv.timeline || {};
     const step4 = t.verificacionAprobada === true || t.verificacionPasada;
     const pasos = [t.preregistroEnviado, t.documentacionCompleta, t.terminosAceptados, step4, t.trasideEntrada, t.trasideSalida];
     return pasos.filter(Boolean).length;
   };
-
-  const notificados = useRef(new Set());
-
-  useEffect(() => {
-    const htReservas = visitas.filter(v => v.tipo === 'huesped-temporal');
-    htReservas.forEach(r => {
-      if (notificados.current.has(r.id)) return;
-      const color = colorReserva(r);
-      if (color === '#F59E0B') {
-        addToast(`Recordatorio: La reserva de ${r.nombre} tiene pasos pendientes (${diasRestantes(r.fechaDesde)} días para el ingreso)`, 'warning');
-        notificados.current.add(r.id);
-      } else if (color === theme.colors.danger) {
-        addToast(`URGENTE: La reserva de ${r.nombre} tiene pasos pendientes y faltan ${diasRestantes(r.fechaDesde)} días o menos`, 'warning');
-        notificados.current.add(r.id);
-      }
-    });
-  }, [visitas, tipoTab]);
 
   const detalleActual = detalleItem ? visitas.find(v => v.id === detalleItem.id) || null : null;
 
@@ -581,7 +573,63 @@ export default function VisitasHistorialPage() {
         })}
 
         {/* List — normal roles: card per reservation for huesped-temporal */}
-        {tipoTab !== 'calendario' && rolActivo !== 'guardia' && filtered.flatMap(item => {
+        {tipoTab !== 'calendario' && rolActivo !== 'guardia' && (reservaDetail ? (
+          /* Vista detalle de reserva HT — reemplaza la lista */
+          <div key="reserva-detail" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <button
+              onClick={() => setReservaDetail(null)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 0',
+                background: 'none', border: 'none', cursor: 'pointer', fontFamily: theme.fonts.family,
+                fontSize: theme.fonts.sizes.sm, color: theme.colors.primary, fontWeight: theme.fonts.weights.semibold,
+                alignSelf: 'flex-start',
+              }}
+            >
+              ← Volver a visitas
+            </button>
+            <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <img src={tipoVisitaIcons[reservaDetail.tipo]} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>Reserva de {reservaDetail.nombre}</div>
+                  <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{reservaDetail.torre} - {reservaDetail.depto}</div>
+                  <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>{reservaDetail.fechaDesde} a {reservaDetail.fechaHasta} · {reservaDetail.invitados?.length || 0} huéspedes</div>
+                </div>
+              </div>
+            </div>
+            {reservaDetail.invitados?.map((inv, idx) => {
+              const t = inv.timeline || {};
+              const completados = progresoInvitado(inv);
+              return (
+                <div key={idx} style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card }}>
+                  <div style={{ fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.base, color: theme.colors.text, marginBottom: '8px' }}>{inv.nombre}</div>
+                  {/* Mini timeline dots */}
+                  <div style={{ display: 'flex', gap: '3px', marginBottom: '10px' }}>
+                    {TIMELINE_STEPS.map((step, si) => {
+                      const st = t[step.key];
+                      const done = step.key === 'verificacionPasada' ? (t.verificacionAprobada === true || !!st) : !!st;
+                      const isSpecial = step.key === 'terminosAceptados' && t.terminosAprobadoPor === 'anfitrion';
+                      return (
+                        <div key={step.key} title={`${step.label}${isSpecial ? ' (aprobado por anfitrión)' : ''}`} style={{ width: '14px', height: '14px', borderRadius: '50%', background: done ? (isSpecial ? theme.colors.secondary : theme.colors.success) : theme.colors.border, flexShrink: 0 }} />
+                      );
+                    })}
+                  </div>
+                  <button
+                    onClick={() => setAccionGuest({ inv, idx, item: reservaDetail })}
+                    style={{
+                      width: '100%', padding: '10px', borderRadius: theme.radius.full,
+                      background: theme.colors.primary, color: '#fff', border: 'none',
+                      cursor: 'pointer', fontFamily: theme.fonts.family,
+                      fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.semibold,
+                    }}
+                  >
+                    Ver detalles →
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        ) : filtered.flatMap(item => {
           if (item.tipo === 'huesped-temporal') {
             const color = colorReserva(item);
             return [(
@@ -760,7 +808,7 @@ export default function VisitasHistorialPage() {
               )}
             </div>
           )];
-        })}
+        }))}
 
         {/* Bulk TRA/SIRE action */}
         {tipoTab === 'huespedes' && selectedTraSire.length > 0 && (
@@ -1257,64 +1305,132 @@ export default function VisitasHistorialPage() {
         })()}
       </Modal>
 
-      {/* Reservation detail modal */}
+      {/* Acciones por huésped — modal individual */}
       <Modal
-        isOpen={!!reservaDetail}
-        onClose={() => setReservaDetail(null)}
-        title={`Reserva de ${reservaDetail?.nombre || ''}`}
+        isOpen={!!accionGuest}
+        onClose={() => setAccionGuest(null)}
+        title={`Acciones: ${accionGuest?.inv?.nombre || ''}`}
       >
-        {reservaDetail && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <img src={tipoVisitaIcons[reservaDetail.tipo]} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base }}>{reservaDetail.nombre}</div>
-                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{reservaDetail.torre} - {reservaDetail.depto}</div>
-                <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>{reservaDetail.fechaDesde} a {reservaDetail.fechaHasta}</div>
-              </div>
-            </div>
+        {accionGuest && (() => {
+          const { inv, idx, item } = accionGuest;
+          const t = inv.timeline || {};
+          const esAdmin = rolActivo === 'administrador';
+          const esAnfitrion = rolActivo === 'propietario' || rolActivo === 'inquilino-lider';
+          const puedeAprobar = esAdmin || esAnfitrion;
+          const rntCompleto = ubicacionActiva ? configHuespedesTemporales[ubicacionActiva.id]?.legal?.rnt?.trim()?.length > 0 : false;
+          const stepStatus = (key) => {
+            if (key === 'terminosAceptados') {
+              if (t.terminosAceptados === true) return t.terminosAprobadoPor === 'anfitrion' ? 'aprobado-manual' : true;
+              if (t.terminosAceptados === false) return false;
+              return null;
+            }
+            if (key === 'verificacionPasada') {
+              if (t.verificacionAprobada === true) return 'aprobada';
+              return !!t[key];
+            }
+            return !!t[key];
+          };
+          const esExcepcionTc = inv.terminosExcepcion === true && t.terminosAceptados !== true;
+          return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {reservaDetail.invitados?.map((inv, i) => {
-                const t = inv.timeline || {};
+              <div style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <img src={tipoVisitaIcons[item.tipo]} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>{inv.nombre}</div>
+                  <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>{item.torre} - {item.depto} · {item.fechaDesde} a {item.fechaHasta}</div>
+                </div>
+              </div>
+              {TIMELINE_STEPS.map((step, si) => {
+                const st = stepStatus(step.key);
+                const isCompleted = st === true || st === 'aprobado-manual' || st === 'aprobada';
+                const isPending = st === null;
+                const isRejected = st === false && step.key === 'terminosAceptados';
+                const isAprobadoManual = st === 'aprobado-manual';
+                const icon = isCompleted ? '✅' : (isPending ? '⏳' : (isRejected ? '❌' : '⏳'));
                 return (
-                  <div key={i} style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '12px' }}>
-                    <div style={{ fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.base, marginBottom: '8px' }}>{inv.nombre}</div>
-                    {TIMELINE_STEPS.map((step, si) => {
-                      const stepStatus2 = (key) => {
-                        if (key === 'terminosAceptados') {
-                          if (t.terminosAceptados === true) return t.terminosAprobadoPor === 'anfitrion' ? 'aprobado-manual' : true;
-                          if (t.terminosAceptados === false) return false;
-                          return null;
-                        }
-                        if (key === 'verificacionPasada') {
-                          if (t.verificacionAprobada === true) return 'aprobada';
-                          return !!t[key];
-                        }
-                        return !!t[key];
-                      };
-                      const st = stepStatus2(step.key);
-                      const isCompleted = st === true || st === 'aprobado-manual' || st === 'aprobada';
-                      const isPending = st === null;
-                      const isRejected = st === false;
-                      const icon = isCompleted ? '✅' : (isPending ? '⏳' : '❌');
-                      return (
-                        <div key={step.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 8px' }}>
-                          <span style={{ fontSize: '12px', flexShrink: 0 }}>{icon}</span>
-                          <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.text }}>
-                            {si + 1}. {step.label}
-                            {st === 'aprobado-manual' && <span style={{ color: theme.colors.secondary, fontWeight: theme.fonts.weights.semibold }}> (aprobado por anfitrión)</span>}
-                            {st === 'aprobada' && <span style={{ color: theme.colors.success, fontWeight: theme.fonts.weights.semibold }}> (aprobada)</span>}
-                          </span>
-                        </div>
-                      );
-                    })}
+                  <div key={step.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: theme.colors.bgCard, borderRadius: theme.radius.md, marginBottom: '4px' }}>
+                    <span style={{ fontSize: '14px', flexShrink: 0 }}>{icon}</span>
+                    <span style={{ flex: 1, fontSize: theme.fonts.sizes.xs, color: theme.colors.text }}>
+                      {si + 1}. {step.label}
+                      {isAprobadoManual && <span style={{ color: theme.colors.secondary, fontWeight: theme.fonts.weights.semibold, marginLeft: '4px' }}>(aprobado por anfitrión)</span>}
+                      {st === 'aprobada' && <span style={{ color: theme.colors.success, fontWeight: theme.fonts.weights.semibold, marginLeft: '4px' }}>(aprobada)</span>}
+                    </span>
+                    {/* Step 2 — Ver documentación */}
+                    {step.key === 'documentacionCompleta' && isCompleted && inv.documentos?.length > 0 && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDocumentacionDetail({ invitado: inv, item }); }}
+                        style={btnStyle(theme.colors.primary)}
+                      >
+                        Ver documentación
+                      </button>
+                    )}
+                    {/* Step 3 — Excepción T&C */}
+                    {step.key === 'terminosAceptados' && esExcepcionTc && puedeAprobar && (
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <span style={{ fontSize: '12px', color: theme.colors.warning, fontWeight: theme.fonts.weights.bold }}>⚠</span>
+                        <button
+                          onClick={() => { aprobarTerminosManual(item.id, idx); addToast('Excepción T&C aceptada para ' + inv.nombre, 'success'); setAccionGuest(null); }}
+                          style={btnStyle(theme.colors.secondary)}
+                        >
+                          Aceptar excepción
+                        </button>
+                      </div>
+                    )}
+                    {/* Step 4 — Resultado verificación + Aprobar */}
+                    {step.key === 'verificacionPasada' && puedeAprobar && !t.verificacionAprobada && (
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        {t.verificacionHallazgos === true ? (
+                          <button onClick={(e) => { e.stopPropagation(); setHallazgosPopup({ persona: inv, idx, item }); }} style={btnStyle('#FEF3C7', '#92400E')}>Ver resumen</button>
+                        ) : (
+                          <span style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textSecondary }}>{t.verificacionHallazgos === false ? 'Sin hallazgos' : 'Sin resultados'}</span>
+                        )}
+                        <button
+                          onClick={() => { aprobarVerificacion(item.id, idx); addToast('Verificación aprobada para ' + inv.nombre, 'success'); setAccionGuest(null); }}
+                          style={btnStyle(theme.colors.success)}
+                        >
+                          Aprobar
+                        </button>
+                      </div>
+                    )}
+                    {/* Step 5 — Reportar TRA */}
+                    {step.key === 'trasideEntrada' && isCompleted && puedeAprobar && !inv.traSireReported && (
+                      <button
+                        onClick={() => {
+                          if (!rntCompleto) { addToast('Completa tu RNT en la configuración de Huéspedes Temporales', 'warning'); return; }
+                          reportarTraSire(item.id, idx);
+                          addToast('Reporte TRA enviado exitosamente', 'success');
+                          setAccionGuest(null);
+                        }}
+                        style={btnStyle(theme.colors.secondary)}
+                      >
+                        Reportar TRA
+                      </button>
+                    )}
+                    {/* Step 6 — Reportar SIRE */}
+                    {step.key === 'trasideSalida' && isCompleted && puedeAprobar && !inv.traSireReported && (
+                      <button
+                        onClick={() => {
+                          if (!rntCompleto) { addToast('Completa tu RNT en la configuración de Huéspedes Temporales', 'warning'); return; }
+                          reportarTraSire(item.id, idx);
+                          addToast('Reporte SIRE enviado exitosamente', 'success');
+                          setAccionGuest(null);
+                        }}
+                        style={btnStyle(theme.colors.secondary)}
+                      >
+                        Reportar SIRE
+                      </button>
+                    )}
                   </div>
                 );
               })}
+              {/* TRA/SIRE badge consolidado */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', paddingTop: '8px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
+                {inv.traSireReported ? <Badge status="Aceptado">TRA/SIRE reportado</Badge> : <Badge status="Pendiente">TRA/SIRE pendiente</Badge>}
+              </div>
+              <Button variant="ghost" fullWidth onClick={() => setAccionGuest(null)}>Cerrar</Button>
             </div>
-            <Button variant="ghost" fullWidth onClick={() => setReservaDetail(null)}>Volver</Button>
-          </div>
-        )}
+          );
+        })()}
       </Modal>
 
       {/* Verification camera modal — for Guardia (huesped-temporal) */}
