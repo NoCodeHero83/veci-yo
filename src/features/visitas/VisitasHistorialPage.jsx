@@ -21,7 +21,7 @@ const TABS = ['Todas'];
 
 const GUARDIA_TABS = ['Todas'];
 const HUESPEDES_TABS = ['Todas', 'Pendiente', 'Aceptado', 'Ingresado'];
-const TIPO_TABS = [
+const TIPO_TABS_BASE = [
   { value: 'visitas', label: 'Visitas' },
   { value: 'huespedes', label: 'Huéspedes' },
   { value: 'calendario', label: 'Calendario' },
@@ -48,7 +48,7 @@ export default function VisitasHistorialPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const fromHome = location.state?.fromHome || false;
-  const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado, aprobarInvitado, rolActivo, addToast, verificaciones, actualizarVerificacion, actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion, toggleInstruccionCumplida, estacionamientosVisitantes, configHuespedesTemporales, ubicacionActiva, reportarTraSire, usuario, actualizarConfigHuespedTemporal, esResidente, actualizarTimeline, aprobarTerminosManual } = useApp();
+  const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado, aprobarInvitado, rolActivo, addToast, verificaciones, actualizarVerificacion, actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion, toggleInstruccionCumplida, estacionamientosVisitantes, configHuespedesTemporales, ubicacionActiva, reportarTraSire, usuario, actualizarConfigHuespedTemporal, esResidente, actualizarTimeline, aprobarTerminosManual, aprobarVerificacion } = useApp();
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('Todas');
   const [tipoTab, setTipoTab] = useState('visitas');
@@ -73,6 +73,7 @@ export default function VisitasHistorialPage() {
   const [guardiaStep2, setGuardiaStep2] = useState(null);
   const [detallePersonaIdx, setDetallePersonaIdx] = useState(null);
   const [hallazgosPopup, setHallazgosPopup] = useState(null);
+  const [documentacionDetail, setDocumentacionDetail] = useState(null);
   const [selectedTraSire, setSelectedTraSire] = useState([]);
   const [showAsignarEstacionamiento, setShowAsignarEstacionamiento] = useState(false);
   const [parkingSpot, setParkingSpot] = useState('');
@@ -80,6 +81,12 @@ export default function VisitasHistorialPage() {
   const [calendarioMonth, setCalendarioMonth] = useState(new Date());
 
   const algunFiltroActivo = search || fechaDesdeFilter || fechaHastaFilter || torreFilter || deptoFilter || tipoFilter !== 'Todos';
+
+  const TIPO_TABS = useMemo(() => {
+    if (rolActivo === 'huesped-temporal') return [{ value: 'visitas', label: 'Visitas' }];
+    if (rolActivo === 'guardia') return TIPO_TABS_BASE.filter(t => t.value !== 'calendario');
+    return TIPO_TABS_BASE;
+  }, [rolActivo]);
 
   const diasRestantes = (fechaStr) => {
     if (!fechaStr) return Infinity;
@@ -94,7 +101,8 @@ export default function VisitasHistorialPage() {
     if (!reserva.invitados || reserva.invitados.length === 0) return theme.colors.textMuted;
     const todosCompletos = reserva.invitados.every(inv => {
       const t = inv.timeline || {};
-      return t.preregistroEnviado && t.documentacionCompleta && t.terminosAceptados && t.verificacionPasada && t.trasideEntrada && t.trasideSalida;
+      const step4 = t.verificacionAprobada === true || t.verificacionPasada;
+      return t.preregistroEnviado && t.documentacionCompleta && t.terminosAceptados && step4 && t.trasideEntrada && t.trasideSalida;
     });
     if (todosCompletos) return theme.colors.success;
     const dias = diasRestantes(reserva.fechaDesde);
@@ -104,7 +112,8 @@ export default function VisitasHistorialPage() {
 
   const progresoInvitado = (inv) => {
     const t = inv.timeline || {};
-    const pasos = [t.preregistroEnviado, t.documentacionCompleta, t.terminosAceptados, t.verificacionPasada, t.trasideEntrada, t.trasideSalida];
+    const step4 = t.verificacionAprobada === true || t.verificacionPasada;
+    const pasos = [t.preregistroEnviado, t.documentacionCompleta, t.terminosAceptados, step4, t.trasideEntrada, t.trasideSalida];
     return pasos.filter(Boolean).length;
   };
 
@@ -923,14 +932,21 @@ export default function VisitasHistorialPage() {
                     const t = inv.timeline || {};
                     const esAdmin = rolActivo === 'administrador';
                     const esAnfitrion = rolActivo === 'propietario' || rolActivo === 'inquilino-lider';
+                    const puedeAprobar = esAdmin || esAnfitrion;
+                    const rntCompleto = ubicacionActiva ? configHuespedesTemporales[ubicacionActiva.id]?.legal?.rnt?.trim()?.length > 0 : false;
                     const stepStatus = (key) => {
                       if (key === 'terminosAceptados') {
                         if (t.terminosAceptados === true) return t.terminosAprobadoPor === 'anfitrion' ? 'aprobado-manual' : true;
                         if (t.terminosAceptados === false) return false;
                         return null;
                       }
+                      if (key === 'verificacionPasada') {
+                        if (t.verificacionAprobada === true) return 'aprobada';
+                        return !!t[key];
+                      }
                       return !!t[key];
                     };
+                    const esExcepcionTc = inv.terminosExcepcion === true && t.terminosAceptados !== true;
                     return (
                       <div key={i} style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '12px' }}>
                         <div style={{ fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.base, marginBottom: '10px' }}>
@@ -938,7 +954,7 @@ export default function VisitasHistorialPage() {
                         </div>
                         {TIMELINE_STEPS.map((step, si) => {
                           const st = stepStatus(step.key);
-                          const isCompleted = st === true || st === 'aprobado-manual';
+                          const isCompleted = st === true || st === 'aprobado-manual' || st === 'aprobada';
                           const isPending = st === null;
                           const isRejected = st === false && step.key === 'terminosAceptados';
                           const isAprobadoManual = st === 'aprobado-manual';
@@ -953,39 +969,32 @@ export default function VisitasHistorialPage() {
                                     (aprobado por anfitrión)
                                   </span>
                                 )}
+                                {st === 'aprobada' && (
+                                  <span style={{ color: theme.colors.success, fontWeight: theme.fonts.weights.semibold, marginLeft: '4px' }}>
+                                    (aprobada)
+                                  </span>
+                                )}
                               </span>
-                              {step.key === 'terminosAceptados' && isRejected && (esAdmin || esAnfitrion) && (
+                              {/* Step 2 — Ver documentación */}
+                              {step.key === 'documentacionCompleta' && isCompleted && inv.documentos?.length > 0 && (
                                 <button
-                                  onClick={() => aprobarTerminosManual(detalleActual.id, i)}
+                                  onClick={(e) => { e.stopPropagation(); setDocumentacionDetail({ invitado: inv, item: detalleActual }); }}
                                   style={{
                                     padding: '4px 10px', borderRadius: theme.radius.full,
-                                    background: theme.colors.secondary, color: '#fff', border: 'none',
+                                    background: theme.colors.primary, color: '#fff', border: 'none',
                                     cursor: 'pointer', fontSize: theme.fonts.sizes['2xs'],
                                     fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
                                   }}
                                 >
-                                  Aprobar manualmente
+                                  Ver documentación
                                 </button>
                               )}
-                            </div>
-                          );
-                        })}
-                        {/* TRA/SIRE */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
-                          {inv.traSireReported ? (
-                            <Badge status="Aceptado">TRA/SIRE reportado</Badge>
-                          ) : (
-                            <>
-                              <Badge status="Pendiente">TRA/SIRE pendiente</Badge>
-                              {inv.llego && (rolActivo === 'propietario' || rolActivo === 'inquilino-lider') && (() => {
-                                const rntCompleto = ubicacionActiva ? configHuespedesTemporales[ubicacionActiva.id]?.legal?.rnt?.trim()?.length > 0 : false;
-                                return (
+                              {/* Step 3 — Excepción T&C */}
+                              {step.key === 'terminosAceptados' && esExcepcionTc && puedeAprobar && (
+                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                  <span style={{ fontSize: '12px', color: theme.colors.warning, fontWeight: theme.fonts.weights.bold }}>⚠</span>
                                   <button
-                                    onClick={() => {
-                                      if (!rntCompleto) { addToast('Completa tu RNT en la configuración de Huéspedes Temporales', 'warning'); return; }
-                                      reportarTraSire(detalleActual.id, i);
-                                      addToast('Reporte TRA/SIRE enviado exitosamente', 'success');
-                                    }}
+                                    onClick={() => { aprobarTerminosManual(detalleActual.id, i); addToast('Excepción T&C aceptada para ' + inv.nombre, 'success'); }}
                                     style={{
                                       padding: '4px 10px', borderRadius: theme.radius.full,
                                       background: theme.colors.secondary, color: '#fff', border: 'none',
@@ -993,11 +1002,88 @@ export default function VisitasHistorialPage() {
                                       fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
                                     }}
                                   >
-                                    Reportar TRA/SIRE
+                                    Aceptar excepción
                                   </button>
-                                );
-                              })()}
-                            </>
+                                </div>
+                              )}
+                              {/* Step 4 — Resultado de verificación + Aprobar */}
+                              {step.key === 'verificacionPasada' && puedeAprobar && !t.verificacionAprobada && (
+                                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                  {t.verificacionHallazgos === true ? (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setHallazgosPopup({ persona: inv, idx: i, item: detalleActual }); }}
+                                      style={{
+                                        padding: '4px 10px', borderRadius: theme.radius.full,
+                                        background: '#FEF3C7', color: '#92400E', border: 'none',
+                                        cursor: 'pointer', fontSize: theme.fonts.sizes['2xs'],
+                                        fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
+                                      }}
+                                    >
+                                      Ver resumen
+                                    </button>
+                                  ) : (
+                                    <span style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textSecondary }}>
+                                      {t.verificacionHallazgos === false ? 'Sin hallazgos' : 'Sin resultados'}
+                                    </span>
+                                  )}
+                                  <button
+                                    onClick={() => { aprobarVerificacion(detalleActual.id, i); addToast('Verificación aprobada para ' + inv.nombre, 'success'); }}
+                                    style={{
+                                      padding: '4px 10px', borderRadius: theme.radius.full,
+                                      background: theme.colors.success, color: '#fff', border: 'none',
+                                      cursor: 'pointer', fontSize: theme.fonts.sizes['2xs'],
+                                      fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
+                                    }}
+                                  >
+                                    Aprobar
+                                  </button>
+                                </div>
+                              )}
+                              {/* Step 5 — Reportar TRA (solo si ingresó) */}
+                              {step.key === 'trasideEntrada' && isCompleted && puedeAprobar && !inv.traSireReported && (
+                                <button
+                                  onClick={() => {
+                                    if (!rntCompleto) { addToast('Completa tu RNT en la configuración de Huéspedes Temporales', 'warning'); return; }
+                                    reportarTraSire(detalleActual.id, i);
+                                    addToast('Reporte TRA enviado exitosamente', 'success');
+                                  }}
+                                  style={{
+                                    padding: '4px 10px', borderRadius: theme.radius.full,
+                                    background: theme.colors.secondary, color: '#fff', border: 'none',
+                                    cursor: 'pointer', fontSize: theme.fonts.sizes['2xs'],
+                                    fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
+                                  }}
+                                >
+                                  Reportar TRA
+                                </button>
+                              )}
+                              {/* Step 6 — Reportar SIRE (solo si salió) */}
+                              {step.key === 'trasideSalida' && isCompleted && puedeAprobar && !inv.traSireReported && (
+                                <button
+                                  onClick={() => {
+                                    if (!rntCompleto) { addToast('Completa tu RNT en la configuración de Huéspedes Temporales', 'warning'); return; }
+                                    reportarTraSire(detalleActual.id, i);
+                                    addToast('Reporte SIRE enviado exitosamente', 'success');
+                                  }}
+                                  style={{
+                                    padding: '4px 10px', borderRadius: theme.radius.full,
+                                    background: theme.colors.secondary, color: '#fff', border: 'none',
+                                    cursor: 'pointer', fontSize: theme.fonts.sizes['2xs'],
+                                    fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
+                                  }}
+                                >
+                                  Reportar SIRE
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {/* TRA/SIRE — badge de estado (vista consolidada) */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
+                          {inv.traSireReported ? (
+                            <Badge status="Aceptado">TRA/SIRE reportado</Badge>
+                          ) : (
+                            <Badge status="Pendiente">TRA/SIRE pendiente</Badge>
                           )}
                         </div>
                       </div>
@@ -1098,6 +1184,79 @@ export default function VisitasHistorialPage() {
         )}
       </Modal>
 
+      {/* Documentación detail modal */}
+      <Modal
+        isOpen={!!documentacionDetail}
+        onClose={() => setDocumentacionDetail(null)}
+        title={`Documentación de ${documentacionDetail?.invitado?.nombre || ''}`}
+      >
+        {documentacionDetail && (() => {
+          const inv = documentacionDetail.invitado;
+          const item = documentacionDetail.item;
+          const docLabels = {
+            'cedula-anverso': 'Cédula (anverso)',
+            'cedula-reverso': 'Cédula (reverso)',
+            'pasaporte': 'Pasaporte',
+            'tutela': 'Tutela',
+          };
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Tipo de documento */}
+              <div style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '12px 14px' }}>
+                <div style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.textSecondary, marginBottom: '4px' }}>Tipo de documento</div>
+                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>{inv.tipoDocumento || 'No especificado'}</div>
+              </div>
+              {/* Imágenes subidas */}
+              {inv.documentos?.length > 0 && (
+                <div>
+                  <div style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.textSecondary, marginBottom: '8px' }}>Imágenes del documento</div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {inv.documentos.map((doc, di) => (
+                      <div key={di} style={{
+                        width: 'calc(50% - 4px)', minHeight: '100px',
+                        borderRadius: theme.radius.md,
+                        background: 'linear-gradient(135deg, #E8EAF6, #C5CAE9)',
+                        display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', justifyContent: 'center',
+                        border: `1px solid ${theme.colors.border}`,
+                        padding: '8px',
+                      }}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={theme.colors.textSecondary} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        <div style={{ fontSize: '9px', color: theme.colors.textSecondary, marginTop: '4px', textAlign: 'center' }}>{docLabels[doc] || doc}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Datos extraídos automáticamente */}
+              <div style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '12px 14px' }}>
+                <div style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.textSecondary, marginBottom: '8px' }}>Datos extraídos automáticamente</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>Nombre completo</span>
+                    <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>{inv.nombre}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>Número de documento</span>
+                    <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>{inv.documentoNumero || 'N/A'}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>Fecha de nacimiento</span>
+                    <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>{inv.fechaNacimiento || 'N/A'}</span>
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Button variant="ghost" fullWidth onClick={() => setDocumentacionDetail(null)}>Cerrar</Button>
+              </div>
+            </div>
+          );
+        })()}
+      </Modal>
+
       {/* Reservation detail modal */}
       <Modal
         isOpen={!!reservaDetail}
@@ -1121,10 +1280,20 @@ export default function VisitasHistorialPage() {
                   <div key={i} style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '12px' }}>
                     <div style={{ fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.base, marginBottom: '8px' }}>{inv.nombre}</div>
                     {TIMELINE_STEPS.map((step, si) => {
-                      const st = step.key === 'terminosAceptados'
-                        ? (t.terminosAceptados === true ? (t.terminosAprobadoPor === 'anfitrion' ? 'aprobado-manual' : true) : t.terminosAceptados === false ? false : null)
-                        : !!t[step.key];
-                      const isCompleted = st === true || st === 'aprobado-manual';
+                      const stepStatus2 = (key) => {
+                        if (key === 'terminosAceptados') {
+                          if (t.terminosAceptados === true) return t.terminosAprobadoPor === 'anfitrion' ? 'aprobado-manual' : true;
+                          if (t.terminosAceptados === false) return false;
+                          return null;
+                        }
+                        if (key === 'verificacionPasada') {
+                          if (t.verificacionAprobada === true) return 'aprobada';
+                          return !!t[key];
+                        }
+                        return !!t[key];
+                      };
+                      const st = stepStatus2(step.key);
+                      const isCompleted = st === true || st === 'aprobado-manual' || st === 'aprobada';
                       const isPending = st === null;
                       const isRejected = st === false;
                       const icon = isCompleted ? '✅' : (isPending ? '⏳' : '❌');
@@ -1134,6 +1303,7 @@ export default function VisitasHistorialPage() {
                           <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.text }}>
                             {si + 1}. {step.label}
                             {st === 'aprobado-manual' && <span style={{ color: theme.colors.secondary, fontWeight: theme.fonts.weights.semibold }}> (aprobado por anfitrión)</span>}
+                            {st === 'aprobada' && <span style={{ color: theme.colors.success, fontWeight: theme.fonts.weights.semibold }}> (aprobada)</span>}
                           </span>
                         </div>
                       );

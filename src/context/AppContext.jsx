@@ -354,6 +354,18 @@ export function AppProvider({ children }) {
     }));
   }, []);
 
+  const aprobarVerificacion = useCallback((visitaId, invitadoIdx) => {
+    setVisitas(prev => prev.map(v => {
+      if (v.id !== visitaId) return v;
+      const invitados = v.invitados.map((inv, i) => {
+        if (i !== invitadoIdx) return inv;
+        const timeline = { ...(inv.timeline || {}), verificacionAprobada: true, verificacionPasada: true };
+        return { ...inv, timeline };
+      });
+      return { ...v, invitados };
+    }));
+  }, []);
+
   // TRA/SIRE reporting
   const reportarTraSire = useCallback((visitaId, invitadoIdx) => {
     setVisitas(prev => prev.map(v => {
@@ -757,7 +769,7 @@ export function AppProvider({ children }) {
       actualizarInstruccionDocumento, actualizarTipoNotificacion, toggleInstruccionCumplida,
       ubicacionActiva, suscripcionActiva, suscripciones, activarSuscripcion,
       configHuespedesTemporales, actualizarConfigHuespedTemporal,
-      verificaciones, actualizarVerificacion, actualizarTimeline, aprobarTerminosManual, reportarTraSire,
+      verificaciones, actualizarVerificacion, actualizarTimeline, aprobarTerminosManual, aprobarVerificacion, reportarTraSire,
       reservas, agregarReserva, actualizarEstadoReserva, actualizarReserva, eliminarReserva, actualizarPersonaReserva,
       zonasComunesConfig, actualizarZonaComun, agregarZonaComun, eliminarZonaComun,
       gestionZonas, actualizarGestionZona, agregarGestionZona, eliminarGestionZona,
