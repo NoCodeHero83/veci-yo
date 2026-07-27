@@ -79,16 +79,20 @@ export default function VisitasHistorialPage() {
   const [parkingSpot, setParkingSpot] = useState('');
   const [reservaDetail, setReservaDetail] = useState(null);
   const [accionGuest, setAccionGuest] = useState(null);
-  const [showCalendar, setShowCalendar] = useState(false);
   const [calendarioMonth, setCalendarioMonth] = useState(new Date());
 
   const algunFiltroActivo = search || fechaDesdeFilter || fechaHastaFilter || torreFilter || deptoFilter || tipoFilter !== 'Todos';
 
   const TIPO_TABS = useMemo(() => {
     if (rolActivo === 'huesped-temporal') return [{ value: 'visitas', label: 'Visitas' }];
+    if (rolActivo === 'guardia') return [
+      { value: 'visitas', label: 'Visitas' },
+      { value: 'huespedes', label: 'Huéspedes' },
+    ];
     return [
       { value: 'visitas', label: 'Visitas' },
       { value: 'huespedes', label: 'Huéspedes' },
+      { value: 'calendario', label: 'Calendario' },
     ];
   }, [rolActivo]);
 
@@ -218,23 +222,6 @@ export default function VisitasHistorialPage() {
               />
             </div>
           )}
-          {tipoTab === 'huespedes' && (rolActivo === 'propietario' || rolActivo === 'inquilino-lider' || rolActivo === 'administrador') && (
-            <div style={{ marginTop: '8px', textAlign: 'center' }}>
-              <button
-                onClick={() => setShowCalendar(o => !o)}
-                style={{
-                  padding: '6px 16px', borderRadius: theme.radius.full,
-                  background: showCalendar ? theme.colors.primary : theme.colors.bgMuted,
-                  color: showCalendar ? '#fff' : theme.colors.primary,
-                  border: `1px solid ${showCalendar ? theme.colors.primary : theme.colors.border}`,
-                  cursor: 'pointer', fontFamily: theme.fonts.family,
-                  fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold,
-                }}
-              >
-                {showCalendar ? 'Ver lista de huéspedes' : 'Ver calendario'}
-              </button>
-            </div>
-          )}
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
             <button
               onClick={() => setFilterOpen(o => !o)}
@@ -351,8 +338,8 @@ export default function VisitasHistorialPage() {
           )}
         </div>
 
-        {/* Calendar tab — acceso desde Huéspedes, barras estilo Airbnb */}
-        {tipoTab === 'huespedes' && showCalendar && (() => {
+        {/* Calendar tab — barras overlay absolutas sin deformar celdas */}
+        {tipoTab === 'calendario' && (() => {
           const hoy = new Date(calendarioMonth);
           const año = hoy.getFullYear();
           const mes = hoy.getMonth();
@@ -366,73 +353,90 @@ export default function VisitasHistorialPage() {
             const fecha = new Date(+y, +m - 1, +d);
             return fecha.getMonth() === mes && fecha.getFullYear() === año;
           });
+          const GAP = 1;
           const CELL_HEIGHT = 80;
           return (
-            <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, boxShadow: theme.shadows.card, overflow: 'hidden' }}>
+            <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, boxShadow: theme.shadows.card }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px' }}>
                 <button onClick={() => setCalendarioMonth(new Date(año, mes - 1, 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: theme.colors.text }}>‹</button>
                 <span style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base }}>{hoy.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</span>
                 <button onClick={() => setCalendarioMonth(new Date(año, mes + 1, 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: theme.colors.text }}>›</button>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px', background: theme.colors.borderLight, padding: '0 8px 8px' }}>
-                {/* Day headers — row 1 */}
-                {diasSemana.map(d => (
-                  <div key={d} style={{ textAlign: 'center', fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textMuted, padding: '6px 0', fontWeight: theme.fonts.weights.semibold }}>{d}</div>
-                ))}
-                {/* Empty cells before day 1 — fixed height */}
-                {Array.from({ length: primerDia }, (_, i) => (
-                  <div key={`empty-${i}`} style={{ height: `${CELL_HEIGHT}px`, padding: '4px', border: 'none' }} />
-                ))}
-                {/* Day cells — fixed height (no deformation) */}
-                {Array.from({ length: diasEnMes }, (_, i) => (
-                  <div key={i + 1} style={{ height: `${CELL_HEIGHT}px`, padding: '4px', border: 'none' }}>
-                    <div style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>{i + 1}</div>
-                  </div>
-                ))}
-                {/* Reservation bars — overlaid on same grid, explicit positioning */}
-                {reservasEnMes.map(r => {
-                  if (!r.fechaDesde) return null;
-                  const [d1] = r.fechaDesde.split('/');
-                  const startDay = parseInt(d1);
-                  const cellIdx = startDay - 1;
-                  const gridCol = (cellIdx + primerDia) % 7 + 1;
-                  const gridRow = Math.floor((cellIdx + primerDia) / 7) + 2;
-                  let span = 1;
-                  if (r.fechaHasta) {
-                    const [d2] = r.fechaHasta.split('/');
-                    const endDay = Math.min(parseInt(d2), diasEnMes);
-                    const endCellIdx = endDay - 1;
-                    const endGridCol = (endCellIdx + primerDia) % 7 + 1;
-                    const sameRow = Math.floor((endCellIdx + primerDia) / 7) === Math.floor((cellIdx + primerDia) / 7);
-                    span = sameRow ? Math.min(endGridCol - gridCol + 1, 7 - gridCol + 1) : (7 - gridCol + 1);
-                  }
-                  const color = colorReserva(r);
-                  return (
-                    <div
-                      key={r.id}
-                      onClick={() => setReservaDetail(r)}
-                      style={{
-                        gridRow, gridColumn: `${gridCol} / span ${span}`,
-                        background: color, borderRadius: '999px',
-                        height: '22px', marginTop: '22px', padding: '0 8px',
-                        display: 'flex', alignItems: 'center', zIndex: 1,
-                        cursor: 'pointer', pointerEvents: 'auto', marginLeft: '2px', marginRight: '2px',
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                        fontSize: theme.fonts.sizes['2xs'], color: '#fff', fontWeight: theme.fonts.weights.medium,
-                      }}
-                      title={r.nombre}
-                    >
-                      {r.nombre}
-                    </div>
-                  );
-                })}
+              <div style={{ overflow: 'hidden' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: `${GAP}px`, background: theme.colors.borderLight, padding: '0 8px 8px', position: 'relative' }}>
+                  {/* Day headers */}
+                  {diasSemana.map(d => (
+                    <div key={d} style={{ textAlign: 'center', fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textMuted, padding: '6px 0', fontWeight: theme.fonts.weights.semibold }}>{d}</div>
+                  ))}
+                  {/* Empty + day cells — todas con altura fija idéntica */}
+                  {Array.from({ length: primerDia }, (_, i) => (
+                    <div key={`empty-${i}`} style={{ height: `${CELL_HEIGHT}px`, padding: '4px', border: 'none' }} />
+                  ))}
+                  {Array.from({ length: diasEnMes }, (_, i) => {
+                    const dia = i + 1;
+                    return (
+                      <div key={dia} style={{ height: `${CELL_HEIGHT}px`, padding: '4px', border: 'none', position: 'relative' }}>
+                        <div style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>{dia}</div>
+                      </div>
+                    );
+                  })}
+                  {/* Reservation bars — absolute dentro de la celda de inicio, overflow a celdas siguientes */}
+                  {Array.from({ length: diasEnMes }, (_, i) => {
+                    const dia = i + 1;
+                    return reservasEnMes
+                      .filter(r => {
+                        if (!r.fechaDesde) return false;
+                        const [d1] = r.fechaDesde.split('/');
+                        return parseInt(d1) === dia;
+                      })
+                      .map(r => {
+                        const color = colorReserva(r);
+                        let span = 1;
+                        if (r.fechaHasta) {
+                          const [d1] = r.fechaDesde.split('/');
+                          const [d2] = r.fechaHasta.split('/');
+                          const start = parseInt(d1);
+                          const end = Math.min(parseInt(d2), diasEnMes);
+                          span = end - start + 1;
+                        }
+                        return (
+                          <div
+                            key={r.id}
+                            onClick={() => setReservaDetail(r)}
+                            style={{
+                              position: 'absolute',
+                              top: '22px', left: 0,
+                              width: `calc(100% * ${span} + ${GAP}px * ${span - 1})`,
+                              height: '22px',
+                              background: color,
+                              borderRadius: '999px',
+                              padding: '0 8px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              zIndex: 1,
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              fontSize: theme.fonts.sizes['2xs'],
+                              color: '#fff',
+                              fontWeight: theme.fonts.weights.medium,
+                            }}
+                            title={r.nombre}
+                          >
+                            {r.nombre}
+                          </div>
+                        );
+                      });
+                  })}
+                </div>
               </div>
             </div>
           );
         })()}
 
         {/* List — guardia: compact person cards */}
-        {!showCalendar && rolActivo === 'guardia' && filtered.flatMap(item => {
+        {tipoTab !== 'calendario' && rolActivo === 'guardia' && filtered.flatMap(item => {
           const persons = item.invitados && item.invitados.length > 0
             ? item.invitados.map((inv, idx) => ({ base: item, persona: inv, idx }))
             : [{ base: item, persona: { nombre: item.nombre, llego: false, horaIngreso: '', horaSalida: '' }, idx: -1 }];
@@ -605,7 +609,7 @@ export default function VisitasHistorialPage() {
         })}
 
         {/* List — normal roles: card per reservation for huesped-temporal */}
-        {!showCalendar && rolActivo !== 'guardia' && (reservaDetail ? (
+        {tipoTab !== 'calendario' && rolActivo !== 'guardia' && (reservaDetail ? (
           /* Vista detalle de reserva HT — reemplaza la lista */
           <div key="reserva-detail" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <button
@@ -890,7 +894,7 @@ export default function VisitasHistorialPage() {
         )}
 
         {/* Row counter */}
-        {!showCalendar && (
+        {tipoTab !== 'calendario' && (
           <div style={{ textAlign: 'center', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, padding: '8px 0' }}>
             Mostrando {filtered.length} de {visitas.length} visitas
           </div>
