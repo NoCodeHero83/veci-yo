@@ -372,9 +372,9 @@ export default function VisitasHistorialPage() {
           return (
             <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, boxShadow: theme.shadows.card }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px' }}>
-                <button onClick={() => setCalendarioMonth(new Date(año, mes - 1, 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: theme.colors.text }}>‹</button>
+                <button onClick={() => setCalendarioMonth(new Date(año, mes - 1, 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '22px', color: theme.colors.text, padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px' }}>‹</button>
                 <span style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base }}>{hoy.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</span>
-                <button onClick={() => setCalendarioMonth(new Date(año, mes + 1, 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: theme.colors.text }}>›</button>
+                <button onClick={() => setCalendarioMonth(new Date(año, mes + 1, 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '22px', color: theme.colors.text, padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px' }}>›</button>
               </div>
               <div style={{ overflow: 'hidden' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: `${GAP}px`, background: theme.colors.borderLight, padding: '0 8px 8px', position: 'relative' }}>
