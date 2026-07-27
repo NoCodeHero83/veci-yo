@@ -338,7 +338,7 @@ export default function VisitasHistorialPage() {
           )}
         </div>
 
-        {/* Calendar tab — barras overlay absolutas sin deformar celdas */}
+        {/* Calendar tab — todas las visitas con color según estado */}
         {tipoTab === 'calendario' && (() => {
           const hoy = new Date(calendarioMonth);
           const año = hoy.getFullYear();
@@ -346,13 +346,27 @@ export default function VisitasHistorialPage() {
           const primerDia = new Date(año, mes, 1).getDay();
           const diasEnMes = new Date(año, mes + 1, 0).getDate();
           const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-          const htReservas = visitas.filter(v => v.tipo === 'huesped-temporal');
-          const reservasEnMes = htReservas.filter(v => {
+          const estadoColor = {
+            Pendiente: theme.colors.textMuted,
+            Aceptado: theme.colors.secondary,
+            Rechazado: theme.colors.danger,
+            Ingresado: theme.colors.success,
+          };
+          const visitasEnMes = visitas.filter(v => {
             if (!v.fechaDesde) return false;
             const [d, m, y] = v.fechaDesde.split('/');
             const fecha = new Date(+y, +m - 1, +d);
             return fecha.getMonth() === mes && fecha.getFullYear() === año;
           });
+          const handleClickCalVisita = (v) => {
+            if (v.tipo === 'huesped-temporal') {
+              setTipoTab('huespedes');
+              setReservaDetail(v);
+            } else {
+              setTipoTab('visitas');
+              setDetalleItem(v);
+            }
+          };
           const GAP = 1;
           const CELL_HEIGHT = 80;
           return (
@@ -364,11 +378,9 @@ export default function VisitasHistorialPage() {
               </div>
               <div style={{ overflow: 'hidden' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: `${GAP}px`, background: theme.colors.borderLight, padding: '0 8px 8px', position: 'relative' }}>
-                  {/* Day headers */}
                   {diasSemana.map(d => (
                     <div key={d} style={{ textAlign: 'center', fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textMuted, padding: '6px 0', fontWeight: theme.fonts.weights.semibold }}>{d}</div>
                   ))}
-                  {/* Empty + day cells — todas con altura fija idéntica */}
                   {Array.from({ length: primerDia }, (_, i) => (
                     <div key={`empty-${i}`} style={{ height: `${CELL_HEIGHT}px`, padding: '4px', border: 'none' }} />
                   ))}
@@ -377,57 +389,51 @@ export default function VisitasHistorialPage() {
                     return (
                       <div key={dia} style={{ height: `${CELL_HEIGHT}px`, padding: '4px', border: 'none', position: 'relative' }}>
                         <div style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>{dia}</div>
+                        {visitasEnMes.filter(v => {
+                          if (!v.fechaDesde) return false;
+                          const [d1] = v.fechaDesde.split('/');
+                          return parseInt(d1) === dia;
+                        }).map((v, idx) => {
+                          let span = 1;
+                          if (v.fechaHasta) {
+                            const [d1] = v.fechaDesde.split('/');
+                            const [d2] = v.fechaHasta.split('/');
+                            const end = Math.min(parseInt(d2), diasEnMes);
+                            span = end - parseInt(d1) + 1;
+                          }
+                          const color = estadoColor[v.estado] || theme.colors.textMuted;
+                          return (
+                            <div
+                              key={v.id}
+                              onClick={() => handleClickCalVisita(v)}
+                              style={{
+                                position: 'absolute',
+                                top: `${22 + idx * 24}px`,
+                                left: 0,
+                                width: `calc(100% * ${span} + ${GAP}px * ${span - 1})`,
+                                height: '20px',
+                                background: color,
+                                borderRadius: '999px',
+                                padding: '0 8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                zIndex: 1,
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                fontSize: theme.fonts.sizes['2xs'],
+                                color: '#fff',
+                                fontWeight: theme.fonts.weights.medium,
+                              }}
+                              title={v.nombre}
+                            >
+                              {v.nombre}
+                            </div>
+                          );
+                        })}
                       </div>
                     );
-                  })}
-                  {/* Reservation bars — absolute dentro de la celda de inicio, overflow a celdas siguientes */}
-                  {Array.from({ length: diasEnMes }, (_, i) => {
-                    const dia = i + 1;
-                    return reservasEnMes
-                      .filter(r => {
-                        if (!r.fechaDesde) return false;
-                        const [d1] = r.fechaDesde.split('/');
-                        return parseInt(d1) === dia;
-                      })
-                      .map(r => {
-                        const color = colorReserva(r);
-                        let span = 1;
-                        if (r.fechaHasta) {
-                          const [d1] = r.fechaDesde.split('/');
-                          const [d2] = r.fechaHasta.split('/');
-                          const start = parseInt(d1);
-                          const end = Math.min(parseInt(d2), diasEnMes);
-                          span = end - start + 1;
-                        }
-                        return (
-                          <div
-                            key={r.id}
-                            onClick={() => setReservaDetail(r)}
-                            style={{
-                              position: 'absolute',
-                              top: '22px', left: 0,
-                              width: `calc(100% * ${span} + ${GAP}px * ${span - 1})`,
-                              height: '22px',
-                              background: color,
-                              borderRadius: '999px',
-                              padding: '0 8px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              zIndex: 1,
-                              cursor: 'pointer',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              fontSize: theme.fonts.sizes['2xs'],
-                              color: '#fff',
-                              fontWeight: theme.fonts.weights.medium,
-                            }}
-                            title={r.nombre}
-                          >
-                            {r.nombre}
-                          </div>
-                        );
-                      });
                   })}
                 </div>
               </div>
