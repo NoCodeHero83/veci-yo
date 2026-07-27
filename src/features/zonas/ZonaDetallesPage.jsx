@@ -65,10 +65,15 @@ const estilosPersona = {
 export default function ZonaDetallesPage() {
   const { zonaId } = useParams();
   const navigate = useNavigate();
-  const { reservas, actualizarEstadoReserva, eliminarReserva, addToast, rolActivo, actualizarPersonaReserva } = useApp();
+  const { reservas, actualizarEstadoReserva, eliminarReserva, addToast, rolActivo, actualizarPersonaReserva, usuario } = useApp();
 
   const zona = zonasComunes.find(z => z.id === zonaId) || { nombre: zonaId, emoji: '🏢' };
-  const zonasReservas = reservas.filter(r => r.zonaId === zonaId);
+  const zonasReservas = reservas.filter(r => {
+    if (r.zonaId !== zonaId) return false;
+    if (rolActivo === 'guardia' || rolActivo === 'administrador') return true;
+    const nombreUsuario = usuario?.nombre?.toLowerCase().split(' ')[0] || '';
+    return nombreUsuario && r.nombre?.toLowerCase().includes(nombreUsuario);
+  });
 
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState(null);
