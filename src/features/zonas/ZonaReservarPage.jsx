@@ -132,7 +132,7 @@ export default function ZonaReservarPage() {
 
         {nombresPersonas.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '2px' }}>Nombres de los asistentes</div>
+            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '2px' }}>Nombres de los asistentes <span style={{ color: theme.colors.textMuted }}>(opcional — puedes agregarlos ahora o después editando la reserva)</span></div>
             {nombresPersonas.map((nom, idx) => (
               <div key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <input

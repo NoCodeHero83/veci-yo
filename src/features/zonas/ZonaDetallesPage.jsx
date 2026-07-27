@@ -85,6 +85,7 @@ export default function ZonaDetallesPage() {
   const [liberarOpen, setLiberarOpen] = useState(false);
   const [liberarItem, setLiberarItem] = useState(null);
   const [liberarCuposInput, setLiberarCuposInput] = useState(0);
+  const [reemplazoInput, setReemplazoInput] = useState({});
 
   const esGuardia = rolActivo === 'guardia';
 
@@ -328,6 +329,19 @@ export default function ZonaDetallesPage() {
                   <span style={{ fontSize: '14px', color: theme.colors.textSecondary }}>🕐</span>
                   <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{item.horario}</span>
                 </div>
+                {/* 1. Cupos liberados dinámicamente */}
+                {item.personas?.filter(p => p.llego === 'salio').length > 0 && (
+                  <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: theme.fonts.sizes.xs, color: theme.colors.success, fontWeight: theme.fonts.weights.semibold }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    {item.personas.filter(p => p.llego === 'salio').length} cupos libres
+                  </div>
+                )}
+                {/* 4. Indicador de huésped temporal */}
+                {item.personas?.some(p => p.tipoParticipante === 'Huésped Temporal') && (
+                  <div style={{ marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '2px 8px', borderRadius: theme.radius.full, background: '#FEF3C7', fontSize: theme.fonts.sizes['2xs'], color: '#92400E' }}>
+                    Reservada por huésped temporal
+                  </div>
+                )}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
                 {terminada && (
@@ -501,7 +515,52 @@ export default function ZonaDetallesPage() {
                         </button>
                       </div>
                     )}
+                    {/* 2. Reemplazo badge */}
+                    {p.reemplazo && (
+                      <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: theme.radius.full, background: '#DBEAFE', color: '#1E40AF', fontWeight: theme.fonts.weights.semibold, marginLeft: '6px' }}>
+                        Reemplazo
+                      </span>
+                    )}
                   </div>
+                  {/* 2. Reemplazo input cuando la persona salió */}
+                  {esGuardia && p.llego === 'salio' && (
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        value={reemplazoInput[idx] || ''}
+                        onChange={e => setReemplazoInput(prev => ({ ...prev, [idx]: e.target.value }))}
+                        placeholder="Nombre del reemplazo"
+                        style={{
+                          flex: 1, padding: '6px 10px', borderRadius: theme.radius.md,
+                          border: `1px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.xs,
+                          fontFamily: theme.fonts.family, outline: 'none',
+                          background: theme.colors.bgCard, color: theme.colors.text,
+                        }}
+                      />
+                      <button
+                        type="button"
+                        disabled={!reemplazoInput[idx]?.trim()}
+                        onClick={() => {
+                          const nombre = reemplazoInput[idx].trim();
+                          if (!nombre) return;
+                          const lastIdx = editPersonasList.length;
+                          setEditPersonasList(prev => [...prev, { nombre, llego: false, tipoParticipante: 'Visitante', reemplazo: true }]);
+                          setEditPersonasCount(c => c + 1);
+                          setReemplazoInput(prev => ({ ...prev, [idx]: '' }));
+                        }}
+                        style={{
+                          padding: '6px 12px', borderRadius: theme.radius.full,
+                          background: reemplazoInput[idx]?.trim() ? theme.colors.success : theme.colors.bgMuted,
+                          color: reemplazoInput[idx]?.trim() ? '#fff' : theme.colors.textMuted,
+                          border: 'none', cursor: reemplazoInput[idx]?.trim() ? 'pointer' : 'not-allowed',
+                          fontFamily: theme.fonts.family, fontSize: theme.fonts.sizes['2xs'],
+                          fontWeight: theme.fonts.weights.semibold, whiteSpace: 'nowrap',
+                        }}
+                      >
+                        + Reemplazar
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
