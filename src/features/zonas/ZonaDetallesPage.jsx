@@ -72,7 +72,10 @@ export default function ZonaDetallesPage() {
     if (r.zonaId !== zonaId) return false;
     if (rolActivo === 'guardia' || rolActivo === 'administrador') return true;
     const nombreUsuario = usuario?.nombre?.toLowerCase().split(' ')[0] || '';
-    return nombreUsuario && r.nombre?.toLowerCase().includes(nombreUsuario);
+    if (!nombreUsuario) return false;
+    const esCreador = r.nombre?.toLowerCase().includes(nombreUsuario);
+    const esInvitado = r.personas?.some(p => p.nombre?.toLowerCase().includes(nombreUsuario));
+    return esCreador || esInvitado;
   });
 
   const [search, setSearch] = useState('');
