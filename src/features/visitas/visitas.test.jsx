@@ -4,14 +4,12 @@ import { renderWithProviders } from '../../test/renderWithProviders';
 import VisitasHistorialPage from './VisitasHistorialPage';
 
 describe('Batch E — Huésped Temporal (vista anfitrión)', () => {
-  it('muestra KPI de verificación en la vista general de Huéspedes', () => {
+  it('muestra barras de consumo de verificaciones en la vista general de Huéspedes', () => {
     renderWithProviders(<VisitasHistorialPage />, { route: '/visitas' });
     fireEvent.click(screen.getByRole('button', { name: 'Huéspedes' }));
-    // Etiquetas únicas del KPI
-    expect(screen.getByText('Verificados')).toBeInTheDocument();
-    expect(screen.getByText('Con hallazgos')).toBeInTheDocument();
-    expect(screen.getByText('TRA/SIRE pendiente')).toBeInTheDocument();
-    expect(screen.getByText('Menores')).toBeInTheDocument();
+    // Barras de consumo del paquete base y adicional
+    expect(screen.getByText(/Verificaciones disponibles .* Paquete base/i)).toBeInTheDocument();
+    expect(screen.getByText(/Paquete adicional/i)).toBeInTheDocument();
   });
 
   it('abre el detalle de reserva con timeline inline (sin popup "Ver detalles")', () => {

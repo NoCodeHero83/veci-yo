@@ -6,6 +6,8 @@ import SearchBar from '../../components/ui/SearchBar';
 import Tabs from '../../components/ui/Tabs';
 import StatusTabs from '../../components/ui/StatusTabs';
 import Badge from '../../components/ui/Badge';
+import TimelineHuesped from '../../components/ui/TimelineHuesped';
+import VerificacionesConsumo from '../../components/ui/VerificacionesConsumo';
 import BottomSheet, { BottomSheetOption } from '../../components/ui/BottomSheet';
 import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
@@ -61,7 +63,11 @@ export default function VisitasHistorialPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const fromHome = location.state?.fromHome || false;
-  const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado, aprobarInvitado, rolActivo, addToast, verificaciones, actualizarVerificacion, actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion, toggleInstruccionCumplida, estacionamientosVisitantes, configHuespedesTemporales, ubicacionActiva, reportarTraSire, usuario, actualizarConfigHuespedTemporal, esResidente, actualizarTimeline, aprobarTerminosManual, aprobarVerificacion, aprobarVerificacionConHallazgos } = useApp();
+  const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado, aprobarInvitado, rolActivo, addToast, verificaciones, actualizarVerificacion, actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion, toggleInstruccionCumplida, estacionamientosVisitantes, configHuespedesTemporales, ubicacionActiva, suscripcionActiva, reportarTraSire, usuario, actualizarConfigHuespedTemporal, esResidente, actualizarTimeline, aprobarTerminosManual, aprobarVerificacion, aprobarVerificacionConHallazgos } = useApp();
+
+  // El rediseño de la Card de Reserva (Huésped Temporal) aplica para todos los
+  // roles excepto Guardia de Seguridad y Administrador, que mantienen sus vistas.
+  const mostrarDisenoReserva = rolActivo !== 'guardia' && rolActivo !== 'administrador';
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('Todas');
   const [tipoTab, setTipoTab] = useState('visitas');
@@ -806,8 +812,18 @@ export default function VisitasHistorialPage() {
           ));
         })}
 
-        {/* KPI de verificación — vista general huéspedes (no en cada reserva) */}
-        {tipoTab === 'huespedes' && rolActivo !== 'guardia' && !reservaDetail && renderKpiHuespedes()}
+        {/* Barras de consumo de verificaciones (reemplazan los KPIs) — vista general huéspedes.
+            Guardia y Administrador mantienen sus vistas definidas (KPIs numéricos). */}
+        {tipoTab === 'huespedes' && !reservaDetail && (
+          ['guardia', 'administrador'].includes(rolActivo)
+            ? renderKpiHuespedes()
+            : (
+              <VerificacionesConsumo
+                verificaciones={configHuespedesTemporales[ubicacionActiva?.id]?.verificaciones}
+                suscripcionActiva={suscripcionActiva}
+              />
+            )
+        )}
 
         {/* List — normal roles: card per reservation for huesped-temporal */}
         {tipoTab !== 'calendario' && rolActivo !== 'guardia' && (reservaDetail ? (
@@ -829,7 +845,9 @@ export default function VisitasHistorialPage() {
                 <img src={tipoVisitaIcons[reservaDetail.tipo]} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>Reserva de {reservaDetail.nombre}</div>
-                  <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{reservaDetail.torre} - {reservaDetail.depto}</div>
+                  {!mostrarDisenoReserva && (
+                    <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{reservaDetail.torre} - {reservaDetail.depto}</div>
+                  )}
                   <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <span>{reservaDetail.fechaDesde} a {reservaDetail.fechaHasta}</span>
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>👤 {reservaDetail.invitados?.length || 0}</span>
@@ -903,7 +921,7 @@ export default function VisitasHistorialPage() {
                         Reserva de {item.nombre}
                       </div>
                       <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginTop: '1px' }}>
-                        {item.torre} - {item.depto} · {TIPO_LABELS[item.tipo]}
+                        {mostrarDisenoReserva ? TIPO_LABELS[item.tipo] : `${item.torre} - ${item.depto} · ${TIPO_LABELS[item.tipo]}`}
                       </div>
                       <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, marginTop: '2px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         <span>{item.fechaDesde} a {item.fechaHasta}</span>
@@ -921,37 +939,55 @@ export default function VisitasHistorialPage() {
                     ⋮
                   </button>
                 </div>
-                {/* Progress summary per group member */}
+                {/* Resumen por huésped — diseño nuevo (Card de Reserva) o legacy */}
                 {item.invitados && item.invitados.length > 0 && (
-                  <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      {item.invitados.map((inv, idx) => {
-                        const completados = progresoInvitado(inv);
-                        return (
-                          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <div style={{ display: 'flex', gap: '3px', flex: 1 }}>
-                              {TIMELINE_STEPS.map((step, si) => {
-                                const t = inv.timeline || {};
-                                const done = si < 4 ? !!t[step.key] : !!t[step.key];
-                                const isSpecial = step.key === 'terminosAceptados' && t.terminosAprobadoPor === 'anfitrion';
-                                return (
-                                  <div
-                                    key={step.key}
-                                    title={`${step.label}${isSpecial ? ' (aprobado por anfitrión)' : ''}`}
-                                    style={{
-                                      width: '14px', height: '14px', borderRadius: '50%',
-                                      background: done ? (isSpecial ? theme.colors.secondary : theme.colors.success) : theme.colors.border,
-                                      flexShrink: 0,
-                                    }}
-                                  />
-                                );
-                              })}
-                            </div>
+                  mostrarDisenoReserva ? (
+                    <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}`, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {item.invitados.map((inv, idx) => (
+                        <div key={idx}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                            <span style={{ fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>{inv.nombre}</span>
+                            {inv.esMenor && (
+                              <span style={{ fontSize: theme.fonts.sizes['2xs'], fontWeight: theme.fonts.weights.bold, color: '#92400E', background: '#FEF3C7', padding: '2px 7px', borderRadius: theme.radius.full, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                👶 Menor
+                              </span>
+                            )}
                           </div>
-                        );
-                      })}
+                          <TimelineHuesped timeline={inv.timeline} />
+                        </div>
+                      ))}
                     </div>
-                  </div>
+                  ) : (
+                    <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        {item.invitados.map((inv, idx) => {
+                          const completados = progresoInvitado(inv);
+                          return (
+                            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <div style={{ display: 'flex', gap: '3px', flex: 1 }}>
+                                {TIMELINE_STEPS.map((step, si) => {
+                                  const t = inv.timeline || {};
+                                  const done = si < 4 ? !!t[step.key] : !!t[step.key];
+                                  const isSpecial = step.key === 'terminosAceptados' && t.terminosAprobadoPor === 'anfitrion';
+                                  return (
+                                    <div
+                                      key={step.key}
+                                      title={`${step.label}${isSpecial ? ' (aprobado por anfitrión)' : ''}`}
+                                      style={{
+                                        width: '14px', height: '14px', borderRadius: '50%',
+                                        background: done ? (isSpecial ? theme.colors.secondary : theme.colors.success) : theme.colors.border,
+                                        flexShrink: 0,
+                                      }}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )
                 )}
               </div>
             )];

@@ -1292,6 +1292,7 @@ export const configuracionHuespedesTemporalesInit = {
       { id: 1, nombre: 'Pedro Gómez', rol: 'coanfitrion', telefono: '+593 999888111' },
     ],
     verificaciones: {
+      incluidas: 20,
       suscritasUsadas: 5,
       suplementarias: 10,
       vencimientoSuplementarias: '27/10/2026',
@@ -1322,6 +1323,7 @@ export const configuracionHuespedesTemporalesInit = {
     legal: { rnt: 'RNT-67890' },
     staff: [],
     verificaciones: {
+      incluidas: 20,
       suscritasUsadas: 2,
       suplementarias: 5,
       vencimientoSuplementarias: '15/10/2026',
