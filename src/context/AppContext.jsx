@@ -366,6 +366,18 @@ export function AppProvider({ children }) {
     }));
   }, []);
 
+  const aprobarVerificacionConHallazgos = useCallback((visitaId, invitadoIdx) => {
+    setVisitas(prev => prev.map(v => {
+      if (v.id !== visitaId) return v;
+      const invitados = v.invitados.map((inv, i) => {
+        if (i !== invitadoIdx) return inv;
+        const timeline = { ...(inv.timeline || {}), verificacionAprobada: true, verificacionPasada: true, verificacionHallazgos: true };
+        return { ...inv, timeline };
+      });
+      return { ...v, invitados };
+    }));
+  }, []);
+
   // TRA/SIRE reporting
   const reportarTraSire = useCallback((visitaId, invitadoIdx) => {
     setVisitas(prev => prev.map(v => {
@@ -746,14 +758,41 @@ export function AppProvider({ children }) {
   const ubicacionActiva = ubicaciones.find(u => u.favorito) || ubicaciones[0] || null;
   const suscripcionActiva = ubicacionActiva ? suscripciones[ubicacionActiva.id]?.activa || false : false;
 
-  // Un usuario es residente si: es inquilino-lider, o es propietario con declaración positiva
+  // Un usuario es residente si: es inquilino-lider, o es propietario con declaración positiva.
+  // Si un propietario tiene Renta Corta habilitada en su propiedad activa, se trata automáticamente
+  // como residente (acceso a Visitas, Zonas Comunes, Correspondencia, Gratitud y Reputación).
+  const tieneRentaCorta = rolActivo === 'propietario'
+    && !!ubicacionActiva
+    && !!configHuespedesTemporales[ubicacionActiva.id]?.permiteRentaCorta;
   const esResidente = rolActivo === 'inquilino-lider'
-    || (rolActivo === 'propietario' && (residentesDeclarados[usuario?.correo] !== false));
+    || (rolActivo === 'propietario' && (residentesDeclarados[usuario?.correo] !== false || tieneRentaCorta));
   // Un usuario puede ver el listado de residentes si es propietario (incluso no-residente)
   const puedeVerResidentes = rolActivo === 'propietario' || rolActivo === 'inquilino-lider' || rolActivo === 'administrador';
 
   const togglePropietarioResidente = useCallback((email, value) => {
     setResidentesDeclarados(prev => ({ ...prev, [email]: value }));
+  }, []);
+
+  // ─── Alias / anonimato (Perfil) ──────────────────────────────────────────
+  // Sugiere "Vecino <código de unidad>" o "Vecino <torre><depto>" según la
+  // ubicación activa; el usuario puede editarlo libremente.
+  const sugerirAlias = useCallback(() => {
+    if (ubicacionActiva) {
+      const u = unidades.find(un => un.id === ubicacionActiva.id);
+      const codigo = u?.codigo || ubicacionActiva.codigo || `${ubicacionActiva.torreNumero || ''}${ubicacionActiva.deptoNumero || ''}`;
+      if (codigo) return `Vecino ${codigo}`;
+    }
+    return `Vecino ${Math.floor(100 + Math.random() * 900)}`;
+  }, [ubicacionActiva, unidades]);
+
+  const [alias, setAlias] = useState(() => usuario?.alias || '');
+  const [usaAliasCuadroHonor, setUsaAliasCuadroHonor] = useState(usuario?.usaAliasCuadroHonor !== false);
+  const [usaAliasZonas, setUsaAliasZonas] = useState(usuario?.usaAliasZonas !== false);
+
+  const actualizarAlias = useCallback(({ alias: a, cuadroHonor, zonas }) => {
+    if (typeof a === 'string') setAlias(a);
+    if (typeof cuadroHonor === 'boolean') setUsaAliasCuadroHonor(cuadroHonor);
+    if (typeof zonas === 'boolean') setUsaAliasZonas(zonas);
   }, []);
 
   return (
@@ -769,7 +808,7 @@ export function AppProvider({ children }) {
       actualizarInstruccionDocumento, actualizarTipoNotificacion, toggleInstruccionCumplida,
       ubicacionActiva, suscripcionActiva, suscripciones, activarSuscripcion,
       configHuespedesTemporales, actualizarConfigHuespedTemporal,
-      verificaciones, actualizarVerificacion, actualizarTimeline, aprobarTerminosManual, aprobarVerificacion, reportarTraSire,
+      verificaciones, actualizarVerificacion, actualizarTimeline, aprobarTerminosManual, aprobarVerificacion, aprobarVerificacionConHallazgos, reportarTraSire,
       reservas, agregarReserva, actualizarEstadoReserva, actualizarReserva, eliminarReserva, actualizarPersonaReserva,
       zonasComunesConfig, actualizarZonaComun, agregarZonaComun, eliminarZonaComun,
       gestionZonas, actualizarGestionZona, agregarGestionZona, eliminarGestionZona,
@@ -791,6 +830,7 @@ export function AppProvider({ children }) {
       reclamos, agregarReclamo, actualizarEstadoReclamo, actualizarEstadoReclamoConMensaje,
       toasts, addToast,
       esResidente, puedeVerResidentes, residentesDeclarados, togglePropietarioResidente,
+      alias, usaAliasCuadroHonor, usaAliasZonas, actualizarAlias, sugerirAlias,
       coadministradores, setCoadministradores,
       gratitudUsada, setGratitudUsada,
       tiposDocumentoPorPais,

@@ -54,6 +54,7 @@ import AdministradorGestionZonaReservasPage from './features/administrador/Admin
 
 // Propietario
 import PropietarioConfiguracionPage from './features/propietario/PropietarioConfiguracionPage';
+import PropietarioAceptacionPage from './features/propietario/PropietarioAceptacionPage';
 import PropietarioCrearRolPage from './features/propietario/PropietarioCrearRolPage';
 import PropietarioHistorialContratoPage from './features/propietario/PropietarioHistorialContratoPage';
 import PropietarioHuespedesTemporalesPage from './features/propietario/PropietarioHuespedesTemporalesPage';
@@ -149,6 +150,7 @@ export default function App() {
         <Route path="/admin/gestion-zonas/:id/reservas" element={<AdministradorGestionZonaReservasPage />} />
 
         <Route path="/propietario/configuracion" element={<PropietarioConfiguracionPage />} />
+        <Route path="/propietario/configuracion/aceptar" element={<PropietarioAceptacionPage />} />
         <Route path="/propietario/configuracion/crear-rol" element={<PropietarioCrearRolPage />} />
         <Route path="/propietario/configuracion/historial-contrato" element={<PropietarioHistorialContratoPage />} />
         <Route path="/propietario/configuracion/huespedes-temporales" element={<PropietarioHuespedesTemporalesPage />} />
@@ -156,6 +158,7 @@ export default function App() {
 
         {/* Inquilino líder · Configuración (misma pantalla y funcionalidades que Propietario) */}
         <Route path="/inquilino-lider/configuracion" element={<PropietarioConfiguracionPage basePath="/inquilino-lider/configuracion" />} />
+        <Route path="/inquilino-lider/configuracion/aceptar" element={<PropietarioAceptacionPage />} />
         <Route path="/inquilino-lider/configuracion/crear-rol" element={<PropietarioCrearRolPage />} />
         <Route path="/inquilino-lider/configuracion/historial-contrato" element={<PropietarioHistorialContratoPage />} />
         <Route path="/inquilino-lider/configuracion/huespedes-temporales" element={<PropietarioHuespedesTemporalesPage />} />

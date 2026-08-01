@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell';
 import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
+import Toggle from '../../components/ui/Toggle';
 import avatarDefault from '../../assets/avatars/perfil-default.png';
 import iconSeguridad from '../../assets/icons/perfil/seguridad.png';
 import iconSOS from '../../assets/icons/perfil/sos.png';
@@ -92,10 +94,19 @@ function FilaOpcion({ emoji, label, onPress }) {
 
 export default function PerfilPage() {
   const navigate = useNavigate();
-  const { usuario, rolActivo, modo, addToast, cerrarSesion } = useApp();
+  const { usuario, rolActivo, modo, addToast, cerrarSesion, alias, usaAliasCuadroHonor, usaAliasZonas, actualizarAlias, sugerirAlias } = useApp();
 
   const nombre = nombreUsuario(usuario, rolActivo, modo);
   const enDesarrollo = () => {};
+
+  const [aliasLocal, setAliasLocal] = useState(alias || sugerirAlias());
+  const [usaCuadroHonor, setUsaCuadroHonor] = useState(usaAliasCuadroHonor);
+  const [usaZonas, setUsaZonas] = useState(usaAliasZonas);
+
+  const guardarAlias = () => {
+    actualizarAlias({ alias: aliasLocal.trim() || sugerirAlias(), cuadroHonor: usaCuadroHonor, zonas: usaZonas });
+    addToast('Alias actualizado', 'success');
+  };
 
   const handleCerrarSesion = () => {
     cerrarSesion();
@@ -174,6 +185,47 @@ export default function PerfilPage() {
         <div style={{ display: 'flex', gap: '12px' }}>
           <TarjetaAccion icon={iconSeguridad} label="Seguridad" onPress={() => navigate('/perfil/seguridad')} />
           <TarjetaAccion icon={iconSOS} label="S.O.S" onPress={() => navigate('/perfil/sos')} />
+        </div>
+
+        {/* Alias / Anonimato */}
+        <div style={{ ...cardStyle, padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: theme.fonts.sizes.md, fontWeight: theme.fonts.weights.bold, color: theme.colors.text }}>Alias / Anonimato</h3>
+            <p style={{ margin: '4px 0 0', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
+              Tu alias se muestra en lugar de tu nombre real en las secciones que elijas.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>Alias sugerido (editable)</label>
+            <input
+              value={aliasLocal}
+              onChange={e => setAliasLocal(e.target.value)}
+              placeholder={sugerirAlias()}
+              style={{ padding: '12px 14px', borderRadius: theme.radius.md, border: `1.5px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.base, fontFamily: theme.fonts.family, color: theme.colors.text, background: theme.colors.bgCard, outline: 'none', boxSizing: 'border-box' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>Usar alias en Cuadro de Honor</span>
+            <Toggle value={usaCuadroHonor} onChange={setUsaCuadroHonor} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>Usar alias en Zonas Comunes y reservas</span>
+            <Toggle value={usaZonas} onChange={setUsaZonas} />
+          </div>
+
+          <p style={{ margin: 0, fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, background: theme.colors.bgMuted, padding: '10px 12px', borderRadius: theme.radius.md }}>
+            Seguridad y Administración siempre ven tu nombre real, sin importar el alias.
+          </p>
+
+          <button
+            type="button"
+            onClick={guardarAlias}
+            style={{ width: '100%', padding: '12px', borderRadius: theme.radius.full, background: theme.colors.primary, color: theme.colors.text, fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.md, border: 'none', cursor: 'pointer', fontFamily: theme.fonts.family }}
+          >
+            Guardar alias
+          </button>
         </div>
 
         {/* Soporte / Cerrar sesión */}

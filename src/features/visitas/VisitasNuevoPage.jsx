@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell';
 import PageHeader from '../../components/layout/PageHeader';
 import Calendar from '../../components/ui/Calendar';
@@ -51,6 +51,7 @@ function formatTimeRange(start, end) {
 
 export default function VisitasNuevoPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { agregarVisita, rolActivo, suscripcionActiva, activarSuscripcion, ubicacionActiva, addToast, unidades, configHuespedesTemporales, actualizarConfigHuespedTemporal, permisos, esResidente } = useApp();
   const TIPOS = rolActivo === 'guardia'
     ? TIPOS_BASE.filter(t => t.id !== 'permanente')
@@ -58,7 +59,12 @@ export default function VisitasNuevoPage() {
     ? TIPOS_BASE.filter(t => t.id === 'amigos' || t.id === 'temporal')
     : [...TIPOS_BASE, TIPO_HUESPED_TEMPORAL];
 
-  const [tipoSeleccionado, setTipoSeleccionado] = useState(null);
+  const tipoPreseleccionado = location.state?.tipoPreseleccionado;
+  const tipoInicial = (tipoPreseleccionado && TIPOS.some(t => t.id === tipoPreseleccionado)
+    && (tipoPreseleccionado !== 'huesped-temporal' || suscripcionActiva))
+    ? tipoPreseleccionado
+    : null;
+  const [tipoSeleccionado, setTipoSeleccionado] = useState(tipoInicial);
   const [torre, setTorre] = useState('');
   const [depto, setDepto] = useState('');
   const [personas, setPersonas] = useState('5');
@@ -73,6 +79,7 @@ export default function VisitasNuevoPage() {
   const [horaSalidaInicio, setHoraSalidaInicio] = useState('');
   const [horaSalidaFin, setHoraSalidaFin] = useState('');
   const [acompanantes, setAcompanantes] = useState([]);
+  const [mostrarAvisoMenores, setMostrarAvisoMenores] = useState(false);
   const [estacionamientosSeleccionados, setEstacionamientosSeleccionados] = useState(0);
   const [vehiculos, setVehiculos] = useState([]);
   const [tieneVehiculoToggle, setTieneVehiculoToggle] = useState(false);
@@ -125,7 +132,7 @@ export default function VisitasNuevoPage() {
     setAcompanantes(prev => {
       const updated = [...prev];
       while (updated.length < compCount) {
-        updated.push({ nombre: '', ci: '' });
+        updated.push({ nombre: '', ci: '', esMenor: false });
       }
       while (updated.length > compCount) {
         updated.pop();
@@ -311,6 +318,9 @@ export default function VisitasNuevoPage() {
                     style={{ ...inputStyle, width: '80px' }}
                   />
                   <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>personas</span>
+                  <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, marginLeft: 'auto' }}>
+                    👶 {acompanantes.filter(a => a.esMenor).length} menores
+                  </span>
                 </div>
                 
               </div>
@@ -398,8 +408,26 @@ export default function VisitasNuevoPage() {
                   placeholder="Identificación (opcional)"
                   style={inputStyle}
                 />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
+                  <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>Menor de edad</span>
+                  <Toggle
+                    value={!!acc.esMenor}
+                    onChange={(v) => {
+                      const updated = [...acompanantes];
+                      updated[idx] = { ...updated[idx], esMenor: v };
+                      setAcompanantes(updated);
+                      setMostrarAvisoMenores(true);
+                    }}
+                  />
+                </div>
               </div>
             ))}
+
+            {(acompanantes.some(a => a.esMenor) || mostrarAvisoMenores) && (
+              <div style={{ background: '#FEF3C7', borderRadius: theme.radius.lg, padding: '12px 14px', fontSize: theme.fonts.sizes.xs, color: '#92400E', lineHeight: 1.5 }}>
+                Advertencia legal: Si el invitado es menor de edad, debe ingresar con su padre/madre/tutor legal con la documentación respectiva. Este edificio está comprometido con la prevención del abuso sexual de menores y la trata de personas.
+              </div>
+            )}
 
             {/* Hora estimada de llegada */}
             <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card, display: 'flex', flexDirection: 'column', gap: '10px' }}>

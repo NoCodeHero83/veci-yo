@@ -59,6 +59,17 @@ const badgeStyle = {
   color: theme.colors.text,
 };
 
+function cumplimientoIcon(activo) {
+  return {
+    width: '26px', height: '26px', borderRadius: '50%',
+    border: 'none', cursor: 'pointer', fontSize: '13px',
+    background: activo ? theme.colors.successLight : theme.colors.bgMuted,
+    opacity: activo ? 1 : 0.4,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: 0,
+  };
+}
+
 function TipoCard({ icon, label, onClick, emoji }) {
   return (
     <button
@@ -187,6 +198,12 @@ export default function ReglasPage() {
         </div>
         )}
 
+        {rolActivo === 'propietario' || rolActivo === 'inquilino-lider' ? (
+          <button type="button" onClick={() => navigate('/perfil/reclamos/nuevo', { state: { tipo: 'Reglas' } })} style={{ ...pillButtonStyle, background: theme.colors.secondary, color: '#fff' }}>
+            Crear PQRS desde Reglas
+          </button>
+        ) : null}
+
         {rolActivo !== 'huesped-temporal' && filtered.map(dept => (
           <div key={dept.id} style={{ ...cardStyle, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ width: '44px', height: '44px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: theme.colors.bgMuted, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -194,16 +211,25 @@ export default function ReglasPage() {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: theme.fonts.sizes.base, fontWeight: theme.fonts.weights.bold, color: theme.colors.text }}>
-                {dept.departamento}
+                {dept.ocultarNumero ? 'Departamento (oculto)' : dept.departamento}
               </div>
               <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, lineHeight: '1.5' }}>
-                Anfitrión: {dept.anfitrion}<br />
-                Administrador: {dept.administrador}<br />
-                Propietario: {dept.propietario}
+                Anfitrión: {dept.anfitrion} {dept.telAnfitrion ? <span style={{ color: theme.colors.success, fontWeight: 'bold' }} title="Contacto completo">✓</span> : <span style={{ color: theme.colors.danger, fontWeight: 'bold' }} title="Contacto incompleto">✕</span>}<br />
+                Administrador: {dept.administrador} {dept.telAdmin ? <span style={{ color: theme.colors.success, fontWeight: 'bold' }} title="Contacto completo">✓</span> : <span style={{ color: theme.colors.danger, fontWeight: 'bold' }} title="Contacto incompleto">✕</span>}<br />
+                Propietario: {dept.propietario} {dept.telPropietario ? <span style={{ color: theme.colors.success, fontWeight: 'bold' }} title="Contacto completo">✓</span> : <span style={{ color: theme.colors.danger, fontWeight: 'bold' }} title="Contacto incompleto">✕</span>}
               </div>
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '4px' }}>
-                <span style={{ ...badgeStyle, background: dept.estado === 'Inscripto' ? theme.colors.successLight : theme.colors.iconAmberBg }}>📣</span>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '6px', flexWrap: 'wrap' }}>
                 <img src={iconRnt} alt="RNT" style={{ height: '22px', borderRadius: theme.radius.full, objectFit: 'cover' }} />
+                {(dept.cumplimiento?.antirruido || dept.cumplimiento?.noFumar || dept.cumplimiento?.sensor) && (
+                  <span style={{ display: 'inline-flex', gap: '4px' }}>
+                    <button type="button" onClick={() => addToast('Dispositivo antirruido registrado', 'success')} title="Dispositivo antirruido" style={cumplimientoIcon(dept.cumplimiento?.antirruido)}>🔇</button>
+                    <button type="button" onClick={() => addToast('Señalética de no fumar registrada', 'success')} title="Señalética de no fumar" style={cumplimientoIcon(dept.cumplimiento?.noFumar)}>🚭</button>
+                    <button type="button" onClick={() => addToast('Sensor de incendio/gas/CO2 registrado', 'success')} title="Sensor de incendio/gas/CO2" style={cumplimientoIcon(dept.cumplimiento?.sensor)}>🔥</button>
+                  </span>
+                )}
+                {dept.mascotas && (
+                  <span style={{ ...badgeStyle, background: theme.colors.successLight, color: theme.colors.success }}>🐾 Mascotas</span>
+                )}
               </div>
             </div>
             <button
@@ -233,7 +259,7 @@ export default function ReglasPage() {
         <div style={{ height: '24px' }} />
       </div>
 
-      {/* Menú de acciones por departamento — solo visible para Guardia, Huésped Temporal y Administrador */}
+      {/* Menú de acciones por departamento */}
       <Modal isOpen={!!accionesDept} onClose={() => setAccionesDept(null)}>
         {rolActivo === 'guardia' || rolActivo === 'huesped-temporal' || rolActivo === 'administrador' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -242,8 +268,13 @@ export default function ReglasPage() {
             <button type="button" onClick={() => handleComunicacion('propietario')} style={pillButtonStyle}>3er Contacto: Llamar Propietario</button>
           </div>
         ) : (
-          <div style={{ textAlign: 'center', padding: '12px', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
-            No tienes permisos para realizar llamadas desde esta sección.
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <button type="button" onClick={() => { const d = accionesDept; setAccionesDept(null); navigate('/perfil/reclamos/nuevo', { state: { asunto: `Incidente departamento ${d?.departamento || ''}`, tipo: 'Reglas' } }); }} style={pillButtonStyle}>
+              Reportar incidente (PQRS)
+            </button>
+            <div style={{ textAlign: 'center', padding: '4px', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
+              No tienes permisos para realizar llamadas desde esta sección.
+            </div>
           </div>
         )}
       </Modal>

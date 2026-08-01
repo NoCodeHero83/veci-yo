@@ -78,6 +78,8 @@ export default function PropietarioHuespedesTemporalesPage() {
   const minDiasAdmin = config?.minDiasAdmin ?? 1;
 
   const [legal, setLegal] = useState(config?.legal ?? { rnt: '' });
+  const [cumplimiento, setCumplimiento] = useState(config?.cumplimiento ?? { antirruido: false, noFumar: false, sensor: false });
+  const [ocultarNumero, setOcultarNumero] = useState(config?.ocultarNumero ?? false);
 
   const handleGuardar = () => {
     if (!ubicacionId) return;
@@ -93,6 +95,8 @@ export default function PropietarioHuespedesTemporalesPage() {
       pms,
       legal,
       permiteVisitasHuespedes,
+      cumplimiento,
+      ocultarNumero,
     });
     addToast('Configuración guardada exitosamente', 'success');
     const from = location.state?.from;
@@ -396,6 +400,27 @@ export default function PropietarioHuespedesTemporalesPage() {
                   </div>
                   <input type="text" value={legal.rnt} onChange={e => setLegal(p => ({ ...p, rnt: e.target.value }))} placeholder="Ej: RNT-12345" style={inputStyle} />
                 </div>
+              </div>
+            </div>
+
+            <div style={sectionCard}>
+              <h3 style={sectionTitle}>Confianza del departamento</h3>
+              <p style={{ margin: '0 0 12px', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, textAlign: 'center' }}>
+                Marca lo que tu departamento cuenta. Se mostrará como íconos de confianza en la lista pública de renta corta.
+              </p>
+              {[
+                { key: 'antirruido', label: 'Dispositivo antirruido' },
+                { key: 'noFumar', label: 'Señalética de "no fumar"' },
+                { key: 'sensor', label: 'Sensor de incendio / gas / CO2' },
+              ].map(op => (
+                <div key={op.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${theme.colors.borderLight}` }}>
+                  <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>{op.label}</span>
+                  <Toggle value={!!cumplimiento[op.key]} onChange={(v) => setCumplimiento(c => ({ ...c, [op.key]: v }))} />
+                </div>
+              ))}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0' }}>
+                <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>Ocultar número de departamento en la lista pública</span>
+                <Toggle value={ocultarNumero} onChange={setOcultarNumero} />
               </div>
             </div>
 

@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell';
 import PageHeader from '../../components/layout/PageHeader';
+import Modal from '../../components/ui/Modal';
 import { ModuloGate, ModuloHeaderInfo } from '../../components/ui/ModuloEstado';
 import { zonasComunes } from '../../data/mockData';
 import theme from '../../config/theme';
@@ -11,6 +13,14 @@ export default function ZonasComunesPage() {
   const navigate = useNavigate();
   const { rolActivo, esResidente } = useApp();
   const accesoBloqueado = rolActivo === 'propietario' && !esResidente;
+  const esHuesped = rolActivo === 'huesped-temporal';
+  const [reglamentoZona, setReglamentoZona] = useState(null);
+  const [restringidaOpen, setRestringidaOpen] = useState(false);
+
+  const aceptarReglamento = (id) => {
+    try { localStorage.setItem(`reglamento-aceptado-${id}`, '1'); } catch (e) { /* noop */ }
+    setReglamentoZona(null);
+  };
 
   return (
     <AppShell>
@@ -24,62 +34,104 @@ export default function ZonasComunesPage() {
       <ModuloGate helpKey="zonas">
       <div style={{ padding: '16px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-          {zonasComunes.map(zona => {
-            const isFull = zona.disponibles >= zona.total;
-            return (
-              <button
-                key={zona.id}
-                onClick={() => navigate(`/zonas-comunes/${zona.id}`)}
+          {zonasComunes.map(zona => (
+            <button
+              key={zona.id}
+              onClick={() => esHuesped ? setRestringidaOpen(true) : navigate(`/zonas-comunes/${zona.id}`)}
+              disabled={esHuesped}
+              style={{
+                background: theme.colors.bgCard,
+                borderRadius: theme.radius.xl,
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '10px',
+                boxShadow: theme.shadows.card,
+                cursor: esHuesped ? 'not-allowed' : 'pointer',
+                fontFamily: theme.fonts.family,
+                border: 'none',
+                position: 'relative',
+                opacity: esHuesped ? 0.5 : 1,
+                filter: esHuesped ? 'grayscale(1)' : 'none',
+              }}
+            >
+              <img
+                src={zonaIcons[zona.id]}
+                alt={zona.nombre}
+                style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover' }}
+              />
+              <span
                 style={{
-                  background: theme.colors.bgCard,
-                  borderRadius: theme.radius.xl,
-                  padding: '16px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '10px',
-                  boxShadow: theme.shadows.card,
-                  border: isFull ? `2px solid ${theme.colors.primary}` : `2px solid transparent`,
-                  cursor: 'pointer',
-                  fontFamily: theme.fonts.family,
-                  position: 'relative',
+                  fontSize: theme.fonts.sizes.sm,
+                  fontWeight: theme.fonts.weights.semibold,
+                  color: theme.colors.text,
                 }}
               >
-                {/* Capacity badge */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '10px',
-                    right: '10px',
-                    fontSize: theme.fonts.sizes.xs,
-                    fontWeight: theme.fonts.weights.semibold,
-                    color: isFull ? theme.colors.danger : theme.colors.textSecondary,
-                  }}
-                >
-                  {zona.disponibles}/{zona.total}
-                </div>
-
-                <img
-                  src={zonaIcons[zona.id]}
-                  alt={zona.nombre}
-                  style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover' }}
-                />
-                <span
-                  style={{
-                    fontSize: theme.fonts.sizes.sm,
-                    fontWeight: theme.fonts.weights.semibold,
-                    color: theme.colors.text,
-                  }}
-                >
-                  {zona.nombre}
-                </span>
+                {zona.nombre}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setReglamentoZona(zona); }}
+                style={{
+                  fontSize: theme.fonts.sizes['2xs'],
+                  color: theme.colors.primary,
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: theme.fonts.weights.semibold,
+                  textDecoration: 'underline',
+                  fontFamily: theme.fonts.family,
+                }}
+              >
+                Reglamento
               </button>
-            );
-          })}
+            </button>
+          ))}
         </div>
       </div>
       </ModuloGate>
       </>)}
+
+      <Modal isOpen={!!reglamentoZona} onClose={() => setReglamentoZona(null)} title={`Reglamento — ${reglamentoZona?.nombre || ''}`}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <p style={{ margin: 0, fontSize: theme.fonts.sizes.sm, color: theme.colors.text, lineHeight: 1.6 }}>
+            {reglamentoZona?.reglamento}
+          </p>
+          <button
+            type="button"
+            onClick={() => aceptarReglamento(reglamentoZona.id)}
+            style={{
+              width: '100%', padding: '12px', borderRadius: theme.radius.full,
+              background: theme.colors.primary, color: theme.colors.text,
+              fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.md,
+              border: 'none', cursor: 'pointer', fontFamily: theme.fonts.family,
+            }}
+          >
+            Acepto el reglamento
+          </button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={restringidaOpen} onClose={() => setRestringidaOpen(false)} title="Zona restringida">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <p style={{ margin: 0, fontSize: theme.fonts.sizes.sm, color: theme.colors.text, lineHeight: 1.6 }}>
+            Las zonas comunes están restringidas para huéspedes temporales. Esta es una regla del edificio, no del anfitrión. Si necesitas acceso, coordínalo con tu anfitrión.
+          </p>
+          <button
+            type="button"
+            onClick={() => setRestringidaOpen(false)}
+            style={{
+              width: '100%', padding: '12px', borderRadius: theme.radius.full,
+              background: theme.colors.primary, color: theme.colors.text,
+              fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.md,
+              border: 'none', cursor: 'pointer', fontFamily: theme.fonts.family,
+            }}
+          >
+            Entendido
+          </button>
+        </div>
+      </Modal>
     </AppShell>
   );
 }

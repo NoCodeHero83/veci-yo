@@ -27,7 +27,7 @@ export default function GratitudPopup({ isOpen, onClose, destinatarioPreseleccio
 
   // Solo residentes aparecen como destinatarios posibles
   const residentesVisibles = residentesPropietario.filter(r =>
-    r.rol === 'Residente' || r.rol === 'Residente Lider' || r.rol === 'Inquilino Lider' || r.rol === 'Corresidente'
+    r.rol === 'Residente' || r.rol === 'Inquilino Lider' || r.rol === 'Corresidente'
   );
 
   const handleConfirm = () => {

@@ -273,8 +273,8 @@ export default function InquilinoLiderHome() {
             Tráfico de Ingresos y Salidas
           </h2>
 
-          {/* Day selectors — below the title */}
-          <div style={{ display: 'flex', gap: '6px' }}>
+          {/* Day selectors — below the title, centered to align with the Ingresos/Salidas toggle */}
+          <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
             {dias.map(dia => (
               <button
                 key={dia.key}

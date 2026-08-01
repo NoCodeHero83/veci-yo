@@ -10,7 +10,7 @@ import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import SelectField from '../../components/ui/SelectField';
 import { useApp } from '../../context/AppContext';
-import { zonasComunes, cantidadPersonas } from '../../data/mockData';
+import { zonasComunes, cantidadPersonas, horasReserva } from '../../data/mockData';
 import theme from '../../config/theme';
 import zonaIcons, { zonaBanners } from '../../assets/icons/zonas';
 
@@ -27,6 +27,18 @@ const borderByEstado = {
   Disponible: theme.colors.secondary,
   'No disponible': 'transparent',
 };
+
+const chipDia = (activo) => ({
+  padding: '6px 14px',
+  borderRadius: theme.radius.full,
+  border: `1.5px solid ${activo ? theme.colors.primary : theme.colors.border}`,
+  background: activo ? theme.colors.primary : theme.colors.bgCard,
+  color: activo ? '#fff' : theme.colors.textSecondary,
+  fontSize: theme.fonts.sizes.xs,
+  fontWeight: theme.fonts.weights.semibold,
+  cursor: 'pointer',
+  fontFamily: theme.fonts.family,
+});
 
 const estilosPersona = {
   container: {
@@ -81,6 +93,8 @@ export default function ZonaDetallesPage() {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState(null);
   const [filtrosAbierto, setFiltrosAbierto] = useState(true);
+  const [filtroDia, setFiltroDia] = useState(null);
+  const [fechaRango, setFechaRango] = useState('');
   const [menuItem, setMenuItem] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
   const [editPersonasOpen, setEditPersonasOpen] = useState(false);
@@ -97,11 +111,26 @@ export default function ZonaDetallesPage() {
 
   const esGuardia = rolActivo === 'guardia';
 
+  const nombreDia = (fecha) => ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][fecha.getDay()];
+  const hoy = new Date();
+  const manana = new Date(hoy.getTime() + 86400000);
+  const diaFiltro = filtroDia === 'hoy' ? nombreDia(hoy) : filtroDia === 'manana' ? nombreDia(manana) : (fechaRango ? nombreDia(new Date(fechaRango + 'T00:00:00')) : null);
+
   const filtered = zonasReservas.filter(r => {
     const matchSearch = !search || r.depto.toLowerCase().includes(search.toLowerCase());
     const matchTab = !activeTab || r.estado === activeTab;
-    return matchSearch && matchTab;
+    const matchDia = !diaFiltro || (r.horario || '').toLowerCase().startsWith(diaFiltro.toLowerCase());
+    return matchSearch && matchTab && matchDia;
   });
+
+  // Disponibilidad por slots (zonas que usan modelo de slots)
+  const slotsDisponibles = (zona.usaSlots && diaFiltro) ? horasReserva.map(slot => {
+    const ocupados = zonasReservas.filter(r =>
+      (r.horario || '').toLowerCase().includes(diaFiltro.toLowerCase()) &&
+      (r.horario || '').includes(slot.split(' ')[0])
+    ).length;
+    return { slot, ocupados, libres: Math.max(0, zona.total - ocupados) };
+  }) : [];
 
   const handleEstado = (estado) => {
     actualizarEstadoReserva(menuItem.id, estado);
@@ -241,6 +270,14 @@ export default function ZonaDetallesPage() {
           {filtrosAbierto && (
             <>
               <SearchBar value={search} onChange={setSearch} />
+              <div style={{ marginTop: '10px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button onClick={() => setFiltroDia('hoy')} style={chipDia(filtroDia === 'hoy')}>Hoy</button>
+                <button onClick={() => setFiltroDia('manana')} style={chipDia(filtroDia === 'manana')}>Mañana</button>
+                <input type="date" value={fechaRango} onChange={e => { setFechaRango(e.target.value); setFiltroDia(null); }} style={{ padding: '6px 10px', borderRadius: theme.radius.md, border: `1.5px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.xs, fontFamily: theme.fonts.family }} />
+                {(filtroDia || fechaRango) && (
+                  <button onClick={() => { setFiltroDia(null); setFechaRango(''); }} style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Limpiar</button>
+                )}
+              </div>
               <div style={{ marginTop: '10px' }}>
                 <StatusTabs
                   tabs={esGuardia ? ['Todos', 'Aprobada', 'Pendiente', 'Cancelada'] : ['Todos', 'Reservado', 'Aprobado', 'Pendiente', 'No disponible', 'Disponible']}
@@ -255,6 +292,33 @@ export default function ZonaDetallesPage() {
                 />
               </div>
             </>
+          )}
+        </div>
+
+        {/* Disponibilidad */}
+        <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '12px', boxShadow: theme.shadows.card }}>
+          <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, marginBottom: '8px' }}>
+            Disponibilidad{zona.usaSlots ? ' por slots' : ` · horario libre (máx ${zona.duracionMaxima} h)`}
+          </div>
+          {zona.usaSlots ? (
+            diaFiltro ? (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                {slotsDisponibles.map((s, i) => (
+                  <div key={i} style={{ padding: '10px 12px', borderRadius: theme.radius.lg, background: s.libres > 0 ? theme.colors.successLight : theme.colors.bgMuted, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <span style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>{s.slot}</span>
+                    <span style={{ fontSize: theme.fonts.sizes['2xs'], color: s.libres > 0 ? theme.colors.success : theme.colors.danger }}>
+                      {s.libres > 0 ? `${s.libres} disponibles` : 'Lleno'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>Selecciona Hoy, Mañana o una fecha para ver los slots.</div>
+            )
+          ) : (
+            <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
+              Reserva por bloque de tiempo con duración máxima de {zona.duracionMaxima} {zona.duracionMaxima === 1 ? 'hora' : 'horas'}. No se muestran los detalles de otras reservas.
+            </div>
           )}
         </div>
 

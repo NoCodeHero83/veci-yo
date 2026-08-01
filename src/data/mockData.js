@@ -318,14 +318,14 @@ export const packVerificacion = [
 // ─── ZONAS COMUNES ───────────────────────────────────────────────────────────
 
 export const zonasComunes = [
-  { id: 'piscina', nombre: 'Piscina', emoji: '🏊', disponibles: 2, total: 2 },
-  { id: 'parque', nombre: 'Parque', emoji: '🛝', disponibles: 15, total: 15 },
-  { id: 'bbq', nombre: 'BBQ', emoji: '🔥', disponibles: 15, total: 15 },
-  { id: 'gym', nombre: 'GYM', emoji: '🏋️', disponibles: 30, total: 30 },
-  { id: 'coworking', nombre: 'Coworking', emoji: '💼', disponibles: 2, total: 2 },
-  { id: 'tenis', nombre: 'Tenis', emoji: '🎾', disponibles: 2, total: 2 },
-  { id: 'sala-juegos', nombre: 'Sala de juegos', emoji: '🎱', disponibles: 5, total: 5 },
-  { id: 'lavanderia', nombre: 'Lavandería', emoji: '🫧', disponibles: 15, total: 15 },
+  { id: 'piscina', nombre: 'Piscina', emoji: '🏊', disponibles: 2, total: 2, usaSlots: false, duracionMaxima: 2, reglamento: 'Horario de piscina: 08:00 a 20:00. Prohibido correr en el borde. Menores deben ir acompañados de un adulto.' },
+  { id: 'parque', nombre: 'Parque', emoji: '🛝', disponibles: 15, total: 15, usaSlots: false, duracionMaxima: 3, reglamento: 'Respetar el horario de silencio después de las 21:00. Recoger basura antes de retirarse.' },
+  { id: 'bbq', nombre: 'BBQ', emoji: '🔥', disponibles: 15, total: 15, usaSlots: false, duracionMaxima: 4, reglamento: 'Apagar parrilla tras usarla. No dejar carbón encendido. Limpiar la zona.' },
+  { id: 'gym', nombre: 'GYM', emoji: '🏋️', disponibles: 30, total: 30, usaSlots: false, duracionMaxima: 2, reglamento: 'Máximo 2 horas por reserva. Usar toalla en los equipos. Devolver pesas a su lugar.' },
+  { id: 'coworking', nombre: 'Coworking', emoji: '💼', disponibles: 2, total: 2, usaSlots: false, duracionMaxima: 4, reglamento: 'Mantener silencio. No consumir alimentos en las mesas de trabajo.' },
+  { id: 'tenis', nombre: 'Tenis', emoji: '🎾', disponibles: 2, total: 2, usaSlots: true, duracionMaxima: 1, reglamento: 'Una cancha por reserva. Calzado deportivo obligatorio.' },
+  { id: 'sala-juegos', nombre: 'Sala de juegos', emoji: '🎱', disponibles: 5, total: 5, usaSlots: false, duracionMaxima: 3, reglamento: 'No se permite el ingreso de menores sin supervisión.' },
+  { id: 'lavanderia', nombre: 'Lavandería', emoji: '🫧', disponibles: 15, total: 15, usaSlots: true, duracionMaxima: 1, reglamento: 'Slots de 1 hora. Retirar la ropa al finalizar el slot.' },
 ];
 
 function generarPersonas(titular, cantidad) {
@@ -891,7 +891,7 @@ export const garitas = ['Principal', 'Secundaria', 'Peatonal', 'Vehicular'];
 // ─── PROPIETARIO ─────────────────────────────────────────────────────────────
 
 export const residentesPropietarioInit = [
-  { id: 1, nombre: 'Alberto Manual', rol: 'Residente Lider', ci: '1782753580', fecha: '14/05/2024', correo: '', tipo: '', codigoArea: '', telefono: '', contactoNombre: '', contactoCodigo: '', contactoTelefono: '', fechaInicio: '', duracion: '', montoAlquiler: '', monitoreoPago: false, servicios: {} },
+  { id: 1, nombre: 'Alberto Manual', rol: 'Inquilino Lider', ci: '1782753580', fecha: '14/05/2024', correo: '', tipo: '', codigoArea: '', telefono: '', contactoNombre: '', contactoCodigo: '', contactoTelefono: '', fechaInicio: '', duracion: '', montoAlquiler: '', monitoreoPago: false, servicios: {} },
   { id: 2, nombre: 'Sofia Martinez', rol: 'Residente', ci: '1759632584', fecha: '22/06/2024', correo: '', tipo: '', codigoArea: '', telefono: '', contactoNombre: '', contactoCodigo: '', contactoTelefono: '', fechaInicio: '', duracion: '', montoAlquiler: '', monitoreoPago: false, servicios: {} },
   { id: 3, nombre: 'Luis Torres', rol: 'Residente', ci: '1824507896', fecha: '30/07/2024', correo: '', tipo: '', codigoArea: '', telefono: '', contactoNombre: '', contactoCodigo: '', contactoTelefono: '', fechaInicio: '', duracion: '', montoAlquiler: '', monitoreoPago: false, servicios: {} },
 ];
@@ -1007,9 +1007,9 @@ export const anuncios = [
 export const reglasEstados = ['Inscripto', 'No inscripto', 'Pendiente'];
 
 export const reglasDepartamentos = [
-  { id: 1, departamento: 'Dpto 100 A', responsable: 'Maria Perez', estado: 'Inscripto', administrador: 'Carlos Gómez', anfitrion: 'María Pérez', propietario: 'Juan López', telAdmin: '+51999888777', telAnfitrion: '+51999777666', telPropietario: '+51999666555' },
-  { id: 2, departamento: 'Dpto 101 A', responsable: 'Maria Perez', estado: 'No inscripto', administrador: 'Carlos Gómez', anfitrion: 'María Pérez', propietario: 'Juan López', telAdmin: '+51999888777', telAnfitrion: '+51999777666', telPropietario: '+51999666555' },
-  { id: 3, departamento: 'Dpto 102 B', responsable: 'Maria Perez', estado: 'Pendiente', administrador: 'Carlos Gómez', anfitrion: 'María Pérez', propietario: 'Juan López', telAdmin: '+51999888777', telAnfitrion: '+51999777666', telPropietario: '+51999666555' },
+  { id: 1, departamento: 'Dpto 100 A', responsable: 'Maria Perez', estado: 'Inscripto', administrador: 'Carlos Gómez', anfitrion: 'María Pérez', propietario: 'Juan López', telAdmin: '+51999888777', telAnfitrion: '+51999777666', telPropietario: '+51999666555', mascotas: true, ocultarNumero: false, cumplimiento: { antirruido: true, noFumar: true, sensor: true } },
+  { id: 2, departamento: 'Dpto 101 A', responsable: 'Maria Perez', estado: 'No inscripto', administrador: 'Carlos Gómez', anfitrion: 'María Pérez', propietario: 'Juan López', telAdmin: '+51999888777', telAnfitrion: '+51999777666', telPropietario: '+51999666555', mascotas: false, ocultarNumero: false, cumplimiento: { antirruido: false, noFumar: true, sensor: false } },
+  { id: 3, departamento: 'Dpto 102 B', responsable: 'Maria Perez', estado: 'Pendiente', administrador: 'Carlos Gómez', anfitrion: 'María Pérez', propietario: 'Juan López', telAdmin: '+51999888777', telAnfitrion: '+51999777666', telPropietario: '+51999666555', mascotas: true, ocultarNumero: true, cumplimiento: { antirruido: true, noFumar: false, sensor: true } },
 ];
 
 export const reglasTorres = ['A', 'B', 'C'];

@@ -41,7 +41,20 @@ const dateInputStyle = {
 };
 
 const TIPOS_ANUNCIO = ['Anuncio', 'Encuesta'];
-const FORM_VACIO = { tipo: 'Anuncio', titulo: '', descripcion: '', categoria: '', paraPropietarios: false, paraResidentes: false, paraHuespedes: false, urlVideo: '', votacion: false, umbral: '', tiempoMaximo: '', fechaPublicada: '', fechaFinalizacion: '', opcionesVotacion: ['', ''], ocultarResultados: false };
+
+const chipVotacion = (activo) => ({
+  flex: 1,
+  padding: '8px 0',
+  borderRadius: '999px',
+  border: `1.5px solid ${activo ? theme.colors.primary : theme.colors.border}`,
+  background: activo ? theme.colors.primary : theme.colors.bgCard,
+  color: activo ? '#fff' : theme.colors.textSecondary,
+  fontSize: theme.fonts.sizes.sm,
+  fontWeight: theme.fonts.weights.semibold,
+  cursor: 'pointer',
+  fontFamily: theme.fonts.family,
+});
+const FORM_VACIO = { tipo: 'Anuncio', titulo: '', descripcion: '', categoria: '', paraPropietarios: false, paraResidentes: false, paraHuespedes: false, urlVideo: '', votacion: false, umbral: '', tiempoMaximo: '', fechaPublicada: '', fechaFinalizacion: '', opcionesVotacion: ['', ''], ocultarResultados: false, votacionMultiple: false };
 
 // Pantalla "2-Anuncios": listado de comunicados del condominio con filtros
 // (búsqueda, fechas, categoría, encuesta), creación de nuevos anuncios
@@ -63,6 +76,7 @@ export default function AnunciosPage() {
 
   const setField = (key) => (value) => setForm(prev => ({ ...prev, [key]: value }));
 
+  const esHuesped = rolActivo === 'huesped-temporal';
   const filtered = anuncios.filter(a => {
     const matchSearch = !search
       || a.titulo.toLowerCase().includes(search.toLowerCase())
@@ -70,7 +84,9 @@ export default function AnunciosPage() {
       || a.descripcion.toLowerCase().includes(search.toLowerCase());
     const matchCategoria = !categoriaFiltro || a.categoria === categoriaFiltro;
     const matchEncuesta = !encuestaActiva || a.votacion;
-    return matchSearch && matchCategoria && matchEncuesta;
+    // Huésped temporal: solo ve anuncios dirigidos a huéspedes, nunca encuestas
+    const matchAudiencia = !esHuesped || (a.paraHuespedes === true && !a.votacion);
+    return matchSearch && matchCategoria && matchEncuesta && matchAudiencia;
   });
 
   const handlePublicar = () => {
@@ -165,7 +181,7 @@ export default function AnunciosPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px', alignItems: 'center' }}>
                 <SelectField label="Categoria" value={categoriaFiltro} options={['Todas', ...anunciosCategorias]} onChange={v => setCategoriaFiltro(v === 'Todas' ? '' : v)} placeholder="Todas" />
-                {rolActivo !== 'guardia' && <Toggle value={encuestaActiva} onChange={setEncuestaActiva} labelRight="Encuesta" />}
+                {rolActivo !== 'guardia' && rolActivo !== 'huesped-temporal' && <Toggle value={encuestaActiva} onChange={setEncuestaActiva} labelRight="Encuesta" />}
               </div>
             </div>
           )}
@@ -300,6 +316,16 @@ export default function AnunciosPage() {
               </div>
 
               <Toggle value={form.ocultarResultados} onChange={setField('ocultarResultados')} labelRight="Ocultar resultados hasta el cierre" />
+
+              <div>
+                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>
+                  Tipo de selección
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button type="button" onClick={() => setField('votacionMultiple')(false)} style={chipVotacion(!form.votacionMultiple)}>Única</button>
+                  <button type="button" onClick={() => setField('votacionMultiple')(true)} style={chipVotacion(form.votacionMultiple)}>Múltiple</button>
+                </div>
+              </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
                 <InputField value={form.umbral} onChange={setField('umbral')} placeholder="Umbral mínimo" />

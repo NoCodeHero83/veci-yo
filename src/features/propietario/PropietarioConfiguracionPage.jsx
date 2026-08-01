@@ -16,13 +16,18 @@ import iconAdjuntarImagen from '../../assets/icons/shared/adjuntar-imagen.png';
 
 const ROL_COLORES = {
   'Propietario': { bg: '#F3E8FF', color: '#7C3AED' },
-  'Residente Lider': { bg: '#FEF9C3', color: '#854D0E' },
   'Inquilino Lider': { bg: '#FEF9C3', color: '#854D0E' },
   'Residente': { bg: '#E0F2FE', color: '#0369A1' },
   'Corresidente': { bg: '#E0F2FE', color: '#0369A1' },
   'Coadministrador': { bg: '#FCE7F3', color: '#BE185D' },
   'Familiar': { bg: '#F0FDF4', color: '#166534' },
 };
+
+const GRUPOS_JERARQUIA = [
+  { titulo: 'Inquilino líder', roles: ['Inquilino Lider'], indent: false },
+  { titulo: 'Residente', roles: ['Residente', 'Corresidente'], indent: true },
+  { titulo: 'Coadministrador', roles: ['Coadministrador'], indent: false },
+];
 
 const CATEGORIAS = ['Mantenimiento', 'Seguridad', 'Administración', 'Comunidad', 'Servicios'];
 const DESTINATARIOS = ['Todos los residentes', 'Residentes activos', 'Administración', 'Propietarios'];
@@ -37,99 +42,11 @@ function IconoImagen() {
 
 export default function PropietarioConfiguracionPage({ basePath = '/propietario/configuracion' } = {}) {
   const navigate = useNavigate();
-  const { residentesPropietario, eliminarResidente, agregarResidente, addToast, rolActivo, unidades, propietariosInvited, aceptarInvitacion, agregarUbicacion, usuario, tipologias, actualizarConfigHuespedTemporal, marcarUnidadConfigurada, configHuespedesTemporales, esResidente, togglePropietarioResidente, residentesDeclarados } = useApp();
+  const { residentesPropietario, eliminarResidente, agregarResidente, addToast, rolActivo, unidades, propietariosInvited, aceptarInvitacion, agregarUbicacion, usuario, tipologias, esResidente, togglePropietarioResidente } = useApp();
 
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [menuResidente, setMenuResidente] = useState(null);
   const [deleteResidente, setDeleteResidente] = useState(null);
-
-  const [showPropertyWizard, setShowPropertyWizard] = useState(false);
-  const [configStep, setConfigStep] = useState(0);
-  const [acceptedUbicacionId, setAcceptedUbicacionId] = useState(null);
-  const [completedConfigSteps, setCompletedConfigSteps] = useState({});
-  const config = acceptedUbicacionId ? configHuespedesTemporales[acceptedUbicacionId] : null;
-
-  const [minDias, setMinDias] = useState(config?.minDias ?? 2);
-  const [maxHuespedes, setMaxHuespedes] = useState(config?.maxHuespedes ?? 2);
-  const [politicaMascotas, setPoliticaMascotas] = useState(config?.politicaMascotas ?? 'no-permitidas');
-  const [aptoNinos, setAptoNinos] = useState(config?.aptoNinos ?? false);
-  const [descripcion, setDescripcion] = useState(config?.descripcion ?? '');
-  const [numHabitaciones, setNumHabitaciones] = useState(config?.numHabitaciones ?? 1);
-  const [numCamas, setNumCamas] = useState(config?.numCamas ?? 1);
-  const [estacionamientosProp, setEstacionamientosProp] = useState(config?.estacionamientos ?? 0);
-  const [integraciones, setIntegraciones] = useState(config?.integraciones ?? { airbnb: false, booking: false, lodgify: false });
-  const [staff, setStaff] = useState(config?.staff ?? []);
-  const [showStaffForm, setShowStaffForm] = useState(false);
-  const [staffForm, setStaffForm] = useState({ nombre: '', rol: 'coanfitrion', telefono: '' });
-
-  const handleGuardarWizard = () => {
-    if (!acceptedUbicacionId) return;
-    actualizarConfigHuespedTemporal(acceptedUbicacionId, {
-      minDias, maxHuespedes, politicaMascotas, aptoNinos, descripcion,
-      numHabitaciones, estacionamientos: estacionamientosProp,
-      staff,
-    });
-  };
-
-  const toggleIntegracion = (key) => {
-    setIntegraciones(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const agregarStaff = () => {
-    if (!staffForm.nombre) return;
-    setStaff(prev => [...prev, { ...staffForm, id: Date.now() }]);
-    setStaffForm({ nombre: '', rol: 'coanfitrion', telefono: '' });
-    setShowStaffForm(false);
-  };
-
-  const eliminarStaff = (id) => {
-    setStaff(prev => prev.filter(s => s.id !== id));
-  };
-
-  const wizardConfigSteps = [
-    { key: 'parametros', label: 'Parametros de estancia' },
-    { key: 'reglas', label: 'Reglas y preferencias' },
-    { key: 'estacionamientos', label: 'Estacionamientos' },
-    { key: 'integraciones', label: 'Integraciones' },
-    { key: 'legal', label: 'Cumplimiento legal' },
-    { key: 'staff', label: 'Personal' },
-  ];
-
-  const handleFinalizarWizard = () => {
-    handleGuardarWizard();
-    const unidad = unidades.find(u => u.propietarioEmail === usuario?.correo && u.estado === 'config-pendiente');
-    if (unidad) marcarUnidadConfigurada(unidad.id);
-    setShowPropertyWizard(false);
-    setConfigStep(0);
-  };
-
-  const inputStyle = {
-    width: '100%',
-    background: theme.colors.bgMuted,
-    borderRadius: theme.radius.lg,
-    border: `1px solid ${theme.colors.border}`,
-    outline: 'none',
-    fontSize: theme.fonts.sizes.base,
-    fontFamily: theme.fonts.family,
-    color: theme.colors.text,
-    padding: '10px 14px',
-    boxSizing: 'border-box',
-  };
-
-  const sectionCard = {
-    background: theme.colors.bgCard,
-    borderRadius: theme.radius.xl,
-    padding: '20px',
-    boxShadow: theme.shadows.card,
-  };
-
-  const sectionTitle = {
-    textAlign: 'center',
-    fontSize: theme.fonts.sizes.base,
-    fontWeight: theme.fonts.weights.bold,
-    color: theme.colors.text,
-    marginBottom: '16px',
-  };
 
   const [showFamiliar, setShowFamiliar] = useState(false);
   const [showResidentePopup, setShowResidentePopup] = useState(false);
@@ -173,17 +90,6 @@ const handleAgregarFamiliar = () => {
         title="Configuración"
         action={
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              onClick={() => navigate(`${basePath}/historial-contrato`)}
-              style={{ width: '36px', height: '36px', borderRadius: theme.radius.md, background: theme.colors.primary, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={theme.colors.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-              </svg>
-            </button>
             <button
               onClick={() => navigate(`${basePath}/crear-rol`)}
               style={{ width: '36px', height: '36px', borderRadius: theme.radius.md, background: theme.colors.primary, color: theme.colors.text, fontSize: '22px', fontWeight: 'bold', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: theme.fonts.family }}
@@ -249,9 +155,7 @@ const handleAgregarFamiliar = () => {
                   togglePropietarioResidente(usuario?.correo, pendienteResidenteValue);
                   aceptarInvitacion(invitacion.id);
                   const newUbId = agregarUbicacion({ direccion: `Torre ${unidad.torreNumero} - ${unidad.codigo}`, alias: `${unidad.codigo}`, favorito: true });
-                  setAcceptedUbicacionId(newUbId);
-                  setShowPropertyWizard(true);
-                  setConfigStep(1);
+                  navigate(`${basePath}/aceptar`, { state: { ubicacionId: newUbId, unidadId: unidad.id } });
                 }}>
                   Aceptar invitación
                 </Button>
@@ -276,180 +180,12 @@ const handleAgregarFamiliar = () => {
             );
           })}
 
-        {showPropertyWizard && configStep > 0 && (
-          <>
-            {/* Progress steps */}
-            <div style={sectionCard}>
-              <h3 style={sectionTitle}>Configura tu propiedad</h3>
-              <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginBottom: '12px' }}>
-                {wizardConfigSteps.map((step, i) => (
-                  <div key={step.key} style={{
-                    width: '10px', height: '10px', borderRadius: '50%',
-                    background: i < configStep - 1 ? theme.colors.success : i === configStep - 1 ? theme.colors.primary : theme.colors.border,
-                    transition: 'background 200ms',
-                  }} />
-                ))}
-              </div>
-              <p style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, textAlign: 'center', marginBottom: '12px' }}>
-                Paso {configStep} de {wizardConfigSteps.length}
-              </p>
-              {wizardConfigSteps.filter((_, i) => i < configStep || i === configStep - 1).map((step, i) => {
-                const stepIndex = wizardConfigSteps.indexOf(step);
-                const isCompleted = completedConfigSteps[step.key];
-                const isCurrent = stepIndex === configStep - 1;
-                return (
-                  <div key={step.key} style={{
-                    display: 'flex', alignItems: 'center', gap: '10px',
-                    padding: '10px 0', borderBottom: stepIndex < wizardConfigSteps.length - 1 ? `1px solid ${theme.colors.borderLight}` : 'none',
-                    opacity: isCurrent || isCompleted ? 1 : 0.4,
-                  }}>
-                    <span style={{
-                      width: '24px', height: '24px', borderRadius: '50%',
-                      background: isCompleted ? theme.colors.success : isCurrent ? theme.colors.primary : theme.colors.border,
-                      color: '#fff', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0,
-                    }}>
-                      {isCompleted ? '\u2713' : String(stepIndex + 1)}
-                    </span>
-                    <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, flex: 1 }}>{step.label}</span>
-                    {isCompleted && <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.success }}>Completado</span>}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Current step content */}
-            <div style={sectionCard}>
-              {configStep === 1 && (
-                <>
-                  <h3 style={sectionTitle}>Parametros de estancia y aforo</h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px' }}>Minimo de dias</div>
-                    <input type="number" min="1" value={minDias} onChange={e => setMinDias(parseInt(e.target.value) || 1)} style={inputStyle} />
-                    <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px' }}>Capacidad maxima</div>
-                    <input type="number" min="1" value={maxHuespedes} onChange={e => setMaxHuespedes(parseInt(e.target.value) || 1)} style={inputStyle} />
-                  </div>
-                </>
-              )}
-              {configStep === 2 && (
-                <>
-                  <h3 style={sectionTitle}>Reglas de convivencia y preferencias</h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>Politica de mascotas</span>
-                      <div style={{ width: '140px' }}>
-                        <SelectField value={politicaMascotas} options={['permitidas', 'no-permitidas']} onChange={setPoliticaMascotas} placeholder="Seleccione" />
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>Apta para ninos</span>
-                      <Toggle value={aptoNinos} onChange={setAptoNinos} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, marginBottom: '6px' }}>Descripcion del alojamiento</div>
-                      <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} placeholder="N habitaciones, camas, info de aforo..." rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
-                    </div>
-                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                      <div style={{ flex: '1 1 100px' }}>
-                        <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px' }}>Habitaciones</div>
-                        <input type="number" min="1" value={numHabitaciones} onChange={e => setNumHabitaciones(parseInt(e.target.value) || 1)} style={inputStyle} />
-                      </div>
-                      <div style={{ flex: '1 1 100px' }}>
-                        <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px' }}>Camas</div>
-                        <input type="number" min="1" value={numCamas} onChange={e => setNumCamas(parseInt(e.target.value) || 1)} style={inputStyle} />
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-              {configStep === 3 && (
-                <>
-                  <h3 style={sectionTitle}>Estacionamientos</h3>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <input type="number" min="0" value={estacionamientosProp} onChange={e => setEstacionamientosProp(parseInt(e.target.value) || 0)} style={{ ...inputStyle, width: '80px' }} />
-                    <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>Estacionamientos disponibles para visitantes</span>
-                  </div>
-                </>
-              )}
-              {configStep === 4 && (
-                <>
-                  <h3 style={sectionTitle}>Integraciones</h3>
-                  <p style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, marginBottom: '12px' }}>
-                    Prepara tu propiedad para futuras integraciones con plataformas de reservas.
-                  </p>
-                  {[
-                    { key: 'airbnb', label: 'Airbnb' },
-                    { key: 'booking', label: 'Booking.com' },
-                    { key: 'lodgify', label: 'Lodgify' },
-                  ].map(item => (
-                    <div key={item.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: `1px solid ${theme.colors.borderLight}` }}>
-                      <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>{item.label}</span>
-                      <Toggle value={integraciones[item.key]} onChange={() => toggleIntegracion(item.key)} />
-                    </div>
-                  ))}
-                </>
-              )}
-              {configStep === 5 && (
-                <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                  <p style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, lineHeight: 1.5 }}>
-                    La configuración legal (RNT, TRA, SIRE) se realiza desde la pantalla de configuración de Huéspedes Temporales.
-                  </p>
-                </div>
-              )}
-              {configStep === 6 && (
-                <>
-                  <h3 style={sectionTitle}>Personal</h3>
-                  <p style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, marginBottom: '12px' }}>
-                    Registra coanfitriones, personal de limpieza y contactos de emergencia.
-                  </p>
-                  {staff.map(persona => (
-                    <div key={persona.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: `1px solid ${theme.colors.borderLight}` }}>
-                      <div>
-                        <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.medium, color: theme.colors.text }}>{persona.nombre}</div>
-                        <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
-                          {persona.rol === 'coanfitrion' ? 'Coanfitrion' : persona.rol === 'limpieza' ? 'Limpieza' : 'Emergencia'}
-                        </div>
-                      </div>
-                      <button onClick={() => eliminarStaff(persona.id)} style={{ color: theme.colors.danger, fontSize: theme.fonts.sizes.sm, background: 'none', border: 'none', cursor: 'pointer' }}>Eliminar</button>
-                    </div>
-                  ))}
-                  <Button variant="secondary" fullWidth onClick={() => setShowStaffForm(true)}>+ Agregar personal</Button>
-                </>
-              )}
-              {configStep === 7 && (
-                <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                  <div style={{ fontSize: '48px', marginBottom: '12px' }}>{'\u2705'}</div>
-                  <h3 style={{ fontSize: theme.fonts.sizes.base, fontWeight: theme.fonts.weights.bold, color: theme.colors.text, marginBottom: '8px' }}>
-                    !Todo listo!
-                  </h3>
-                  <p style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, lineHeight: 1.5, marginBottom: '20px' }}>
-                    Has completado todos los pasos de configuracion para tu propiedad. Al finalizar, la propiedad quedara activa y podras administrarla.
-                  </p>
-                  <Button variant="primary" fullWidth onClick={handleFinalizarWizard}>
-                    Finalizar configuracion
-                  </Button>
-                </div>
-              )}
-              {configStep < 7 && (
-                <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-                  {configStep > 1 && (
-                    <Button variant="secondary" fullWidth onClick={() => setConfigStep(p => p - 1)}>Anterior</Button>
-                  )}
-                  <Button variant="primary" fullWidth onClick={() => {
-                    handleGuardarWizard();
-                    const key = wizardConfigSteps[configStep - 1]?.key;
-                    if (key) setCompletedConfigSteps(prev => ({ ...prev, [key]: true }));
-                    setConfigStep(p => p + 1);
-                  }}>
-                    {configStep < 6 ? 'Siguiente' : 'Finalizar'}
-                  </Button>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
         {/* Propietario — siempre visible con su estado de residencia editable */}
+        {rolActivo === 'propietario' && usuario && (
+          <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.bold, color: theme.colors.text, marginTop: '4px' }}>
+            Propietario
+          </div>
+        )}
         {rolActivo === 'propietario' && usuario && (
           <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '16px', boxShadow: theme.shadows.card }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
@@ -497,30 +233,38 @@ const handleAgregarFamiliar = () => {
           </div>
         )}
 
-        {/* Lista completa de residentes actuales */}
+        {/* Lista completa de residentes actuales agrupada por jerarquía */}
         <div style={{ fontSize: theme.fonts.sizes.base, fontWeight: theme.fonts.weights.bold, color: theme.colors.text, marginTop: '8px' }}>
           Residentes actuales ({residentesPropietario.length})
         </div>
+        <p style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, lineHeight: theme.fonts.lineHeights.relaxed, margin: 0 }}>
+          El Inquilino líder o el Propietario son quienes pueden agregar o editar los residentes de la propiedad.
+        </p>
 
-        {residentesPropietario.map(r => {
-          const col = ROL_COLORES[r.rol] || { bg: '#F3F4F6', color: '#374151' };
+        {GRUPOS_JERARQUIA.map(grupo => {
+          const items = residentesPropietario.filter(r => grupo.roles.includes(r.rol));
+          if (items.length === 0) return null;
           return (
-            <div key={r.id} style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '16px', boxShadow: theme.shadows.card }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: theme.fonts.sizes.md, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, marginBottom: '4px' }}>
-                    {r.nombre}
-                  </p>
-                  <span style={{ display: 'inline-block', fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.bold, color: col.color, background: col.bg, borderRadius: theme.radius.full, padding: '2px 10px', marginBottom: '8px' }}>
-                    {r.rol}
-                  </span>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
-                    <span>Ci:{r.ci}</span>
-                    <span>{r.fecha}</span>
+            <div key={grupo.titulo} style={{ display: 'flex', flexDirection: 'column', gap: '10px', ...(grupo.indent ? { paddingLeft: '14px', borderLeft: `2px solid ${theme.colors.borderLight}` } : {}) }}>
+              <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.bold, color: theme.colors.text }}>
+                {grupo.titulo}
+              </div>
+              {items.map(r => (
+                <div key={r.id} style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '16px', boxShadow: theme.shadows.card }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: theme.fonts.sizes.md, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, marginBottom: '8px' }}>
+                        {r.nombre}
+                      </p>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
+                        <span>Ci:{r.ci}</span>
+                        <span>{r.fecha}</span>
+                      </div>
+                    </div>
+                    <DotsMenuButton onClick={() => setMenuResidente(r)} />
                   </div>
                 </div>
-                <DotsMenuButton onClick={() => setMenuResidente(r)} />
-              </div>
+              ))}
             </div>
           );
         })}
@@ -646,19 +390,6 @@ const handleAgregarFamiliar = () => {
             </div>
           )}
           <Button variant="primary" fullWidth onClick={handlePublicar}>Publicar</Button>
-        </div>
-      </Modal>
-
-      {/* Agregar Personal (desde wizard) */}
-      <Modal isOpen={showStaffForm} onClose={() => setShowStaffForm(false)} title="Agregar personal">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <InputField label="Nombre" value={staffForm.nombre} onChange={v => setStaffForm(p => ({ ...p, nombre: v }))} placeholder="Nombre completo" />
-          <div>
-            <span style={{ display: 'block', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Rol</span>
-            <SelectField value={staffForm.rol} options={['coanfitrion', 'limpieza', 'emergencia']} onChange={v => setStaffForm(p => ({ ...p, rol: v }))} placeholder="Seleccionar rol" />
-          </div>
-          <InputField label="Telefono (opcional)" value={staffForm.telefono} onChange={v => setStaffForm(p => ({ ...p, telefono: v }))} placeholder="+593 999999999" />
-          <Button variant="primary" fullWidth onClick={agregarStaff}>Agregar</Button>
         </div>
       </Modal>
     </AppShell>

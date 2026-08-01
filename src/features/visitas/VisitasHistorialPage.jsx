@@ -29,13 +29,26 @@ const TIPO_TABS_BASE = [
 const TIPOS = ['Todos', 'Amigos Familiares', 'Profesional Temporal', 'Profesional Permanente'];
 
 const TIMELINE_STEPS = [
-  { key: 'preregistroEnviado', label: 'Link de preregistro enviado' },
-  { key: 'documentacionCompleta', label: 'Documentación completada' },
-  { key: 'terminosAceptados', label: 'Términos y Condiciones aceptados' },
-  { key: 'verificacionPasada', label: 'Verificación superada' },
-  { key: 'trasideEntrada', label: 'Ingreso al edificio (TRASIDE entrada)' },
-  { key: 'trasideSalida', label: 'Salida del edificio (TRASIDE salida)' },
+  { key: 'preregistroEnviado', label: 'Link de preregistro enviado', icon: '🔗' },
+  { key: 'documentacionCompleta', label: 'Documentación completada', icon: '📄' },
+  { key: 'terminosAceptados', label: 'Términos y Condiciones aceptados', icon: '📝' },
+  { key: 'verificacionPasada', label: 'Verificación superada', icon: '🛡️' },
+  { key: 'trasideEntrada', label: 'Ingreso al edificio (TRA/SIRE entrada)', icon: '🟢' },
+  { key: 'trasideSalida', label: 'Salida del edificio (TRA/SIRE salida)', icon: '🔴' },
 ];
+
+const chipFecha = (activo) => ({
+  flex: 1,
+  padding: '8px 0',
+  borderRadius: theme.radius.full,
+  border: `1.5px solid ${activo ? theme.colors.primary : theme.colors.border}`,
+  background: activo ? theme.colors.primary : theme.colors.bgCard,
+  color: activo ? '#fff' : theme.colors.textSecondary,
+  fontSize: theme.fonts.sizes.xs,
+  fontWeight: theme.fonts.weights.semibold,
+  cursor: 'pointer',
+  fontFamily: theme.fonts.family,
+});
 
 const TIPO_LABELS = {
   amigos: 'Amigos Familiares',
@@ -48,7 +61,7 @@ export default function VisitasHistorialPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const fromHome = location.state?.fromHome || false;
-  const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado, aprobarInvitado, rolActivo, addToast, verificaciones, actualizarVerificacion, actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion, toggleInstruccionCumplida, estacionamientosVisitantes, configHuespedesTemporales, ubicacionActiva, reportarTraSire, usuario, actualizarConfigHuespedTemporal, esResidente, actualizarTimeline, aprobarTerminosManual, aprobarVerificacion } = useApp();
+  const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado, aprobarInvitado, rolActivo, addToast, verificaciones, actualizarVerificacion, actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion, toggleInstruccionCumplida, estacionamientosVisitantes, configHuespedesTemporales, ubicacionActiva, reportarTraSire, usuario, actualizarConfigHuespedTemporal, esResidente, actualizarTimeline, aprobarTerminosManual, aprobarVerificacion, aprobarVerificacionConHallazgos } = useApp();
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('Todas');
   const [tipoTab, setTipoTab] = useState('visitas');
@@ -78,14 +91,21 @@ export default function VisitasHistorialPage() {
   const [showAsignarEstacionamiento, setShowAsignarEstacionamiento] = useState(false);
   const [parkingSpot, setParkingSpot] = useState('');
   const [reservaDetail, setReservaDetail] = useState(null);
-  const [accionGuest, setAccionGuest] = useState(null);
   const [calendarioMonth, setCalendarioMonth] = useState(new Date());
+  // Prueba A/B de creación de visita: 'opcion1' = flujo separado (botón +),
+  // 'opcion2' = vista combinada con los tipos de visita directos en la lista.
+  const [vistaCreacionAB, setVistaCreacionAB] = useState('opcion1');
 
   const algunFiltroActivo = search || fechaDesdeFilter || fechaHastaFilter || torreFilter || deptoFilter || tipoFilter !== 'Todos';
 
+  // Seguridad (guardia) y Administrador no tienen acceso al Calendario.
+  const sinCalendario = rolActivo === 'guardia' || rolActivo === 'administrador';
+  // Solo Seguridad y Administrador pueden filtrar por piso/torre.
+  const puedeFiltrarTorrePiso = rolActivo === 'guardia' || rolActivo === 'administrador';
+
   const TIPO_TABS = useMemo(() => {
     if (rolActivo === 'huesped-temporal') return [{ value: 'visitas', label: 'Visitas' }];
-    if (rolActivo === 'guardia') return [
+    if (sinCalendario) return [
       { value: 'visitas', label: 'Visitas' },
       { value: 'huespedes', label: 'Huéspedes' },
     ];
@@ -94,7 +114,7 @@ export default function VisitasHistorialPage() {
       { value: 'huespedes', label: 'Huéspedes' },
       { value: 'calendario', label: 'Calendario' },
     ];
-  }, [rolActivo]);
+  }, [rolActivo, sinCalendario]);
 
   const diasRestantes = (fechaStr) => {
     if (!fechaStr) return Infinity;
@@ -133,6 +153,94 @@ export default function VisitasHistorialPage() {
     return pasos.filter(Boolean).length;
   };
 
+  const renderGuestDetailInline = (inv, idx, item) => {
+    const t = inv.timeline || {};
+    const esAdmin = rolActivo === 'administrador';
+    const esAnfitrion = rolActivo === 'propietario' || rolActivo === 'inquilino-lider';
+    const puedeAprobar = esAdmin || esAnfitrion;
+    const rntCompleto = ubicacionActiva ? configHuespedesTemporales[ubicacionActiva.id]?.legal?.rnt?.trim()?.length > 0 : false;
+    const stepStatus = (key) => {
+      if (key === 'terminosAceptados') {
+        if (t.terminosAceptados === true) return t.terminosAprobadoPor === 'anfitrion' ? 'aprobado-manual' : true;
+        if (t.terminosAceptados === false) return false;
+        return null;
+      }
+      if (key === 'verificacionPasada') {
+        if (t.verificacionAprobada === true) return 'aprobada';
+        return !!t[key];
+      }
+      return !!t[key];
+    };
+    const esExcepcionTc = inv.terminosExcepcion === true && t.terminosAceptados !== true;
+    const btn = (bg, color, outline) => ({
+      padding: '5px 10px', borderRadius: theme.radius.md, border: outline ? `1.5px solid ${bg}` : `1.5px solid transparent`,
+      background: outline ? 'transparent' : bg, color: outline ? bg : (color || '#fff'),
+      fontSize: theme.fonts.sizes['2xs'], fontWeight: theme.fonts.weights.semibold, cursor: 'pointer', fontFamily: theme.fonts.family, whiteSpace: 'nowrap',
+    });
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
+        {TIMELINE_STEPS.map((step, si) => {
+          const st = stepStatus(step.key);
+          const isCompleted = st === true || st === 'aprobado-manual' || st === 'aprobada';
+          const isPending = st === null;
+          const isRejected = st === false && step.key === 'terminosAceptados';
+          const isAprobadoManual = st === 'aprobado-manual';
+          const icon = isCompleted ? '✅' : (isRejected ? '❌' : '⏳');
+          return (
+            <div key={step.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '13px', flexShrink: 0 }}>{step.icon}</span>
+              <span style={{ flex: 1, minWidth: '120px', fontSize: theme.fonts.sizes.xs, color: theme.colors.text }}>
+                {step.label}
+                {isAprobadoManual && <span style={{ color: theme.colors.secondary, fontWeight: theme.fonts.weights.semibold, marginLeft: '4px' }}>(aprobado por anfitrión)</span>}
+                {st === 'aprobada' && <span style={{ color: theme.colors.success, fontWeight: theme.fonts.weights.semibold, marginLeft: '4px' }}>(aprobada)</span>}
+              </span>
+              {step.key === 'documentacionCompleta' && isCompleted && inv.documentos?.length > 0 && (
+                <button onClick={(e) => { e.stopPropagation(); setDocumentacionDetail({ invitado: inv, item }); }} style={btn(theme.colors.primary)}>Ver documentación</button>
+              )}
+              {step.key === 'terminosAceptados' && esExcepcionTc && puedeAprobar && (
+                <button onClick={() => { aprobarTerminosManual(item.id, idx); addToast('Excepción T&C aceptada para ' + inv.nombre, 'success'); }} style={btn(theme.colors.secondary)}>Aceptar excepción</button>
+              )}
+              {step.key === 'verificacionPasada' && puedeAprobar && !t.verificacionAprobada && (
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.semibold }}>
+                    {t.verificacionHallazgos === true ? 'Con hallazgos' : (t.verificacionHallazgos === false ? 'Sin hallazgos' : 'Sin resultados')}
+                  </span>
+                  {t.verificacionHallazgos === true && (
+                    <button onClick={(e) => { e.stopPropagation(); setHallazgosPopup({ persona: inv, idx, item }); }} style={btn('#F59E0B', '#fff')}>Ver resumen</button>
+                  )}
+                  <button onClick={() => { aprobarVerificacion(item.id, idx); addToast('Verificación aprobada para ' + inv.nombre, 'success'); }} style={btn(theme.colors.success)}>Aprobar</button>
+                  {esAnfitrion && (
+                    <button onClick={() => { aprobarVerificacionConHallazgos(item.id, idx); addToast('Verificación aprobada con hallazgos para ' + inv.nombre, 'warning'); }} style={btn('#F59E0B', '#fff')}>Aprobar con hallazgos</button>
+                  )}
+                </div>
+              )}
+              {step.key === 'trasideEntrada' && isCompleted && puedeAprobar && !inv.traSireReported && (
+                <button onClick={() => {
+                  if (!rntCompleto) { addToast('Completa tu RNT en la configuración de Huéspedes Temporales', 'warning'); return; }
+                  reportarTraSire(item.id, idx); addToast('Reporte TRA enviado exitosamente', 'success');
+                }} style={btn(theme.colors.secondary)}>Reportar TRA</button>
+              )}
+              {step.key === 'trasideSalida' && isCompleted && puedeAprobar && !inv.traSireReported && (
+                <button onClick={() => {
+                  if (!rntCompleto) { addToast('Completa tu RNT en la configuración de Huéspedes Temporales', 'warning'); return; }
+                  reportarTraSire(item.id, idx); addToast('Reporte SIRE enviado exitosamente', 'success');
+                }} style={btn(theme.colors.secondary)}>Reportar SIRE</button>
+              )}
+            </div>
+          );
+        })}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', paddingTop: '8px', borderTop: `1px solid ${theme.colors.borderLight}`, flexWrap: 'wrap' }}>
+          {inv.traSireReported
+            ? <Badge status="Aceptado">TRA/SIRE reportado</Badge>
+            : <Badge status="Pendiente">TRA/SIRE pendiente</Badge>}
+          {puedeAprobar && !inv.traSireReported && (
+            <button onClick={() => { reportarTraSire(item.id, idx); addToast('TRA/SIRE marcado como realizado', 'success'); }} style={btn('#6B7280', '#fff', true)}>Ya hice TRA/SIRE</button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const detalleActual = detalleItem ? visitas.find(v => v.id === detalleItem.id) || null : null;
 
   const statusForGuardia = (estado) => rolActivo === 'guardia' && estado === 'Rechazado' ? 'Pendiente' : estado;
@@ -140,7 +248,9 @@ export default function VisitasHistorialPage() {
   const filtered = visitas.filter(v => {
     const estadoVis = statusForGuardia(v.estado);
     const matchTipoGrupo = tipoTab === 'huespedes' ? v.tipo === 'huesped-temporal' : v.tipo !== 'huesped-temporal';
-    const matchSearch = !search || v.nombre.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search
+      || v.nombre.toLowerCase().includes(search.toLowerCase())
+      || (v.invitados || []).some(inv => inv.nombre && inv.nombre.toLowerCase().includes(search.toLowerCase()));
     const matchTab = activeTab === 'Todas' || estadoVis === activeTab;
     const matchTipo = tipoFilter === 'Todos' || TIPO_LABELS[v.tipo] === tipoFilter;
     const matchFechaDesde = !fechaDesdeFilter || (v.fechaDesde && v.fechaDesde >= fechaDesdeFilter);
@@ -150,6 +260,33 @@ export default function VisitasHistorialPage() {
     const matchGuest = rolActivo !== 'huesped-temporal' || (usuario?.nombre && v.nombre?.toLowerCase().includes(usuario.nombre.toLowerCase().split(' ')[0]));
     return matchTipoGrupo && matchSearch && matchTab && matchTipo && matchFechaDesde && matchFechaHasta && matchTorre && matchDepto && matchGuest;
   });
+
+  const renderKpiHuespedes = () => {
+    const reservas = filtered.filter(v => v.tipo === 'huesped-temporal');
+    let total = 0, verificados = 0, conHallazgos = 0, traPendiente = 0, menores = 0;
+    reservas.forEach(v => (v.invitados || []).forEach(inv => {
+      total += 1;
+      if (inv.timeline?.verificacionAprobada === true) verificados += 1;
+      if (inv.timeline?.verificacionHallazgos === true) conHallazgos += 1;
+      if (!inv.traSireReported) traPendiente += 1;
+      if (inv.esMenor) menores += 1;
+    }));
+    const kpi = (label, value, color) => (
+      <div style={{ flex: '1 1 0', minWidth: '92px', background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '10px 12px', textAlign: 'center' }}>
+        <div style={{ fontSize: theme.fonts.sizes.lg, fontWeight: theme.fonts.weights.bold, color }}>{value}</div>
+        <div style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textSecondary, marginTop: '2px' }}>{label}</div>
+      </div>
+    );
+    return (
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+        {kpi('Huéspedes', total, theme.colors.text)}
+        {kpi('Verificados', verificados, theme.colors.success)}
+        {kpi('Con hallazgos', conHallazgos, '#92400E')}
+        {kpi('TRA/SIRE pendiente', traPendiente, theme.colors.warning)}
+        {kpi('Menores', menores, theme.colors.secondary)}
+      </div>
+    );
+  };
 
   const statusTabsForTipo = tipoTab === 'huespedes' ? HUESPEDES_TABS : (rolActivo === 'guardia' ? GUARDIA_TABS : TABS);
 
@@ -209,6 +346,55 @@ export default function VisitasHistorialPage() {
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {/* Type tabs: Visitas / Huéspedes */}
         <Tabs tabs={TIPO_TABS} active={tipoTab} onChange={handleTipoTabChange} centered />
+
+        {/* Prueba A/B: comparar vista separada (opción 1) vs vista combinada (opción 2) */}
+        {tipoTab !== 'calendario' && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <span style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textMuted }}>Prueba A/B:</span>
+            {[{ id: 'opcion1', label: 'Opción 1' }, { id: 'opcion2', label: 'Opción 2' }].map(op => (
+              <button
+                key={op.id}
+                onClick={() => setVistaCreacionAB(op.id)}
+                style={{
+                  padding: '4px 12px', borderRadius: theme.radius.full,
+                  border: `1.5px solid ${vistaCreacionAB === op.id ? theme.colors.primary : theme.colors.border}`,
+                  background: vistaCreacionAB === op.id ? theme.colors.primary : theme.colors.bgCard,
+                  color: vistaCreacionAB === op.id ? '#fff' : theme.colors.textSecondary,
+                  fontSize: theme.fonts.sizes.xs, fontFamily: theme.fonts.family, cursor: 'pointer',
+                  fontWeight: theme.fonts.weights.medium,
+                }}
+              >
+                {op.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Opción 2 (vista combinada): tipos de visita directos para registrar con menos clics */}
+        {vistaCreacionAB === 'opcion2' && tipoTab !== 'calendario' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            {(rolActivo === 'guardia' || rolActivo === 'huesped-temporal'
+              ? ['amigos', 'temporal']
+              : ['amigos', 'temporal', 'permanente', 'huesped-temporal']
+            ).map(id => (
+              <button
+                key={id}
+                onClick={() => navigate('/visitas/nuevo', { state: { tipoPreseleccionado: id } })}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '10px 12px', borderRadius: theme.radius.lg,
+                  border: `1px solid ${theme.colors.border}`, background: theme.colors.bgCard,
+                  boxShadow: theme.shadows.card, cursor: 'pointer', fontFamily: theme.fonts.family,
+                  textAlign: 'left',
+                }}
+              >
+                <img src={tipoVisitaIcons[id]} alt={TIPO_LABELS[id]} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>{TIPO_LABELS[id]}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Filter card */}
         <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '12px', boxShadow: theme.shadows.card }}>
           <SearchBar value={search} onChange={setSearch} />
@@ -253,6 +439,10 @@ export default function VisitasHistorialPage() {
               )}
               {/* Date filters stacked */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={() => { const h = new Date().toISOString().slice(0, 10); setFechaDesdeFilter(h); setFechaHastaFilter(h); }} style={chipFecha(fechaDesdeFilter && fechaDesdeFilter === new Date().toISOString().slice(0, 10))}>Hoy</button>
+                  <button onClick={() => { const m = new Date(Date.now() + 86400000).toISOString().slice(0, 10); setFechaDesdeFilter(m); setFechaHastaFilter(m); }} style={chipFecha(false)}>Mañana</button>
+                </div>
                 <div>
                   <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginBottom: '4px' }}>Fecha desde</div>
                   <div style={{ width: '100%', overflow: 'hidden', borderRadius: theme.radius['2xl'], border: `1.5px solid ${theme.colors.border}`, background: theme.colors.bgCard }}>
@@ -304,17 +494,19 @@ export default function VisitasHistorialPage() {
                   </div>
                 </div>
               </div>
-              {/* Direction fields side by side */}
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginBottom: '4px' }}>Torre</div>
-                  <SelectField value={torreFilter} options={['', ...torres]} onChange={setTorreFilter} placeholder="Torre" />
+              {/* Filtro por piso/torre — solo Seguridad y Administrador */}
+              {puedeFiltrarTorrePiso && (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginBottom: '4px' }}>Torre</div>
+                    <SelectField value={torreFilter} options={['', ...torres]} onChange={setTorreFilter} placeholder="Torre" />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginBottom: '4px' }}>Departamento</div>
+                    <SelectField value={deptoFilter} options={['', ...departamentos]} onChange={setDeptoFilter} placeholder="Depto" />
+                  </div>
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginBottom: '4px' }}>Departamento</div>
-                  <SelectField value={deptoFilter} options={['', ...departamentos]} onChange={setDeptoFilter} placeholder="Depto" />
-                </div>
-              </div>
+              )}
             </div>
           )}
           {algunFiltroActivo && (
@@ -614,6 +806,9 @@ export default function VisitasHistorialPage() {
           ));
         })}
 
+        {/* KPI de verificación — vista general huéspedes (no en cada reserva) */}
+        {tipoTab === 'huespedes' && rolActivo !== 'guardia' && !reservaDetail && renderKpiHuespedes()}
+
         {/* List — normal roles: card per reservation for huesped-temporal */}
         {tipoTab !== 'calendario' && rolActivo !== 'guardia' && (reservaDetail ? (
           /* Vista detalle de reserva HT — reemplaza la lista */
@@ -635,7 +830,13 @@ export default function VisitasHistorialPage() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>Reserva de {reservaDetail.nombre}</div>
                   <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{reservaDetail.torre} - {reservaDetail.depto}</div>
-                  <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>{reservaDetail.fechaDesde} a {reservaDetail.fechaHasta} · {reservaDetail.invitados?.length || 0} huéspedes</div>
+                  <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span>{reservaDetail.fechaDesde} a {reservaDetail.fechaHasta}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>👤 {reservaDetail.invitados?.length || 0}</span>
+                    {(reservaDetail.vehiculos?.length || 0) > 0 && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>🚗 {reservaDetail.vehiculos.length}</span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -643,30 +844,33 @@ export default function VisitasHistorialPage() {
               const t = inv.timeline || {};
               const completados = progresoInvitado(inv);
               return (
-                <div key={idx} style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card }}>
-                  <div style={{ fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.base, color: theme.colors.text, marginBottom: '8px' }}>{inv.nombre}</div>
-                  {/* Mini timeline dots */}
-                  <div style={{ display: 'flex', gap: '3px', marginBottom: '10px' }}>
+                <div key={idx} style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card, borderLeft: inv.esMenor ? `4px solid ${theme.colors.warning}` : undefined }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <div style={{ fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>{inv.nombre}</div>
+                    {inv.esMenor && (
+                      <span style={{ fontSize: theme.fonts.sizes['2xs'], fontWeight: theme.fonts.weights.bold, color: '#92400E', background: '#FEF3C7', padding: '2px 7px', borderRadius: theme.radius.full, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                        👶 Menor
+                      </span>
+                    )}
+                  </div>
+                  {/* Mini timeline dots conectados por una línea */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0', marginBottom: '4px' }}>
                     {TIMELINE_STEPS.map((step, si) => {
                       const st = t[step.key];
                       const done = step.key === 'verificacionPasada' ? (t.verificacionAprobada === true || !!st) : !!st;
                       const isSpecial = step.key === 'terminosAceptados' && t.terminosAprobadoPor === 'anfitrion';
+                      const isLast = si === TIMELINE_STEPS.length - 1;
                       return (
-                        <div key={step.key} title={`${step.label}${isSpecial ? ' (aprobado por anfitrión)' : ''}`} style={{ width: '14px', height: '14px', borderRadius: '50%', background: done ? (isSpecial ? theme.colors.secondary : theme.colors.success) : theme.colors.border, flexShrink: 0 }} />
+                        <div key={step.key} style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                          <div title={`${step.label}${isSpecial ? ' (aprobado por anfitrión)' : ''}`} style={{ width: '12px', height: '12px', borderRadius: '50%', background: done ? (isSpecial ? theme.colors.secondary : theme.colors.success) : theme.colors.border, flexShrink: 0, zIndex: 1 }} />
+                          {!isLast && (
+                            <div style={{ flex: 1, height: '2px', background: done ? theme.colors.success : theme.colors.borderLight }} />
+                          )}
+                        </div>
                       );
                     })}
                   </div>
-                  <button
-                    onClick={() => setAccionGuest({ inv, idx, item: reservaDetail })}
-                    style={{
-                      width: '100%', padding: '10px', borderRadius: theme.radius.full,
-                      background: theme.colors.primary, color: '#fff', border: 'none',
-                      cursor: 'pointer', fontFamily: theme.fonts.family,
-                      fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.semibold,
-                    }}
-                  >
-                    Ver detalles →
-                  </button>
+                  {renderGuestDetailInline(inv, idx, reservaDetail)}
                 </div>
               );
             })}
@@ -701,8 +905,12 @@ export default function VisitasHistorialPage() {
                       <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginTop: '1px' }}>
                         {item.torre} - {item.depto} · {TIPO_LABELS[item.tipo]}
                       </div>
-                      <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, marginTop: '2px' }}>
-                        {item.fechaDesde} a {item.fechaHasta} · {item.invitados?.length || 0} huéspedes
+                      <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, marginTop: '2px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span>{item.fechaDesde} a {item.fechaHasta}</span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>👤 {item.invitados?.length || 0}</span>
+                        {(item.vehiculos?.length || 0) > 0 && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>🚗 {item.vehiculos.length}</span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -772,7 +980,10 @@ export default function VisitasHistorialPage() {
                       {item.esEvento ? item.nombreEvento : item.nombre}
                     </div>
                     <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginTop: '1px' }}>
-                      {item.torre} - {item.depto} · {TIPO_LABELS[item.tipo]}
+                      {item.torre || item.depto ? `${item.torre} - ${item.depto}` : 'Sin departamento asociado'} · {TIPO_LABELS[item.tipo]}
+                      {rolActivo === 'administrador' && !item.torre && !item.depto && (
+                        <span style={{ marginLeft: '6px', fontSize: theme.fonts.sizes['2xs'], fontWeight: theme.fonts.weights.bold, color: '#1E40AF', background: '#DBEAFE', padding: '1px 6px', borderRadius: theme.radius.full }}>Administración</span>
+                      )}
                     </div>
                     {/* DNI solo para Proveedor Temporal (lo ingresó él) */}
                     {item.tipo === 'temporal' && item.ci && (
@@ -848,8 +1059,8 @@ export default function VisitasHistorialPage() {
                   )}
                 </div>
               )}
-            </div>
-          )];
+              </div>
+            )];
         }))}
 
         {/* Bulk TRA/SIRE action */}
@@ -1342,134 +1553,6 @@ export default function VisitasHistorialPage() {
               <div style={{ display: 'flex', gap: '8px' }}>
                 <Button variant="ghost" fullWidth onClick={() => setDocumentacionDetail(null)}>Cerrar</Button>
               </div>
-            </div>
-          );
-        })()}
-      </Modal>
-
-      {/* Acciones por huésped — modal individual */}
-      <Modal
-        isOpen={!!accionGuest}
-        onClose={() => setAccionGuest(null)}
-        title={`Acciones: ${accionGuest?.inv?.nombre || ''}`}
-      >
-        {accionGuest && (() => {
-          const { inv, idx, item } = accionGuest;
-          const t = inv.timeline || {};
-          const esAdmin = rolActivo === 'administrador';
-          const esAnfitrion = rolActivo === 'propietario' || rolActivo === 'inquilino-lider';
-          const puedeAprobar = esAdmin || esAnfitrion;
-          const rntCompleto = ubicacionActiva ? configHuespedesTemporales[ubicacionActiva.id]?.legal?.rnt?.trim()?.length > 0 : false;
-          const stepStatus = (key) => {
-            if (key === 'terminosAceptados') {
-              if (t.terminosAceptados === true) return t.terminosAprobadoPor === 'anfitrion' ? 'aprobado-manual' : true;
-              if (t.terminosAceptados === false) return false;
-              return null;
-            }
-            if (key === 'verificacionPasada') {
-              if (t.verificacionAprobada === true) return 'aprobada';
-              return !!t[key];
-            }
-            return !!t[key];
-          };
-          const esExcepcionTc = inv.terminosExcepcion === true && t.terminosAceptados !== true;
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <img src={tipoVisitaIcons[item.tipo]} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>{inv.nombre}</div>
-                  <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>{item.torre} - {item.depto} · {item.fechaDesde} a {item.fechaHasta}</div>
-                </div>
-              </div>
-              {TIMELINE_STEPS.map((step, si) => {
-                const st = stepStatus(step.key);
-                const isCompleted = st === true || st === 'aprobado-manual' || st === 'aprobada';
-                const isPending = st === null;
-                const isRejected = st === false && step.key === 'terminosAceptados';
-                const isAprobadoManual = st === 'aprobado-manual';
-                const icon = isCompleted ? '✅' : (isPending ? '⏳' : (isRejected ? '❌' : '⏳'));
-                return (
-                  <div key={step.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: theme.colors.bgCard, borderRadius: theme.radius.md, marginBottom: '4px' }}>
-                    <span style={{ fontSize: '14px', flexShrink: 0 }}>{icon}</span>
-                    <span style={{ flex: 1, fontSize: theme.fonts.sizes.xs, color: theme.colors.text }}>
-                      {si + 1}. {step.label}
-                      {isAprobadoManual && <span style={{ color: theme.colors.secondary, fontWeight: theme.fonts.weights.semibold, marginLeft: '4px' }}>(aprobado por anfitrión)</span>}
-                      {st === 'aprobada' && <span style={{ color: theme.colors.success, fontWeight: theme.fonts.weights.semibold, marginLeft: '4px' }}>(aprobada)</span>}
-                    </span>
-                    {/* Step 2 — Ver documentación */}
-                    {step.key === 'documentacionCompleta' && isCompleted && inv.documentos?.length > 0 && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setDocumentacionDetail({ invitado: inv, item }); }}
-                        style={btnStyle(theme.colors.primary)}
-                      >
-                        Ver documentación
-                      </button>
-                    )}
-                    {/* Step 3 — Excepción T&C */}
-                    {step.key === 'terminosAceptados' && esExcepcionTc && puedeAprobar && (
-                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                        <span style={{ fontSize: '12px', color: theme.colors.warning, fontWeight: theme.fonts.weights.bold }}>⚠</span>
-                        <button
-                          onClick={() => { aprobarTerminosManual(item.id, idx); addToast('Excepción T&C aceptada para ' + inv.nombre, 'success'); setAccionGuest(null); }}
-                          style={btnStyle(theme.colors.secondary)}
-                        >
-                          Aceptar excepción
-                        </button>
-                      </div>
-                    )}
-                    {/* Step 4 — Resultado verificación + Aprobar */}
-                    {step.key === 'verificacionPasada' && puedeAprobar && !t.verificacionAprobada && (
-                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                        {t.verificacionHallazgos === true ? (
-                          <button onClick={(e) => { e.stopPropagation(); setHallazgosPopup({ persona: inv, idx, item }); }} style={btnStyle('#FEF3C7', '#92400E')}>Ver resumen</button>
-                        ) : (
-                          <span style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textSecondary }}>{t.verificacionHallazgos === false ? 'Sin hallazgos' : 'Sin resultados'}</span>
-                        )}
-                        <button
-                          onClick={() => { aprobarVerificacion(item.id, idx); addToast('Verificación aprobada para ' + inv.nombre, 'success'); setAccionGuest(null); }}
-                          style={btnStyle(theme.colors.success)}
-                        >
-                          Aprobar
-                        </button>
-                      </div>
-                    )}
-                    {/* Step 5 — Reportar TRA */}
-                    {step.key === 'trasideEntrada' && isCompleted && puedeAprobar && !inv.traSireReported && (
-                      <button
-                        onClick={() => {
-                          if (!rntCompleto) { addToast('Completa tu RNT en la configuración de Huéspedes Temporales', 'warning'); return; }
-                          reportarTraSire(item.id, idx);
-                          addToast('Reporte TRA enviado exitosamente', 'success');
-                          setAccionGuest(null);
-                        }}
-                        style={btnStyle(theme.colors.secondary)}
-                      >
-                        Reportar TRA
-                      </button>
-                    )}
-                    {/* Step 6 — Reportar SIRE */}
-                    {step.key === 'trasideSalida' && isCompleted && puedeAprobar && !inv.traSireReported && (
-                      <button
-                        onClick={() => {
-                          if (!rntCompleto) { addToast('Completa tu RNT en la configuración de Huéspedes Temporales', 'warning'); return; }
-                          reportarTraSire(item.id, idx);
-                          addToast('Reporte SIRE enviado exitosamente', 'success');
-                          setAccionGuest(null);
-                        }}
-                        style={btnStyle(theme.colors.secondary)}
-                      >
-                        Reportar SIRE
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-              {/* TRA/SIRE badge consolidado */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', paddingTop: '8px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
-                {inv.traSireReported ? <Badge status="Aceptado">TRA/SIRE reportado</Badge> : <Badge status="Pendiente">TRA/SIRE pendiente</Badge>}
-              </div>
-              <Button variant="ghost" fullWidth onClick={() => setAccionGuest(null)}>Cerrar</Button>
             </div>
           );
         })()}
