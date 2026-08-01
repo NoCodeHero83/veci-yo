@@ -1143,35 +1143,19 @@ export default function VisitasHistorialPage() {
       </div>
       </ModuloGate>
 
-      {/* Edit bottom sheet — acciones según el rol */}
+      {/* Edit bottom sheet — Card de Reserva (Huésped Temporal): solo Editar y Eliminar */}
       <BottomSheet isOpen={!!menuItem} onClose={() => setMenuItem(null)}>
-        {menuItem?.tipo === 'huesped-temporal' && (
-          <BottomSheetOption label="Estado: Aceptado" onPress={() => handleEstado('Aceptado')} />
+        {menuItem?.tipo === 'huesped-temporal' ? (
+          <>
+            <BottomSheetOption label="Editar" onPress={() => { setMenuItem(null); navigate('/visitas/nuevo'); }} />
+            <BottomSheetOption label="Eliminar" variant="danger" onPress={() => { setDeleteItem(menuItem); setMenuItem(null); }} />
+          </>
+        ) : (
+          <>
+            <BottomSheetOption label="Denunciar / Reportar" variant="primary" onPress={() => { setMenuItem(null); navigate('/perfil/soporte/reclamos/nuevo', { state: { categoriaPreseleccionada: 'Denuncia entre departamentos', titulo: `Denuncia: ${menuItem?.nombre || ''}`, descripcion: `Reporte desde visitas contra: ${menuItem?.nombre || ''} (CI: ${menuItem?.ci || ''})` } }); }} />
+            <BottomSheetOption label="Eliminar" variant="danger" onPress={() => { setDeleteItem(menuItem); setMenuItem(null); }} />
+          </>
         )}
-        {menuItem?.tipo === 'huesped-temporal' && rolActivo === 'administrador' && (
-          <BottomSheetOption label="Estado: Rechazado" onPress={() => handleEstado('Rechazado')} />
-        )}
-        {menuItem?.tipo === 'huesped-temporal' && (rolActivo === 'propietario' || rolActivo === 'inquilino-lider') && (() => {
-          const item = menuItem;
-          const invitadosIngresados = item.invitados?.filter(inv => inv.llego)?.length > 0;
-          const configLocal = ubicacionActiva ? configHuespedesTemporales[ubicacionActiva.id] : null;
-          const rntCompleto = configLocal?.legal?.rnt?.trim()?.length > 0;
-          const puedeReportar = invitadosIngresados && rntCompleto;
-          return (
-            <BottomSheetOption
-              label={puedeReportar ? 'Reportar TRA/SIRE' : 'Reportar TRA/SIRE (completa tu RNT)'}
-              variant="primary"
-              disabled={!puedeReportar}
-              onPress={() => {
-                if (!puedeReportar) return;
-                setMenuItem(null);
-                setTraSireModal(item);
-              }}
-            />
-          );
-        })()}
-        <BottomSheetOption label="Denunciar / Reportar" variant="primary" onPress={() => { setMenuItem(null); navigate('/perfil/soporte/reclamos/nuevo', { state: { categoriaPreseleccionada: menuItem?.tipo === 'huesped-temporal' ? 'Reporte de huésped' : 'Denuncia entre departamentos', titulo: `Denuncia: ${menuItem?.nombre || ''}`, descripcion: `Reporte desde visitas contra: ${menuItem?.nombre || ''} (CI: ${menuItem?.ci || ''})` } }); }} />
-        <BottomSheetOption label="Eliminar" variant="danger" onPress={() => { setDeleteItem(menuItem); setMenuItem(null); }} />
       </BottomSheet>
 
       {/* Delete modal — mismo estilo que Correspondencia */}
