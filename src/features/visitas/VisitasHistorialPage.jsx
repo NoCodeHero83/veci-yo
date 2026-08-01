@@ -6,7 +6,7 @@ import SearchBar from '../../components/ui/SearchBar';
 import Tabs from '../../components/ui/Tabs';
 import StatusTabs from '../../components/ui/StatusTabs';
 import Badge from '../../components/ui/Badge';
-import TimelineHuesped from '../../components/ui/TimelineHuesped';
+import TimelineReservaHuespedes from '../../components/ui/TimelineReservaHuespedes';
 import VerificacionesConsumo from '../../components/ui/VerificacionesConsumo';
 import BottomSheet, { BottomSheetOption } from '../../components/ui/BottomSheet';
 import Modal from '../../components/ui/Modal';
@@ -942,20 +942,8 @@ export default function VisitasHistorialPage() {
                 {/* Resumen por huésped — diseño nuevo (Card de Reserva) o legacy */}
                 {item.invitados && item.invitados.length > 0 && (
                   mostrarDisenoReserva ? (
-                    <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}`, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      {item.invitados.map((inv, idx) => (
-                        <div key={idx}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                            <span style={{ fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>{inv.nombre}</span>
-                            {inv.esMenor && (
-                              <span style={{ fontSize: theme.fonts.sizes['2xs'], fontWeight: theme.fonts.weights.bold, color: '#92400E', background: '#FEF3C7', padding: '2px 7px', borderRadius: theme.radius.full, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                                👶 Menor
-                              </span>
-                            )}
-                          </div>
-                          <TimelineHuesped timeline={inv.timeline} />
-                        </div>
-                      ))}
+                    <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
+                      <TimelineReservaHuespedes invitados={item.invitados} />
                     </div>
                   ) : (
                     <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
