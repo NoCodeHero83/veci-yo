@@ -350,6 +350,7 @@ export default function VisitasHistorialPage() {
 
       <ModuloGate helpKey="visitas">
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {!reservaDetail && !detalleItem && !detalleGuardia && (<>
         {/* Type tabs: Visitas / Huéspedes */}
         <Tabs tabs={TIPO_TABS} active={tipoTab} onChange={handleTipoTabChange} centered />
 
@@ -531,10 +532,11 @@ export default function VisitasHistorialPage() {
                 marginTop: '8px',
               }}
             >
-              Limpiar filtros
-            </button>
-          )}
-        </div>
+               Limpiar filtros
+             </button>
+           )}
+           </div>
+           </>)}
 
         {/* Calendar tab — todas las visitas con color según estado */}
         {tipoTab === 'calendario' && (() => {
