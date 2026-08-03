@@ -57,6 +57,8 @@ export default function VisitasNuevoPage() {
     ? TIPOS_BASE.filter(t => t.id !== 'permanente')
     : rolActivo === 'huesped-temporal'
     ? TIPOS_BASE.filter(t => t.id === 'amigos' || t.id === 'temporal')
+    : rolActivo === 'administrador'
+    ? TIPOS_BASE
     : [...TIPOS_BASE, TIPO_HUESPED_TEMPORAL];
 
   const tipoPreseleccionado = location.state?.tipoPreseleccionado;

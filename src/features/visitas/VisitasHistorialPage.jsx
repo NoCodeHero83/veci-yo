@@ -66,8 +66,9 @@ export default function VisitasHistorialPage() {
   const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado, aprobarInvitado, rolActivo, addToast, verificaciones, actualizarVerificacion, actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion, toggleInstruccionCumplida, estacionamientosVisitantes, configHuespedesTemporales, ubicacionActiva, suscripcionActiva, reportarTraSire, usuario, actualizarConfigHuespedTemporal, esResidente, actualizarTimeline, aprobarTerminosManual, aprobarVerificacion, aprobarVerificacionConHallazgos } = useApp();
 
   // El rediseño de la Card de Reserva (Huésped Temporal) aplica para todos los
-  // roles excepto Guardia de Seguridad y Administrador, que mantienen sus vistas.
-  const mostrarDisenoReserva = rolActivo !== 'guardia' && rolActivo !== 'administrador';
+  // roles excepto Guardia de Seguridad, que mantiene su vista compacta.
+  // El Administrador usa el mismo look & feel que el Residente/Anfitrión.
+  const mostrarDisenoReserva = rolActivo !== 'guardia';
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('Todas');
   const [tipoTab, setTipoTab] = useState('visitas');
@@ -379,7 +380,7 @@ export default function VisitasHistorialPage() {
         {/* Opción 2 (vista combinada): tipos de visita directos para registrar con menos clics */}
         {vistaCreacionAB === 'opcion2' && tipoTab !== 'calendario' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-            {(rolActivo === 'guardia' || rolActivo === 'huesped-temporal'
+            {(rolActivo === 'guardia' || rolActivo === 'huesped-temporal' || rolActivo === 'administrador'
               ? ['amigos', 'temporal']
               : ['amigos', 'temporal', 'permanente', 'huesped-temporal']
             ).map(id => (
@@ -813,9 +814,10 @@ export default function VisitasHistorialPage() {
         })}
 
         {/* Barras de consumo de verificaciones (reemplazan los KPIs) — vista general huéspedes.
-            Guardia y Administrador mantienen sus vistas definidas (KPIs numéricos). */}
+            Solo Guardia de Seguridad mantiene sus KPIs numéricos; el resto (incl. Administrador)
+            usa el mismo look & feel que el Residente/Anfitrión. */}
         {tipoTab === 'huespedes' && !reservaDetail && (
-          ['guardia', 'administrador'].includes(rolActivo)
+          rolActivo === 'guardia'
             ? renderKpiHuespedes()
             : (
               <VerificacionesConsumo
