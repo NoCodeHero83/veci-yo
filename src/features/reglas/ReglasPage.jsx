@@ -201,7 +201,7 @@ export default function ReglasPage() {
 
         {rolActivo === 'propietario' || rolActivo === 'inquilino-lider' ? (
           <button type="button" onClick={() => navigate('/perfil/soporte/reclamos/nuevo', { state: { tipo: 'Reglas' } })} style={{ ...pillButtonStyle, background: theme.colors.secondary, color: '#fff' }}>
-            Crear PQRS desde Reglas
+            Crear PQRS
           </button>
         ) : null}
 
@@ -262,22 +262,14 @@ export default function ReglasPage() {
 
       {/* Menú de acciones por departamento */}
       <Modal isOpen={!!accionesDept} onClose={() => setAccionesDept(null)}>
-        {rolActivo === 'guardia' || rolActivo === 'huesped-temporal' || rolActivo === 'administrador' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <button type="button" onClick={() => handleComunicacion('anfitrion')} style={pillButtonStyle}>1er Contacto: Llamar Anfitrión</button>
-            <button type="button" onClick={() => handleComunicacion('administrador')} style={pillButtonStyle}>2do Contacto: Llamar Administrador</button>
-            <button type="button" onClick={() => handleComunicacion('propietario')} style={pillButtonStyle}>3er Contacto: Llamar Propietario</button>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <button type="button" onClick={() => { const d = accionesDept; setAccionesDept(null); navigate('/perfil/soporte/reclamos/nuevo', { state: { asunto: `Incidente departamento ${d?.departamento || ''}`, tipo: 'Reglas' } }); }} style={pillButtonStyle}>
-              Reportar incidente (PQRS)
-            </button>
-            <div style={{ textAlign: 'center', padding: '4px', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
-              No tienes permisos para realizar llamadas desde esta sección.
-            </div>
-          </div>
-        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <button type="button" onClick={() => { setAccionesDept(null); navigate('/perfil/soporte/reclamos/nuevo', { state: { tipo: 'Reglas' } }); }} style={{ ...pillButtonStyle, background: theme.colors.secondary, color: '#fff' }}>
+            Crear PQRS
+          </button>
+          <button type="button" onClick={() => { const d = accionesDept; setAccionesDept(null); navigate('/perfil/soporte/reclamos/nuevo', { state: { asunto: `Incidente departamento ${d?.departamento || ''}`, tipo: 'Reglas' } }); }} style={{ ...pillButtonStyle, background: theme.colors.primary, color: theme.colors.text }}>
+            Reportar incidente (PQRS)
+          </button>
+        </div>
       </Modal>
 
       {/* Popup de cumplimiento del departamento */}

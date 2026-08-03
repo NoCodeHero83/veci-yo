@@ -216,8 +216,8 @@ export default function InquilinoLiderHome() {
         </span>
       </button>}
 
-      {/* Renta corta — acceso a departamentos habilitados (residentes) */}
-      {puedeVerReputacionGratitud && (
+      {/* Renta corta — acceso a departamentos habilitados */}
+      {rolActivo !== 'huesped-temporal' && (
         <button
           type="button"
           onClick={() => navigate('/reglas')}
