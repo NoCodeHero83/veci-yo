@@ -216,8 +216,8 @@ export default function InquilinoLiderHome() {
         </span>
       </button>}
 
-      {/* Renta corta — acceso a departamentos habilitados */}
-      {rolActivo !== 'huesped-temporal' && (
+      {/* Renta corta — acceso a departamentos habilitados (residentes) */}
+      {!esAdmin && !esGuardia && (
         <button
           type="button"
           onClick={() => navigate('/reglas')}
@@ -513,6 +513,28 @@ export default function InquilinoLiderHome() {
             );
           })()}
         </div>
+        {esAdmin || esGuardia && (
+          <div style={{ padding: '0 16px' }}>
+            <button
+              type="button"
+              onClick={() => navigate('/reglas')}
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: theme.radius.full,
+                background: theme.colors.primary,
+                color: theme.colors.text,
+                fontWeight: theme.fonts.weights.semibold,
+                fontSize: theme.fonts.sizes.sm,
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: theme.fonts.family,
+              }}
+            >
+              Departamentos habilitados para renta corta
+            </button>
+          </div>
+        )}
 
         {/* Tabla resumen + botones */}
         {/* Estacionamientos de visita — acceso rápido (solo Administrador y Guardia de Seguridad) */}
