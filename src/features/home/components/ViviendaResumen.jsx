@@ -118,27 +118,6 @@ export default function ViviendaResumen() {
           </button>
         )}
 
-        {esResidente && !esAdministrador && !esHuespedTemporal && (
-          <button
-            onClick={() => navigate('/reglas')}
-            style={{
-              width: '100%',
-              padding: '12px',
-              marginTop: '10px',
-              borderRadius: theme.radius.full,
-              background: theme.colors.secondary,
-              color: '#fff',
-              fontWeight: theme.fonts.weights.semibold,
-              fontSize: theme.fonts.sizes.sm,
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: theme.fonts.family,
-            }}
-          >
-            Departamentos habilitados para renta corta
-          </button>
-        )}
-
         {/* Panel desplegable del Administrador — componente in-place, no rutas nuevas para abrirlo */}
         {esAdministrador && configOpen && (
           <div style={{ width: '100%', marginTop: '-12px', display: 'flex', flexDirection: 'column', animation: 'slideDown 200ms ease' }}>

@@ -216,6 +216,28 @@ export default function InquilinoLiderHome() {
         </span>
       </button>}
 
+      {/* Renta corta — acceso a departamentos habilitados (residentes) */}
+      {puedeVerReputacionGratitud && (
+        <button
+          type="button"
+          onClick={() => navigate('/reglas')}
+          style={{
+            width: '100%',
+            padding: '12px',
+            borderRadius: theme.radius.full,
+            background: theme.colors.primary,
+            color: theme.colors.text,
+            fontWeight: theme.fonts.weights.semibold,
+            fontSize: theme.fonts.sizes.sm,
+            border: 'none',
+            cursor: 'pointer',
+            fontFamily: theme.fonts.family,
+          }}
+        >
+          Departamentos habilitados para renta corta
+        </button>
+      )}
+
       {/* Feed de notificaciones — para propietario no-residente */}
       {rolActivo === 'propietario' && !esResidente && !esAdmin && (
         <div style={{ ...cardStyle, padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -493,7 +515,8 @@ export default function InquilinoLiderHome() {
         </div>
 
         {/* Tabla resumen + botones */}
-        {/* Estacionamientos de visita — acceso rápido */}
+        {/* Estacionamientos de visita — acceso rápido (solo Administrador y Guardia de Seguridad) */}
+        {esAdmin || esGuardia && (
         <div style={{ ...cardStyle, padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -523,6 +546,7 @@ export default function InquilinoLiderHome() {
             </div>
           )}
         </div>
+        )}
 
         {/* Admin: acceso directo a gestión de guardias */}
         {esAdmin && (

@@ -129,10 +129,11 @@ function SectionCard({ title, children }) {
 export default function AdministradorGestionZonaFormPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { gestionZonas, agregarGestionZona, actualizarGestionZona, addToast } = useApp();
+  const { gestionZonas, zonasComunesConfig, agregarGestionZona, actualizarGestionZona, addToast } = useApp();
 
   const esNuevo = id === 'nuevo';
   const existing = !esNuevo ? gestionZonas[id] : null;
+  const existingConfig = !esNuevo ? zonasComunesConfig[id] : null;
 
   const [form, setForm] = useState(() => ({
     id: existing?.id || '',
@@ -154,6 +155,10 @@ export default function AdministradorGestionZonaFormPage() {
     activa: existing?.activa !== undefined ? existing.activa : true,
     permiteCorta: existing?.permiteCorta !== undefined ? existing.permiteCorta : true,
     permiteLarga: existing?.permiteLarga !== undefined ? existing.permiteLarga : true,
+    usaSlots: existingConfig?.usaSlots || false,
+    duracionPermitida: existingConfig?.duracionPermitida || 2,
+    horariosDisponibles: (existingConfig?.horariosDisponibles || []).join(', '),
+    reglamento: existingConfig?.reglas || '',
   }));
 
   const [errors, setErrors] = useState([]);
@@ -203,12 +208,22 @@ export default function AdministradorGestionZonaFormPage() {
     }
     setSaving(true);
     const payload = formDataToPayload(form);
+    const zonaConfig = {
+      usaSlots: form.usaSlots,
+      duracionPermitada: Number(form.duracionPermitada) || 2,
+      horariosDisponibles: form.horariosDisponibles
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean),
+      reglas: form.reglamento,
+      requiereAprobacion: form.requiereAprobacion || false,
+    };
     setTimeout(() => {
       if (esNuevo) {
         const newId = payload.id || `zona-${Date.now()}`;
-        agregarGestionZona({ ...payload, id: newId });
+        agregarGestionZona({ ...payload, id: newId }, zonaConfig);
       } else {
-        actualizarGestionZona(id, payload);
+        actualizarGestionZona(id, payload, zonaConfig);
       }
       setSaving(false);
       setShowSuccess(true);
@@ -307,6 +322,28 @@ export default function AdministradorGestionZonaFormPage() {
                 );
               })}
             </div>
+          </div>
+        </SectionCard>
+
+        {/* Configuración de reserva (la usa el residente al reservar) */}
+        <SectionCard title="Configuración de reserva">
+          <Toggle value={form.usaSlots} onChange={setField('usaSlots')} labelRight="Reserva por slots (horarios fijos)" />
+          <div>
+            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Duración máxima de reserva (horas)</div>
+            <input type="number" min="1" value={form.duracionPermitada} onChange={e => setField('duracionPermitada')(e.target.value)}
+              style={{ width: '100%', padding: '11px 14px', borderRadius: theme.radius['2xl'], border: `1.5px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.base, fontFamily: theme.fonts.family, background: theme.colors.bgCard, outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Horarios disponibles (separados por coma)</div>
+            <input type="text" value={form.horariosDisponibles} onChange={e => setField('horariosDisponibles')(e.target.value)}
+              placeholder="Ej: 08:00 a 12:00, 14:00 a 18:00"
+              style={{ width: '100%', padding: '11px 14px', borderRadius: theme.radius['2xl'], border: `1.5px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.base, fontFamily: theme.fonts.family, background: theme.colors.bgCard, outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Reglamento de la zona</div>
+            <textarea value={form.reglamento} onChange={e => setField('reglamento')(e.target.value)} placeholder="Reglamento que verán los residentes"
+              rows={3}
+              style={{ width: '100%', padding: '11px 14px', borderRadius: theme.radius['2xl'], border: `1.5px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.base, fontFamily: theme.fonts.family, background: theme.colors.bgCard, outline: 'none', boxSizing: 'border-box', resize: 'vertical' }} />
           </div>
         </SectionCard>
 

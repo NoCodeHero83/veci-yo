@@ -261,7 +261,7 @@ export default function AnunciosPage() {
           <InputField label="Descripción*" value={form.descripcion} onChange={setField('descripcion')} placeholder="Describa con el mayor detalle posible" multiline rows={3} />
 
           {form.tipo === 'Anuncio' ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Fecha de publicación*</div>
                 <input type="date" value={form.fechaPublicada} onChange={e => setField('fechaPublicada')(e.target.value)} style={dateInputStyle} />
@@ -327,9 +327,20 @@ export default function AnunciosPage() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                 <InputField value={form.umbral} onChange={setField('umbral')} placeholder="Umbral mínimo" />
                 <InputField value={form.tiempoMaximo} onChange={setField('tiempoMaximo')} placeholder="Tiempo máximo" />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Fecha de publicación*</div>
+                  <input type="date" value={form.fechaPublicada} onChange={e => setField('fechaPublicada')(e.target.value)} style={dateInputStyle} />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Fecha de finalización</div>
+                  <input type="date" value={form.fechaFinalizacion} onChange={e => setField('fechaFinalizacion')(e.target.value)} style={dateInputStyle} />
+                </div>
               </div>
             </>
           )}

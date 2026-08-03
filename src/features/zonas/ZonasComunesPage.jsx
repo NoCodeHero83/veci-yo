@@ -15,7 +15,6 @@ export default function ZonasComunesPage() {
   const accesoBloqueado = rolActivo === 'propietario' && !esResidente;
   const esHuesped = rolActivo === 'huesped-temporal';
   const [reglamentoZona, setReglamentoZona] = useState(null);
-  const [restringidaOpen, setRestringidaOpen] = useState(false);
 
   const aceptarReglamento = (id) => {
     try { localStorage.setItem(`reglamento-aceptado-${id}`, '1'); } catch (e) { /* noop */ }
@@ -34,11 +33,13 @@ export default function ZonasComunesPage() {
       <ModuloGate helpKey="zonas">
       <div style={{ padding: '16px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-          {zonasComunes.map(zona => (
+          {zonasComunes.map(zona => {
+            const zonaRestringida = esHuesped && zona.restringidaHuesped;
+            return (
             <button
               key={zona.id}
-              onClick={() => esHuesped ? setRestringidaOpen(true) : navigate(`/zonas-comunes/${zona.id}`)}
-              disabled={esHuesped}
+              onClick={() => zonaRestringida ? null : navigate(`/zonas-comunes/${zona.id}`)}
+              disabled={zonaRestringida}
               style={{
                 background: theme.colors.bgCard,
                 borderRadius: theme.radius.xl,
@@ -48,12 +49,12 @@ export default function ZonasComunesPage() {
                 alignItems: 'center',
                 gap: '10px',
                 boxShadow: theme.shadows.card,
-                cursor: esHuesped ? 'not-allowed' : 'pointer',
+                cursor: zonaRestringida ? 'not-allowed' : 'pointer',
                 fontFamily: theme.fonts.family,
                 border: 'none',
                 position: 'relative',
-                opacity: esHuesped ? 0.5 : 1,
-                filter: esHuesped ? 'grayscale(1)' : 'none',
+                opacity: zonaRestringida ? 0.5 : 1,
+                filter: zonaRestringida ? 'grayscale(1)' : 'none',
               }}
             >
               <img
@@ -87,7 +88,7 @@ export default function ZonasComunesPage() {
                 Reglamento
               </button>
             </button>
-          ))}
+          ); })}
         </div>
       </div>
       </ModuloGate>
@@ -109,26 +110,6 @@ export default function ZonasComunesPage() {
             }}
           >
             Acepto el reglamento
-          </button>
-        </div>
-      </Modal>
-
-      <Modal isOpen={restringidaOpen} onClose={() => setRestringidaOpen(false)} title="Zona restringida">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <p style={{ margin: 0, fontSize: theme.fonts.sizes.sm, color: theme.colors.text, lineHeight: 1.6 }}>
-            Las zonas comunes están restringidas para huéspedes temporales. Esta es una regla del edificio, no del anfitrión. Si necesitas acceso, coordínalo con tu anfitrión.
-          </p>
-          <button
-            type="button"
-            onClick={() => setRestringidaOpen(false)}
-            style={{
-              width: '100%', padding: '12px', borderRadius: theme.radius.full,
-              background: theme.colors.primary, color: theme.colors.text,
-              fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.md,
-              border: 'none', cursor: 'pointer', fontFamily: theme.fonts.family,
-            }}
-          >
-            Entendido
           </button>
         </div>
       </Modal>

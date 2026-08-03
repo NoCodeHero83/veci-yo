@@ -107,7 +107,7 @@ function TipoCard({ icon, label, onClick, emoji }) {
 // Pendiente) y acciones de comunicación.
 export default function ReglasPage() {
   const navigate = useNavigate();
-  const { addToast, rolActivo } = useApp();
+  const { rolActivo } = useApp();
 
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('Todos');
@@ -117,6 +117,7 @@ export default function ReglasPage() {
   const [pisoFiltro, setPisoFiltro] = useState('');
 
   const [accionesDept, setAccionesDept] = useState(null);
+  const [cumplimientoDept, setCumplimientoDept] = useState(null);
 
   const filtered = reglasDepartamentos.filter(d => {
     const matchSearch = !search
@@ -199,7 +200,7 @@ export default function ReglasPage() {
         )}
 
         {rolActivo === 'propietario' || rolActivo === 'inquilino-lider' ? (
-          <button type="button" onClick={() => navigate('/perfil/reclamos/nuevo', { state: { tipo: 'Reglas' } })} style={{ ...pillButtonStyle, background: theme.colors.secondary, color: '#fff' }}>
+          <button type="button" onClick={() => navigate('/perfil/soporte/reclamos/nuevo', { state: { tipo: 'Reglas' } })} style={{ ...pillButtonStyle, background: theme.colors.secondary, color: '#fff' }}>
             Crear PQRS desde Reglas
           </button>
         ) : null}
@@ -222,9 +223,9 @@ export default function ReglasPage() {
                 <img src={iconRnt} alt="RNT" style={{ height: '22px', borderRadius: theme.radius.full, objectFit: 'cover' }} />
                 {(dept.cumplimiento?.antirruido || dept.cumplimiento?.noFumar || dept.cumplimiento?.sensor) && (
                   <span style={{ display: 'inline-flex', gap: '4px' }}>
-                    <button type="button" onClick={() => addToast('Dispositivo antirruido registrado', 'success')} title="Dispositivo antirruido" style={cumplimientoIcon(dept.cumplimiento?.antirruido)}>🔇</button>
-                    <button type="button" onClick={() => addToast('Señalética de no fumar registrada', 'success')} title="Señalética de no fumar" style={cumplimientoIcon(dept.cumplimiento?.noFumar)}>🚭</button>
-                    <button type="button" onClick={() => addToast('Sensor de incendio/gas/CO2 registrado', 'success')} title="Sensor de incendio/gas/CO2" style={cumplimientoIcon(dept.cumplimiento?.sensor)}>🔥</button>
+                    <button type="button" onClick={() => setCumplimientoDept(dept)} title="Dispositivo antirruido" style={cumplimientoIcon(dept.cumplimiento?.antirruido)}>🔇</button>
+                    <button type="button" onClick={() => setCumplimientoDept(dept)} title="Señalética de no fumar" style={cumplimientoIcon(dept.cumplimiento?.noFumar)}>🚭</button>
+                    <button type="button" onClick={() => setCumplimientoDept(dept)} title="Sensor de incendio/gas/CO2" style={cumplimientoIcon(dept.cumplimiento?.sensor)}>🔥</button>
                   </span>
                 )}
                 {dept.mascotas && (
@@ -269,7 +270,7 @@ export default function ReglasPage() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <button type="button" onClick={() => { const d = accionesDept; setAccionesDept(null); navigate('/perfil/reclamos/nuevo', { state: { asunto: `Incidente departamento ${d?.departamento || ''}`, tipo: 'Reglas' } }); }} style={pillButtonStyle}>
+            <button type="button" onClick={() => { const d = accionesDept; setAccionesDept(null); navigate('/perfil/soporte/reclamos/nuevo', { state: { asunto: `Incidente departamento ${d?.departamento || ''}`, tipo: 'Reglas' } }); }} style={pillButtonStyle}>
               Reportar incidente (PQRS)
             </button>
             <div style={{ textAlign: 'center', padding: '4px', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
@@ -277,6 +278,31 @@ export default function ReglasPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Popup de cumplimiento del departamento */}
+      <Modal isOpen={!!cumplimientoDept} onClose={() => setCumplimientoDept(null)} title="Cumplimiento del departamento">
+        <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ fontSize: theme.fonts.sizes.base, fontWeight: theme.fonts.weights.bold, color: theme.colors.text }}>
+            {cumplimientoDept?.departamento}
+          </div>
+          {[
+            { key: 'antirruido', icono: '🔇', label: 'Dispositivo antirruido' },
+            { key: 'noFumar', icono: '🚭', label: 'Señalética de no fumar' },
+            { key: 'sensor', icono: '🔥', label: 'Sensor de incendio/gas/CO2' },
+          ].map(item => {
+            const activo = !!cumplimientoDept?.cumplimiento?.[item.key];
+            return (
+              <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: theme.radius.md, background: theme.colors.bgMuted }}>
+                <span style={{ fontSize: '18px' }}>{item.icono}</span>
+                <span style={{ flex: 1, fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>{item.label}</span>
+                <span style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.bold, color: activo ? theme.colors.success : theme.colors.danger }}>
+                  {activo ? 'Registrado' : 'No registrado'}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </Modal>
     </AppShell>
   );

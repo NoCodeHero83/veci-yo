@@ -36,8 +36,11 @@ export default function ZonaReservarPage() {
   const campos = CAMPOS_POR_ZONA[zonaId] || { numero: true, personas: true };
   const numeros = Array.from({ length: zona.total || 4 }, (_, i) => `${zona.nombre} N°${i + 1}`);
   const requiereAprobacion = zonaConfig.requiereAprobacion || false;
+  const duracionMax = zonaConfig.duracionPermitada || zona.duracionMaxima || 2;
+  const opcionesDuracion = Array.from({ length: duracionMax }, (_, i) => `${i + 1} ${i + 1 === 1 ? 'hora' : 'horas'}`);
 
   const [hora, setHora] = useState('');
+  const [duracion, setDuracion] = useState('1 hora');
   const [numero, setNumero] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [personas, setPersonas] = useState('');
@@ -78,6 +81,7 @@ export default function ZonaReservarPage() {
       acompanantes: Math.max(0, nombresPersonas.filter(Boolean).length - 1),
       reservaNum: String(Math.floor(Math.random() * 900000 + 100000)),
       horario: hora,
+      duracion,
       estado,
       personas: personasList,
       comentarios,
@@ -123,7 +127,8 @@ export default function ZonaReservarPage() {
           </div>
         </div>
 
-        <SelectField label="Seleccione hora de reserva:" value={hora} options={horasReserva} onChange={setHora} />
+        <SelectField label="Seleccione hora de reserva:" value={hora} options={zonaConfig.horariosDisponibles && zonaConfig.horariosDisponibles.length ? zonaConfig.horariosDisponibles : horasReserva} onChange={setHora} />
+        <SelectField label={`Duración (máx ${duracionMax} ${duracionMax === 1 ? 'hora' : 'horas'}):`} value={duracion} options={opcionesDuracion} onChange={setDuracion} />
         {campos.numero && (
           <SelectField label={`Seleccione N° de ${zona.nombre}:`} value={numero} options={numeros} onChange={setNumero} />
         )}

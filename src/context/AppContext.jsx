@@ -459,17 +459,20 @@ export function AppProvider({ children }) {
   }, []);
 
   // Zonas Comunes - Gestión (Administrador)
-  const actualizarGestionZona = useCallback((zonaId, datos) => {
+  const actualizarGestionZona = useCallback((zonaId, datos, zonaConfig) => {
     setGestionZonas(prev => ({
       ...prev,
       [zonaId]: { ...prev[zonaId], ...datos },
     }));
+    if (zonaConfig) {
+      setZonasComunesConfig(prev => ({ ...prev, [zonaId]: { ...prev[zonaId], ...zonaConfig } }));
+    }
   }, []);
 
-  const agregarGestionZona = useCallback((datos) => {
+  const agregarGestionZona = useCallback((datos, zonaConfig) => {
     const id = datos.id || `zona-${Date.now()}`;
     setGestionZonas(prev => ({ ...prev, [id]: { ...datos, id } }));
-    setZonasComunesConfig(prev => ({ ...prev, [id]: { id, nombre: datos.nombre, emoji: '🏠', descripcion: datos.descripcion || '', horariosDisponibles: [], duracionPermitida: 2, reglas: '', capacidadMaxima: 10, requiereAprobacion: false } }));
+    setZonasComunesConfig(prev => ({ ...prev, [id]: { id, nombre: datos.nombre, emoji: '🏠', descripcion: datos.descripcion || '', horariosDisponibles: zonaConfig?.horariosDisponibles || [], duracionPermitida: zonaConfig?.duracionPermitida || 2, reglas: zonaConfig?.reglas || '', usaSlots: zonaConfig?.usaSlots || false, capacidadMaxima: 10, requiereAprobacion: zonaConfig?.requiereAprobacion || false } }));
   }, []);
 
   const eliminarGestionZona = useCallback((zonaId) => {

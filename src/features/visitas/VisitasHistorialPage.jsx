@@ -107,8 +107,8 @@ export default function VisitasHistorialPage() {
 
   // Seguridad (guardia) y Administrador no tienen acceso al Calendario.
   const sinCalendario = rolActivo === 'guardia' || rolActivo === 'administrador';
-  // Solo Seguridad y Administrador pueden filtrar por piso/torre.
-  const puedeFiltrarTorrePiso = rolActivo === 'guardia' || rolActivo === 'administrador';
+  // Solo Seguridad, Administrador y Huésped Temporal pueden filtrar por piso/torre.
+  const puedeFiltrarTorrePiso = rolActivo === 'guardia' || rolActivo === 'administrador' || rolActivo === 'huesped-temporal';
 
   const TIPO_TABS = useMemo(() => {
     if (rolActivo === 'huesped-temporal') return [{ value: 'visitas', label: 'Visitas' }];
@@ -162,9 +162,8 @@ export default function VisitasHistorialPage() {
 
   const renderGuestDetailInline = (inv, idx, item) => {
     const t = inv.timeline || {};
-    const esAdmin = rolActivo === 'administrador';
     const esAnfitrion = rolActivo === 'propietario' || rolActivo === 'inquilino-lider';
-    const puedeAprobar = esAdmin || esAnfitrion;
+    const puedeAprobar = esAnfitrion;
     const rntCompleto = ubicacionActiva ? configHuespedesTemporales[ubicacionActiva.id]?.legal?.rnt?.trim()?.length > 0 : false;
     const stepStatus = (key) => {
       if (key === 'terminosAceptados') {
@@ -847,7 +846,7 @@ export default function VisitasHistorialPage() {
                 <img src={tipoVisitaIcons[reservaDetail.tipo]} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>Reserva de {reservaDetail.nombre}</div>
-                  {!mostrarDisenoReserva && (
+                  {(reservaDetail.torre || reservaDetail.depto) && (
                     <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{reservaDetail.torre} - {reservaDetail.depto}</div>
                   )}
                   <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -1241,9 +1240,8 @@ export default function VisitasHistorialPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {detalleActual.invitados.map((inv, i) => {
                     const t = inv.timeline || {};
-                    const esAdmin = rolActivo === 'administrador';
                     const esAnfitrion = rolActivo === 'propietario' || rolActivo === 'inquilino-lider';
-                    const puedeAprobar = esAdmin || esAnfitrion;
+                    const puedeAprobar = esAnfitrion;
                     const rntCompleto = ubicacionActiva ? configHuespedesTemporales[ubicacionActiva.id]?.legal?.rnt?.trim()?.length > 0 : false;
                     const stepStatus = (key) => {
                       if (key === 'terminosAceptados') {

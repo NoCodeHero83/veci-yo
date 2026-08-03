@@ -318,14 +318,14 @@ export const packVerificacion = [
 // ─── ZONAS COMUNES ───────────────────────────────────────────────────────────
 
 export const zonasComunes = [
-  { id: 'piscina', nombre: 'Piscina', emoji: '🏊', disponibles: 2, total: 2, usaSlots: false, duracionMaxima: 2, reglamento: 'Horario de piscina: 08:00 a 20:00. Prohibido correr en el borde. Menores deben ir acompañados de un adulto.' },
-  { id: 'parque', nombre: 'Parque', emoji: '🛝', disponibles: 15, total: 15, usaSlots: false, duracionMaxima: 3, reglamento: 'Respetar el horario de silencio después de las 21:00. Recoger basura antes de retirarse.' },
-  { id: 'bbq', nombre: 'BBQ', emoji: '🔥', disponibles: 15, total: 15, usaSlots: false, duracionMaxima: 4, reglamento: 'Apagar parrilla tras usarla. No dejar carbón encendido. Limpiar la zona.' },
-  { id: 'gym', nombre: 'GYM', emoji: '🏋️', disponibles: 30, total: 30, usaSlots: false, duracionMaxima: 2, reglamento: 'Máximo 2 horas por reserva. Usar toalla en los equipos. Devolver pesas a su lugar.' },
-  { id: 'coworking', nombre: 'Coworking', emoji: '💼', disponibles: 2, total: 2, usaSlots: false, duracionMaxima: 4, reglamento: 'Mantener silencio. No consumir alimentos en las mesas de trabajo.' },
-  { id: 'tenis', nombre: 'Tenis', emoji: '🎾', disponibles: 2, total: 2, usaSlots: true, duracionMaxima: 1, reglamento: 'Una cancha por reserva. Calzado deportivo obligatorio.' },
-  { id: 'sala-juegos', nombre: 'Sala de juegos', emoji: '🎱', disponibles: 5, total: 5, usaSlots: false, duracionMaxima: 3, reglamento: 'No se permite el ingreso de menores sin supervisión.' },
-  { id: 'lavanderia', nombre: 'Lavandería', emoji: '🫧', disponibles: 15, total: 15, usaSlots: true, duracionMaxima: 1, reglamento: 'Slots de 1 hora. Retirar la ropa al finalizar el slot.' },
+  { id: 'piscina', nombre: 'Piscina', emoji: '🏊', disponibles: 2, total: 2, usaSlots: false, duracionMaxima: 2, restringidaHuesped: true, reglamento: 'Horario de piscina: 08:00 a 20:00. Prohibido correr en el borde. Menores deben ir acompañados de un adulto.' },
+  { id: 'parque', nombre: 'Parque', emoji: '🛝', disponibles: 15, total: 15, usaSlots: false, duracionMaxima: 3, restringidaHuesped: false, reglamento: 'Respetar el horario de silencio después de las 21:00. Recoger basura antes de retirarse.' },
+  { id: 'bbq', nombre: 'BBQ', emoji: '🔥', disponibles: 15, total: 15, usaSlots: false, duracionMaxima: 4, restringidaHuesped: false, reglamento: 'Apagar parrilla tras usarla. No dejar carbón encendido. Limpiar la zona.' },
+  { id: 'gym', nombre: 'GYM', emoji: '🏋️', disponibles: 30, total: 30, usaSlots: false, duracionMaxima: 2, restringidaHuesped: true, reglamento: 'Máximo 2 horas por reserva. Usar toalla en los equipos. Devolver pesas a su lugar.' },
+  { id: 'coworking', nombre: 'Coworking', emoji: '💼', disponibles: 2, total: 2, usaSlots: false, duracionMaxima: 4, restringidaHuesped: false, reglamento: 'Mantener silencio. No consumir alimentos en las mesas de trabajo.' },
+  { id: 'tenis', nombre: 'Tenis', emoji: '🎾', disponibles: 2, total: 2, usaSlots: true, duracionMaxima: 1, restringidaHuesped: true, reglamento: 'Una cancha por reserva. Calzado deportivo obligatorio.' },
+  { id: 'sala-juegos', nombre: 'Sala de juegos', emoji: '🎱', disponibles: 5, total: 5, usaSlots: false, duracionMaxima: 3, restringidaHuesped: true, reglamento: 'No se permite el ingreso de menores sin supervisión.' },
+  { id: 'lavanderia', nombre: 'Lavandería', emoji: '🫧', disponibles: 15, total: 15, usaSlots: true, duracionMaxima: 1, restringidaHuesped: false, reglamento: 'Slots de 1 hora. Retirar la ropa al finalizar el slot.' },
 ];
 
 function generarPersonas(titular, cantidad) {
@@ -990,6 +990,7 @@ export const anuncios = [
     fechaFinalizacion: '14/04/2025',
     fechaCorta: '22/10/2024',
     votacion: false,
+    paraHuespedes: true,
   },
   {
     id: 699,
@@ -1000,6 +1001,7 @@ export const anuncios = [
     fechaFinalizacion: '12/04/2025',
     fechaCorta: '22/10/2024',
     votacion: false,
+    paraHuespedes: true,
   },
 ];
 

@@ -202,7 +202,7 @@ export default function VisitasNuevoPage() {
   const handleAceptarContinuar = () => {
     const invitados = acompanantes
       .filter(a => a.nombre.trim())
-      .map(a => ({ nombre: a.nombre, ci: a.ci || '', llego: false }));
+      .map(a => ({ nombre: a.nombre, ci: a.ci || '', esMenor: !!a.esMenor, llego: false }));
     const tieneVehiculo = tieneVehiculoToggle && vehiculos.some(v => v.placa.trim());
     const vehiculosValidos = tieneVehiculoToggle ? vehiculos.filter(v => v.placa.trim()).map(v => ({ placa: v.placa, tipo: v.tipo || 'auto' })) : [];
     const num = Math.floor(Math.random() * 900000 + 100000);
@@ -359,6 +359,10 @@ export default function VisitasNuevoPage() {
                     style={inputStyle}
                   />
                 </div>
+              </div>
+
+              <div style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '10px 12px', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, lineHeight: 1.5 }}>
+                Recuerda indicar a tu invitado que debe presentar su documento (cédula, pasaporte o DNI) en portería al ingresar al edificio.
               </div>
 
               {tipoSeleccionado !== 'temporal' && (
