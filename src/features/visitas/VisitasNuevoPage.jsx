@@ -81,7 +81,9 @@ export default function VisitasNuevoPage() {
   const [horaSalidaInicio, setHoraSalidaInicio] = useState('');
   const [horaSalidaFin, setHoraSalidaFin] = useState('');
   const [acompanantes, setAcompanantes] = useState([]);
+  const [cantidadMenores, setCantidadMenores] = useState(0);
   const [mostrarAvisoMenores, setMostrarAvisoMenores] = useState(false);
+  const [avisoMenoresOpen, setAvisoMenoresOpen] = useState(false);
   const [estacionamientosSeleccionados, setEstacionamientosSeleccionados] = useState(0);
   const [vehiculos, setVehiculos] = useState([]);
   const [tieneVehiculoToggle, setTieneVehiculoToggle] = useState(false);
@@ -142,6 +144,12 @@ export default function VisitasNuevoPage() {
       return updated;
     });
   }, [personas]);
+
+  // P11: la cantidad de menores marca automáticamente los primeros N acompañantes como menores de edad
+  useEffect(() => {
+    const n = Math.max(0, Math.min(parseInt(cantidadMenores) || 0, acompanantes.length));
+    setAcompanantes(prev => prev.map((a, i) => ({ ...a, esMenor: i < n })));
+  }, [personas, cantidadMenores]);
 
   const handleCardNumberInput = (value) => {
     const digits = value.replace(/\D/g, '').slice(0, 16);
@@ -324,6 +332,18 @@ export default function VisitasNuevoPage() {
                     👶 {acompanantes.filter(a => a.esMenor).length} menores
                   </span>
                 </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                    <input
+                      type="number"
+                      value={cantidadMenores}
+                      onChange={e => setCantidadMenores(Math.max(0, Math.min(parseInt(e.target.value) || 0, Math.max(0, parseInt(personas) - 1))))}
+                      min="0"
+                      style={{ ...inputStyle, width: '80px' }}
+                    />
+                    <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>menores de edad (de los invitados)</span>
+                  </div>
+                </div>
                 
               </div>
             </div>
@@ -423,6 +443,7 @@ export default function VisitasNuevoPage() {
                       updated[idx] = { ...updated[idx], esMenor: v };
                       setAcompanantes(updated);
                       setMostrarAvisoMenores(true);
+                      if (v) setAvisoMenoresOpen(true);
                     }}
                   />
                 </div>
@@ -689,6 +710,17 @@ export default function VisitasNuevoPage() {
           </p>
           <Button variant="primary" fullWidth onClick={() => { setShowWarningRegistro(false); handleAceptarContinuar(); }}>Entendido, continuar</Button>
           <Button variant="ghost" fullWidth onClick={() => setShowWarningRegistro(false)}>Cancelar</Button>
+        </div>
+      </Modal>
+
+      {/* Aviso legal al marcar un acompañante como menor de edad (P12) */}
+      <Modal isOpen={avisoMenoresOpen} onClose={() => setAvisoMenoresOpen(false)} title="Aviso legal — menores de edad">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'center' }}>
+          <div style={{ fontSize: '40px' }}>👶⚠️</div>
+          <p style={{ fontSize: theme.fonts.sizes.base, color: theme.colors.text, lineHeight: 1.5, margin: 0 }}>
+            Si el invitado es menor de edad, debe ingresar con su padre/madre/tutor legal con la documentación respectiva. Este edificio está comprometido con la prevención del abuso sexual de menores y la trata de personas.
+          </p>
+          <Button variant="primary" fullWidth onClick={() => setAvisoMenoresOpen(false)}>Entendido</Button>
         </div>
       </Modal>
     </AppShell>

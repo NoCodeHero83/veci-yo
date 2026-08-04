@@ -536,7 +536,7 @@ export default function InquilinoLiderHome() {
             );
           })()}
         </div>
-        {esAdmin || esGuardia && (
+        {(esAdmin || esGuardia) && (
           <div style={{ padding: '0 16px' }}>
             <button
               type="button"
@@ -561,7 +561,7 @@ export default function InquilinoLiderHome() {
 
         {/* Tabla resumen + botones */}
         {/* Estacionamientos de visita — acceso rápido (solo Administrador y Guardia de Seguridad) */}
-        {esAdmin || esGuardia && (
+        {(esAdmin || esGuardia) && (
         <div style={{ ...cardStyle, padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

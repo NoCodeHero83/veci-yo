@@ -93,7 +93,7 @@ export default function ZonaDetallesPage() {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState(null);
   const [filtrosAbierto, setFiltrosAbierto] = useState(true);
-  const [filtroDia, setFiltroDia] = useState(null);
+  const [filtroDia, setFiltroDia] = useState('hoy');
   const [fechaDesde, setFechaDesde] = useState('');
   const [fechaHasta, setFechaHasta] = useState('');
   const [reglamentoOpen, setReglamentoOpen] = useState(false);
