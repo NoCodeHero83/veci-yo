@@ -408,6 +408,41 @@ export const reservasZona = [
     reservaNum: '845974', horario: 'Lunes 10 hs a 12 hs.', estado: 'Cancelado',
     personas: generarPersonas('Andrés Vega', 1),
   },
+  {
+    id: 15, zonaId: 'piscina', depto: 'Departamento 201 C', nombre: 'Laura Sánchez', acompanantes: 3,
+    reservaNum: '901200', horario: '10:00 - 12:00', estado: 'Aprobado',
+    personas: generarPersonas('Laura Sánchez', 3),
+  },
+  {
+    id: 16, zonaId: 'piscina', depto: 'Departamento 405 A', nombre: 'Roberto Díaz', acompanantes: 2,
+    reservaNum: '901201', horario: '14:00 - 16:00', estado: 'Aprobado',
+    personas: generarPersonas('Roberto Díaz', 2),
+  },
+  {
+    id: 17, zonaId: 'bbq', depto: 'Departamento 304 A', nombre: 'Miguel Torres', accompany: 6,
+    reservaNum: '901202', horario: '12:00 - 14:00', estado: 'Aprobado',
+    personas: generarPersonas('Miguel Torres', 6),
+  },
+  {
+    id: 18, zonaId: 'bbq', depto: 'Departamento 102 B', nombre: 'Carmen Ruiz', acompanantes: 4,
+    reservaNum: '901203', horario: '16:00 - 18:00', estado: 'Pendiente',
+    personas: generarPersonas('Carmen Ruiz', 4),
+  },
+  {
+    id: 19, zonaId: 'gym', depto: 'Departamento 506 C', nombre: 'Carlos Balazo', acompanantes: 1,
+    reservaNum: '901204', horario: '08:00 - 10:00', estado: 'Aprobado',
+    personas: generarPersonas('Carlos Balazo', 1),
+  },
+  {
+    id: 20, zonaId: 'coworking', depto: 'Departamento 201 C', nombre: 'Sofía Herrera', acompanantes: 1,
+    reservaNum: '901205', horario: '10:00 - 12:00', estado: 'Aprobado',
+    personas: generarPersonas('Sofía Herrera', 1),
+  },
+  {
+    id: 21, zonaId: 'parque', depto: 'Departamento 304 A', nombre: 'Valentina Ríos', accompany: 5,
+    reservaNum: '901206', horario: '16:00 - 18:00', estado: 'Aprobado',
+    personas: generarPersonas('Valentina Ríos', 5),
+  },
 ];
 
 export const horasReserva = [

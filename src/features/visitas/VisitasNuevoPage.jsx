@@ -250,7 +250,8 @@ export default function VisitasNuevoPage() {
       <PageHeader title="Visitas" />
 
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {/* Type selector */}
+        {/* Type selector — hidden when pre-selected from option 2 */}
+        {!tipoPreseleccionado && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           {TIPOS.map(tipo => {
             const isActive = tipoSeleccionado === tipo.id;
@@ -302,6 +303,7 @@ export default function VisitasNuevoPage() {
             );
           })}
         </div>
+        )}
 
         {tipoSeleccionado && (
           <>

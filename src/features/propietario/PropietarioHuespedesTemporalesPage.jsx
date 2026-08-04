@@ -61,6 +61,7 @@ export default function PropietarioHuespedesTemporalesPage() {
   const [estacionamientosProp, setEstacionamientosProp] = useState(config?.estacionamientos ?? 0);
   const [plataformas, setPlataformas] = useState(config?.plataformas ?? { airbnb: false, booking: false, otras: '' });
   const [pms, setPms] = useState(config?.pms ?? { activo: false, cual: '' });
+  const [icalLink, setIcalLink] = useState(config?.icalLink ?? '');
   const [permiteVisitasHuespedes, setPermiteVisitasHuespedes] = useState(config?.permiteVisitasHuespedes ?? 'permitir-todos');
   const [showWarningModal, setShowWarningModal] = useState(false);
   const [nuevoMaximoSolicitado, setNuevoMaximoSolicitado] = useState(0);
@@ -93,6 +94,7 @@ export default function PropietarioHuespedesTemporalesPage() {
       estacionamientos: estacionamientosProp,
       plataformas,
       pms,
+      icalLink,
       legal,
       permiteVisitasHuespedes,
       cumplimiento,
@@ -304,7 +306,7 @@ export default function PropietarioHuespedesTemporalesPage() {
                   size={16}
                 />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginBottom: pms.activo ? '12px' : 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginBottom: '12px' }}>
                 <button
                   onClick={() => setPms({ activo: true, cual: pms.cual })}
                   style={{
@@ -326,15 +328,24 @@ export default function PropietarioHuespedesTemporalesPage() {
                   }}
                 >No</button>
               </div>
-              {pms.activo && (
-                <input
-                  type="text"
-                  value={pms.cual}
-                  onChange={e => setPms(prev => ({ ...prev, cual: e.target.value }))}
-                  placeholder="Indica cuál PMS usas (ej: Mews, Cloudbeds, etc.)"
-                  style={{ ...inputStyle, marginTop: '8px' }}
-                />
-              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', borderRadius: theme.radius.lg, background: theme.colors.bgMuted, border: `1px solid ${theme.colors.border}` }}>
+                  <span style={{ fontSize: '24px' }}>{'\uD83C\uDFE0'}</span>
+                  <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>Airbnb</span>
+                </div>
+                <div>
+                  <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>
+                    Agrega tu enlace de iCal de Airbnb debajo
+                  </div>
+                  <input
+                    type="url"
+                    value={icalLink}
+                    onChange={e => setIcalLink(e.target.value)}
+                    placeholder="https://www.airbnb.com/calendar/ical/..."
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
             </div>
 
             <div style={sectionCard}>

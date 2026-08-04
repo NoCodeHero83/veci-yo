@@ -28,6 +28,7 @@ const TIPOS_PARTICIPANTE = ['Residente', 'Visitante', 'Huésped Temporal'];
 export default function ZonaReservarPage() {
   const { zonaId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { agregarReserva, zonasComunesConfig, rolActivo } = useApp();
   const tipoPorDefecto = rolActivo === 'huesped-temporal' ? 'Huésped Temporal' : 'Residente';
 
@@ -39,10 +40,19 @@ export default function ZonaReservarPage() {
   const duracionMax = zonaConfig.duracionPermitada || zona.duracionMaxima || 2;
   const opcionesDuracion = Array.from({ length: duracionMax }, (_, i) => `${i + 1} ${i + 1 === 1 ? 'hora' : 'horas'}`);
 
-  const [hora, setHora] = useState('');
+  const horaPre = location.state?.horaPre || '';
+  const fechaPre = location.state?.fechaPre ? new Date(location.state.fechaPre) : null;
+  const opcionesHora = zonaConfig.horariosDisponibles && zonaConfig.horariosDisponibles.length
+    ? zonaConfig.horariosDisponibles
+    : horasReserva;
+  const horaInicial = horaPre
+    ? opcionesHora.find(opt => opt.startsWith(horaPre)) || ''
+    : '';
+
+  const [hora, setHora] = useState(horaInicial);
   const [duracion, setDuracion] = useState('1 hora');
   const [numero, setNumero] = useState('');
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(fechaPre || new Date());
   const [personas, setPersonas] = useState('');
   const [nombresPersonas, setNombresPersonas] = useState([]);
   const [tiposPersonas, setTiposPersonas] = useState([]);

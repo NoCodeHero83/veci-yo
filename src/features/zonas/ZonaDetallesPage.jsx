@@ -388,9 +388,13 @@ export default function ZonaDetallesPage() {
                     });
                   });
                   const esGuardiaAdmin = esGuardia || rolActivo === 'administrador';
+                  const fechaSlot = filtroDia === 'hoy' ? new Date() : filtroDia === 'manana' ? new Date(Date.now() + 86400000) : (fechaDesde ? new Date(fechaDesde + 'T00:00:00') : new Date());
                   return horasBase.map(h => {
                     const reservasEnSlot = reservasPorHora[h] || [];
                     const ocupado = reservasEnSlot.length >= (zona.total || 1);
+                    const handleClickSlot = !esGuardiaAdmin && !ocupado
+                      ? () => navigate(`/zonas-comunes/${zonaId}/reservar`, { state: { horaPre: h, fechaPre: fechaSlot.toISOString() } })
+                      : undefined;
                     return (
                       <div key={h} style={{ display: 'flex', borderBottom: `1px solid ${theme.colors.borderLight}` }}>
                         <div style={{ width: '50px', flexShrink: 0, padding: '8px 0', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.medium, textAlign: 'right', paddingRight: '8px' }}>
@@ -424,10 +428,23 @@ export default function ZonaDetallesPage() {
                                 </div>
                               );
                             })
-                          ) : (
+                          ) : esGuardiaAdmin ? (
                             <div style={{ padding: '4px 8px', fontSize: theme.fonts.sizes['2xs'], color: theme.colors.success, fontWeight: theme.fonts.weights.medium }}>
                               Disponible
                             </div>
+                          ) : (
+                            <button
+                              onClick={handleClickSlot}
+                              style={{
+                                display: 'block', width: '100%', padding: '4px 8px', fontSize: theme.fonts.sizes['2xs'], color: theme.colors.success, fontWeight: theme.fonts.weights.medium,
+                                background: 'none', border: 'none', cursor: 'pointer', fontFamily: theme.fonts.family, textAlign: 'left',
+                                borderRadius: theme.radius.md, transition: 'background 150ms',
+                              }}
+                              onMouseEnter={e => { e.target.style.background = '#F0FDF4'; }}
+                              onMouseLeave={e => { e.target.style.background = 'none'; }}
+                            >
+                              Disponible — reservar
+                            </button>
                           )}
                         </div>
                       </div>
@@ -468,9 +485,13 @@ export default function ZonaDetallesPage() {
                   });
                 });
                 const esGuardiaAdmin = esGuardia || rolActivo === 'administrador';
+                const fechaSlot = filtroDia === 'hoy' ? new Date() : filtroDia === 'manana' ? new Date(Date.now() + 86400000) : (fechaDesde ? new Date(fechaDesde + 'T00:00:00') : new Date());
                 return horasBase.map(h => {
                   const reservasEnSlot = reservasPorHora[h] || [];
                   const ocupado = reservasEnSlot.length >= (zona.total || 1);
+                  const handleClickSlot = !esGuardiaAdmin && !ocupado
+                    ? () => navigate(`/zonas-comunes/${zonaId}/reservar`, { state: { horaPre: h, fechaPre: fechaSlot.toISOString() } })
+                    : undefined;
                   return (
                     <div key={h} style={{ display: 'flex', borderBottom: `1px solid ${theme.colors.borderLight}` }}>
                       <div style={{ width: '50px', flexShrink: 0, padding: '8px 0', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.medium, textAlign: 'right', paddingRight: '8px' }}>
@@ -504,10 +525,23 @@ export default function ZonaDetallesPage() {
                               </div>
                             );
                           })
-                        ) : (
+                        ) : esGuardiaAdmin ? (
                           <div style={{ padding: '4px 8px', fontSize: theme.fonts.sizes['2xs'], color: theme.colors.success, fontWeight: theme.fonts.weights.medium }}>
                             Disponible
                           </div>
+                        ) : (
+                          <button
+                            onClick={handleClickSlot}
+                            style={{
+                              display: 'block', width: '100%', padding: '4px 8px', fontSize: theme.fonts.sizes['2xs'], color: theme.colors.success, fontWeight: theme.fonts.weights.medium,
+                              background: 'none', border: 'none', cursor: 'pointer', fontFamily: theme.fonts.family, textAlign: 'left',
+                              borderRadius: theme.radius.md, transition: 'background 150ms',
+                            }}
+                            onMouseEnter={e => { e.target.style.background = '#F0FDF4'; }}
+                            onMouseLeave={e => { e.target.style.background = 'none'; }}
+                          >
+                            Disponible — reservar
+                          </button>
                         )}
                       </div>
                     </div>
