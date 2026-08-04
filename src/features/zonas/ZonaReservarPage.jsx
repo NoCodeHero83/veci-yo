@@ -42,9 +42,12 @@ export default function ZonaReservarPage() {
 
   const horaPre = location.state?.horaPre || '';
   const fechaPre = location.state?.fechaPre ? new Date(location.state.fechaPre) : null;
-  const opcionesHora = zonaConfig.horariosDisponibles && zonaConfig.horariosDisponibles.length
+  const horariosConfig = Array.isArray(zonaConfig.horariosDisponibles)
     ? zonaConfig.horariosDisponibles
-    : horasReserva;
+    : (typeof zonaConfig.horariosDisponibles === 'string' && zonaConfig.horariosDisponibles.trim()
+        ? zonaConfig.horariosDisponibles.split(',').map(s => s.trim()).filter(Boolean)
+        : []);
+  const opcionesHora = horariosConfig.length ? horariosConfig : horasReserva;
   const horaInicial = horaPre
     ? opcionesHora.find(opt => opt.startsWith(horaPre)) || ''
     : '';
@@ -137,7 +140,7 @@ export default function ZonaReservarPage() {
           </div>
         </div>
 
-        <SelectField label="Seleccione hora de reserva:" value={hora} options={zonaConfig.horariosDisponibles && zonaConfig.horariosDisponibles.length ? zonaConfig.horariosDisponibles : horasReserva} onChange={setHora} />
+        <SelectField label="Seleccione hora de reserva:" value={hora} options={opcionesHora} onChange={setHora} />
         <SelectField label={`Duración (máx ${duracionMax} ${duracionMax === 1 ? 'hora' : 'horas'}):`} value={duracion} options={opcionesDuracion} onChange={setDuracion} />
         {campos.numero && (
           <SelectField label={`Seleccione N° de ${zona.nombre}:`} value={numero} options={numeros} onChange={setNumero} />
