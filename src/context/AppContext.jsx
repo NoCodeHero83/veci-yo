@@ -605,6 +605,31 @@ export function AppProvider({ children }) {
     setEstacionamientosVisitantes(prev => ({ ...prev, ...datos }));
   }, []);
 
+  // Estacionamientos de visita asignados por cupo (spot -> "visitaId-invitadoIdx").
+  // Fuente única de verdad: la usan tanto la gestión central del Home como la card de visitas.
+  const [estacionamientosAsignados, setEstacionamientosAsignados] = useState({});
+
+  const asignarEstacionamientoVisita = (spot, clave) => {
+    if (estacionamientosAsignados[spot]) return;
+    const next = { ...estacionamientosAsignados, [spot]: clave };
+    setEstacionamientosAsignados(next);
+    setEstacionamientosVisitantes(v => ({ ...v, ocupados: Math.min(v.total, Object.keys(next).length) }));
+  };
+
+  const liberarEstacionamientoVisita = (spot) => {
+    if (!estacionamientosAsignados[spot]) return;
+    const next = { ...estacionamientosAsignados };
+    delete next[spot];
+    setEstacionamientosAsignados(next);
+    setEstacionamientosVisitantes(v => ({ ...v, ocupados: Object.keys(next).length }));
+  };
+
+  const guardarAsignacionesEstacionamiento = (mapa) => {
+    const next = mapa || {};
+    setEstacionamientosAsignados(next);
+    setEstacionamientosVisitantes(v => ({ ...v, ocupados: Math.min(v.total, Object.keys(next).length) }));
+  };
+
   // Administrador · Bloques
   const agregarBloque = useCallback((datos) => {
     setBloques(prev => [...prev, { id: Date.now(), ...datos }]);
@@ -820,6 +845,7 @@ export function AppProvider({ children }) {
       tipologias, agregarTipologia, actualizarTipologia, eliminarTipologia,
       porterias, agregarPorteria, actualizarPorteria, eliminarPorteria,
       estacionamientosVisitantes, actualizarEstacionamientosVisitantes,
+      estacionamientosAsignados, asignarEstacionamientoVisita, liberarEstacionamientoVisita, guardarAsignacionesEstacionamiento,
       bloques, agregarBloque, actualizarBloque, eliminarBloque,
       unidades, agregarUnidad, actualizarUnidad, eliminarUnidad, actualizarEstadoUnidad,
       asignarPropietarioUnidad, propietariosInvited, aceptarInvitacion,

@@ -63,7 +63,10 @@ export default function VisitasHistorialPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const fromHome = location.state?.fromHome || false;
-  const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado, aprobarInvitado, rolActivo, addToast, verificaciones, actualizarVerificacion, actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion, toggleInstruccionCumplida, estacionamientosVisitantes, configHuespedesTemporales, ubicacionActiva, suscripcionActiva, reportarTraSire, usuario, actualizarConfigHuespedTemporal, esResidente, actualizarTimeline, aprobarTerminosManual, aprobarVerificacion, aprobarVerificacionConHallazgos } = useApp();
+  const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado, aprobarInvitado, rolActivo, addToast, verificaciones, actualizarVerificacion, actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion, toggleInstruccionCumplida, estacionamientosVisitantes, estacionamientosAsignados, asignarEstacionamientoVisita, configHuespedesTemporales, ubicacionActiva, suscripcionActiva, reportarTraSire, usuario, actualizarConfigHuespedTemporal, esResidente, actualizarTimeline, aprobarTerminosManual, aprobarVerificacion, aprobarVerificacionConHallazgos } = useApp();
+
+  const esAdminRol = rolActivo === 'administrador';
+  const esGuardiaRol = rolActivo === 'guardia';
 
   // El rediseño de la Card de Reserva (Huésped Temporal) aplica para todos los
   // roles excepto Guardia de Seguridad, que mantiene su vista compacta.
@@ -98,6 +101,8 @@ export default function VisitasHistorialPage() {
   const [showAsignarEstacionamiento, setShowAsignarEstacionamiento] = useState(false);
   const [parkingSpot, setParkingSpot] = useState('');
   const [reservaDetail, setReservaDetail] = useState(null);
+  const [reservaGuardia, setReservaGuardia] = useState(null);
+  const [parkingTarget, setParkingTarget] = useState(null);
   const [calendarioMonth, setCalendarioMonth] = useState(new Date());
   // Prueba A/B de creación de visita: 'opcion1' = flujo separado (botón +),
   // 'opcion2' = vista combinada con los tipos de visita directos en la lista.
@@ -160,10 +165,23 @@ export default function VisitasHistorialPage() {
     return pasos.filter(Boolean).length;
   };
 
+  // 15b: personas (invitados) de una reserva; si no hay invitados, el titular actúa como persona única
+  const personasDeReserva = (item) => item.invitados && item.invitados.length > 0
+    ? item.invitados.map((inv, idx) => ({ base: item, persona: inv, idx }))
+    : [{ base: item, persona: { nombre: item.nombre, llego: false, horaIngreso: '', horaSalida: '' }, idx: -1 }];
+
+  // 16: huéspedes a mostrar en la línea de tiempo — siempre al menos una fila para que sea consistente
+  const huespedesTimeline = (item) => item.invitados && item.invitados.length > 0 ? item.invitados : [{ nombre: item.nombre }];
+
+  // 18: estacionamiento ya asignado a una visita (mapa compartido Home ⇄ Visitas)
+  const spotDeVisita = (visitaId) => Object.entries(estacionamientosAsignados || {}).find(([, clave]) => String(clave).startsWith(`${visitaId}-`))?.[0] || null;
+
   const renderGuestDetailInline = (inv, idx, item) => {
     const t = inv.timeline || {};
     const esAnfitrion = rolActivo === 'propietario' || rolActivo === 'inquilino-lider';
     const puedeAprobar = esAnfitrion;
+    // 15a: el Administrador ve las acciones exclusivas del Anfitrión, pero no puede ejecutarlas
+    const verAcciones = puedeAprobar || esAdminRol;
     const rntCompleto = ubicacionActiva ? configHuespedesTemporales[ubicacionActiva.id]?.legal?.rnt?.trim()?.length > 0 : false;
     const stepStatus = (key) => {
       if (key === 'terminosAceptados') {
@@ -178,10 +196,11 @@ export default function VisitasHistorialPage() {
       return !!t[key];
     };
     const esExcepcionTc = inv.terminosExcepcion === true && t.terminosAceptados !== true;
-    const btn = (bg, color, outline) => ({
+    const btn = (bg, color, outline, disabled) => ({
       padding: '5px 10px', borderRadius: theme.radius.md, border: outline ? `1.5px solid ${bg}` : `1.5px solid transparent`,
       background: outline ? 'transparent' : bg, color: outline ? bg : (color || '#fff'),
-      fontSize: theme.fonts.sizes['2xs'], fontWeight: theme.fonts.weights.semibold, cursor: 'pointer', fontFamily: theme.fonts.family, whiteSpace: 'nowrap',
+      fontSize: theme.fonts.sizes['2xs'], fontWeight: theme.fonts.weights.semibold, cursor: disabled ? 'not-allowed' : 'pointer', fontFamily: theme.fonts.family, whiteSpace: 'nowrap',
+      opacity: disabled ? 0.5 : 1,
     });
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
@@ -203,10 +222,10 @@ export default function VisitasHistorialPage() {
               {step.key === 'documentacionCompleta' && isCompleted && inv.documentos?.length > 0 && (
                 <button onClick={(e) => { e.stopPropagation(); setDocumentacionDetail({ invitado: inv, item }); }} style={btn(theme.colors.primary)}>Ver documentación</button>
               )}
-              {step.key === 'terminosAceptados' && esExcepcionTc && puedeAprobar && (
-                <button onClick={() => { aprobarTerminosManual(item.id, idx); addToast('Excepción T&C aceptada para ' + inv.nombre, 'success'); }} style={btn(theme.colors.secondary)}>Aceptar excepción</button>
+              {step.key === 'terminosAceptados' && esExcepcionTc && verAcciones && (
+                <button disabled={!puedeAprobar} onClick={puedeAprobar ? () => { aprobarTerminosManual(item.id, idx); addToast('Excepción T&C aceptada para ' + inv.nombre, 'success'); } : undefined} style={btn(theme.colors.secondary, null, false, !puedeAprobar)} title={!puedeAprobar ? 'Acción exclusiva del Anfitrión' : undefined}>Aceptar excepción</button>
               )}
-              {step.key === 'verificacionPasada' && puedeAprobar && !t.verificacionAprobada && (
+              {step.key === 'verificacionPasada' && verAcciones && !t.verificacionAprobada && (
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.semibold }}>
                     {t.verificacionHallazgos === true ? 'Con hallazgos' : (t.verificacionHallazgos === false ? 'Sin hallazgos' : 'Sin resultados')}
@@ -214,23 +233,21 @@ export default function VisitasHistorialPage() {
                   {t.verificacionHallazgos === true && (
                     <button onClick={(e) => { e.stopPropagation(); setHallazgosPopup({ persona: inv, idx, item }); }} style={btn('#F59E0B', '#fff')}>Ver resumen</button>
                   )}
-                  <button onClick={() => { aprobarVerificacion(item.id, idx); addToast('Verificación aprobada para ' + inv.nombre, 'success'); }} style={btn(theme.colors.success)}>Aprobar</button>
-                  {esAnfitrion && (
-                    <button onClick={() => { aprobarVerificacionConHallazgos(item.id, idx); addToast('Verificación aprobada con hallazgos para ' + inv.nombre, 'warning'); }} style={btn('#F59E0B', '#fff')}>Aprobar con hallazgos</button>
-                  )}
+                  <button disabled={!puedeAprobar} onClick={puedeAprobar ? () => { aprobarVerificacion(item.id, idx); addToast('Verificación aprobada para ' + inv.nombre, 'success'); } : undefined} style={btn(theme.colors.success, null, false, !puedeAprobar)} title={!puedeAprobar ? 'Acción exclusiva del Anfitrión' : undefined}>Aprobar</button>
+                  <button disabled={!puedeAprobar} onClick={puedeAprobar ? () => { aprobarVerificacionConHallazgos(item.id, idx); addToast('Verificación aprobada con hallazgos para ' + inv.nombre, 'warning'); } : undefined} style={btn('#F59E0B', '#fff', false, !puedeAprobar)} title={!puedeAprobar ? 'Acción exclusiva del Anfitrión' : undefined}>Aprobar con hallazgos</button>
                 </div>
               )}
-              {step.key === 'trasideEntrada' && isCompleted && puedeAprobar && !inv.traSireReported && (
-                <button onClick={() => {
+              {step.key === 'trasideEntrada' && isCompleted && verAcciones && !inv.traSireReported && (
+                <button disabled={!puedeAprobar} onClick={puedeAprobar ? () => {
                   if (!rntCompleto) { addToast('Completa tu RNT en la configuración de Huéspedes Temporales', 'warning'); return; }
                   reportarTraSire(item.id, idx); addToast('Reporte TRA enviado exitosamente', 'success');
-                }} style={btn(theme.colors.secondary)}>Reportar TRA</button>
+                } : undefined} style={btn(theme.colors.secondary, null, false, !puedeAprobar)} title={!puedeAprobar ? 'Acción exclusiva del Anfitrión' : undefined}>Reportar TRA</button>
               )}
-              {step.key === 'trasideSalida' && isCompleted && puedeAprobar && !inv.traSireReported && (
-                <button onClick={() => {
+              {step.key === 'trasideSalida' && isCompleted && verAcciones && !inv.traSireReported && (
+                <button disabled={!puedeAprobar} onClick={puedeAprobar ? () => {
                   if (!rntCompleto) { addToast('Completa tu RNT en la configuración de Huéspedes Temporales', 'warning'); return; }
                   reportarTraSire(item.id, idx); addToast('Reporte SIRE enviado exitosamente', 'success');
-                }} style={btn(theme.colors.secondary)}>Reportar SIRE</button>
+                } : undefined} style={btn(theme.colors.secondary, null, false, !puedeAprobar)} title={!puedeAprobar ? 'Acción exclusiva del Anfitrión' : undefined}>Reportar SIRE</button>
               )}
             </div>
           );
@@ -239,8 +256,8 @@ export default function VisitasHistorialPage() {
           {inv.traSireReported
             ? <Badge status="Aceptado">TRA/SIRE reportado</Badge>
             : <Badge status="Pendiente">TRA/SIRE pendiente</Badge>}
-          {puedeAprobar && !inv.traSireReported && (
-            <button onClick={() => { reportarTraSire(item.id, idx); addToast('TRA/SIRE marcado como realizado', 'success'); }} style={btn('#6B7280', '#fff', true)}>Ya hice TRA/SIRE</button>
+          {verAcciones && !inv.traSireReported && (
+            <button disabled={!puedeAprobar} onClick={puedeAprobar ? () => { reportarTraSire(item.id, idx); addToast('TRA/SIRE marcado como realizado', 'success'); } : undefined} style={btn('#6B7280', '#fff', true, !puedeAprobar)} title={!puedeAprobar ? 'Acción exclusiva del Anfitrión' : undefined}>Ya hice TRA/SIRE</button>
           )}
         </div>
       </div>
@@ -641,14 +658,30 @@ export default function VisitasHistorialPage() {
           );
         })()}
 
-        {/* List — guardia: compact person cards */}
-        {tipoTab !== 'calendario' && rolActivo === 'guardia' && filtered.flatMap(item => {
-          const persons = item.invitados && item.invitados.length > 0
-            ? item.invitados.map((inv, idx) => ({ base: item, persona: inv, idx }))
-            : [{ base: item, persona: { nombre: item.nombre, llego: false, horaIngreso: '', horaSalida: '' }, idx: -1 }];
-          return persons.map((p, pi) => (
+        {/* List — guardia: primero ve las reservas; al tocar una entra a la lista de huéspedes (15b) */}
+        {tipoTab !== 'calendario' && esGuardiaRol && reservaGuardia && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '12px' }}>
+            <button
+              onClick={() => setReservaGuardia(null)}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 0', background: 'none', border: 'none', cursor: 'pointer', fontFamily: theme.fonts.family, fontSize: theme.fonts.sizes.sm, color: theme.colors.primary, fontWeight: theme.fonts.weights.semibold, alignSelf: 'flex-start' }}
+            >
+              ← Volver a reservas
+            </button>
+            <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card, display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img src={tipoVisitaIcons[reservaGuardia.tipo]} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>
+                  {reservaGuardia.tipo === 'huesped-temporal' ? `Reserva de ${reservaGuardia.nombre}` : (reservaGuardia.esEvento ? reservaGuardia.nombreEvento : reservaGuardia.nombre)}
+                </div>
+                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{reservaGuardia.torre} - {reservaGuardia.depto} · {TIPO_LABELS[reservaGuardia.tipo] || reservaGuardia.tipo}</div>
+                <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>📅 {reservaGuardia.fechaDesde}{reservaGuardia.fechaHasta ? ` a ${reservaGuardia.fechaHasta}` : ''} · 👤 {personasDeReserva(reservaGuardia).length}</div>
+              </div>
+            </div>
+          </div>
+        )}
+        {tipoTab !== 'calendario' && esGuardiaRol && reservaGuardia && personasDeReserva(reservaGuardia).map((p, pi) => (
             <div
-              key={`${item.id}-${pi}`}
+              key={`${p.base.id}-${pi}`}
               style={{
                 background: theme.colors.bgCard,
                 borderRadius: theme.radius.xl,
@@ -789,29 +822,102 @@ export default function VisitasHistorialPage() {
                   </div>
                 )}
               </div>
-              <button
-                onClick={() => setDetalleGuardia(p)}
-                style={{
-                  width: '100%',
-                  padding: '10px 16px',
-                  background: theme.colors.bgMuted,
-                  border: 'none',
-                  borderTop: `1px solid ${theme.colors.borderLight}`,
-                  cursor: 'pointer',
-                  fontFamily: theme.fonts.family,
-                  fontSize: theme.fonts.sizes.sm,
-                  fontWeight: theme.fonts.weights.semibold,
-                  color: theme.colors.primary,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                }}
-              >
-                Ver detalles →
-              </button>
+              <div style={{ display: 'flex' }}>
+                <button
+                  onClick={() => { setParkingSpot(''); setParkingTarget({ visitaId: p.base.id, invitadoIdx: p.idx, nombre: p.persona.nombre, torre: p.base.torre, depto: p.base.depto }); setShowAsignarEstacionamiento(true); }}
+                  style={{
+                    flex: 1,
+                    padding: '10px 16px',
+                    background: theme.colors.bgMuted,
+                    border: 'none',
+                    borderTop: `1px solid ${theme.colors.borderLight}`,
+                    borderRight: `1px solid ${theme.colors.borderLight}`,
+                    cursor: 'pointer',
+                    fontFamily: theme.fonts.family,
+                    fontSize: theme.fonts.sizes.sm,
+                    fontWeight: theme.fonts.weights.semibold,
+                    color: theme.colors.text,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  🅿️ Estacionamiento
+                </button>
+                <button
+                  onClick={() => setDetalleGuardia(p)}
+                  style={{
+                    flex: 1,
+                    padding: '10px 16px',
+                    background: theme.colors.bgMuted,
+                    border: 'none',
+                    borderTop: `1px solid ${theme.colors.borderLight}`,
+                    cursor: 'pointer',
+                    fontFamily: theme.fonts.family,
+                    fontSize: theme.fonts.sizes.sm,
+                    fontWeight: theme.fonts.weights.semibold,
+                    color: theme.colors.primary,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  Ver detalles →
+                </button>
+              </div>
             </div>
-          ));
+          ))}
+
+        {/* Vista de reservas para Guardia (15b) — con mini línea de tiempo y Torre/Depto (16/19) */}
+        {tipoTab !== 'calendario' && esGuardiaRol && !reservaGuardia && filtered.map(item => {
+          const invitadosTimeline = huespedesTimeline(item);
+          return (
+            <div
+              key={item.id}
+              onClick={() => setReservaGuardia(item)}
+              style={{
+                background: theme.colors.bgCard,
+                borderRadius: theme.radius.xl,
+                padding: '14px 16px',
+                boxShadow: theme.shadows.card,
+                cursor: 'pointer',
+                borderLeft: item.tipo === 'huesped-temporal' ? `4px solid ${colorReserva(item)}` : undefined,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                  <img
+                    src={tipoVisitaIcons[item.tipo]}
+                    alt={TIPO_LABELS[item.tipo]}
+                    style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>
+                      {item.tipo === 'huesped-temporal' ? `Reserva de ${item.nombre}` : (item.esEvento ? item.nombreEvento : item.nombre)}
+                    </div>
+                    <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginTop: '1px' }}>
+                      {item.torre} - {item.depto} · {TIPO_LABELS[item.tipo] || item.tipo}
+                    </div>
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, marginTop: '2px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <span>📅 {item.fechaDesde}{item.fechaHasta ? ` a ${item.fechaHasta}` : ''}</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>👤 {invitadosTimeline.length}</span>
+                      {(item.vehiculos?.length || 0) > 0 && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>🚗 {item.vehiculos.length}</span>
+                      )}
+                      {spotDeVisita(item.id) && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>🅿️ {spotDeVisita(item.id)}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
+                <TimelineReservaHuespedes invitados={invitadosTimeline} />
+              </div>
+            </div>
+          );
         })}
 
         {/* Barras de consumo de verificaciones (reemplazan los KPIs) — vista general huéspedes.
@@ -924,7 +1030,7 @@ export default function VisitasHistorialPage() {
                         Reserva de {item.nombre}
                       </div>
                       <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginTop: '1px' }}>
-                        {mostrarDisenoReserva ? TIPO_LABELS[item.tipo] : `${item.torre} - ${item.depto} · ${TIPO_LABELS[item.tipo]}`}
+                        {(esAdminRol || !mostrarDisenoReserva) ? `${item.torre} - ${item.depto} · ${TIPO_LABELS[item.tipo]}` : TIPO_LABELS[item.tipo]}
                       </div>
                       <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, marginTop: '2px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         <span>{item.fechaDesde} a {item.fechaHasta}</span>
@@ -932,9 +1038,21 @@ export default function VisitasHistorialPage() {
                         {(item.vehiculos?.length || 0) > 0 && (
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>🚗 {item.vehiculos.length}</span>
                         )}
+                        {spotDeVisita(item.id) && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>🅿️ {spotDeVisita(item.id)}</span>
+                        )}
                       </div>
                     </div>
                   </div>
+                  {esAdminRol && (
+                    <button
+                      onClick={e => { e.stopPropagation(); setParkingSpot(''); setParkingTarget({ visitaId: item.id, invitadoIdx: -1, nombre: item.nombre, torre: item.torre, depto: item.depto }); setShowAsignarEstacionamiento(true); }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.colors.textSecondary, fontSize: '16px', padding: '4px', flexShrink: 0 }}
+                      title="Asignar estacionamiento"
+                    >
+                      🅿️
+                    </button>
+                  )}
                   <button
                     onClick={e => { e.stopPropagation(); setMenuItem(item); }}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.colors.textSecondary, fontSize: '20px', padding: '4px', flexShrink: 0 }}
@@ -942,16 +1060,15 @@ export default function VisitasHistorialPage() {
                     ⋮
                   </button>
                 </div>
-                {/* Resumen por huésped — diseño nuevo (Card de Reserva) o legacy */}
-                {item.invitados && item.invitados.length > 0 && (
-                  mostrarDisenoReserva ? (
+                {/* Resumen por huésped — siempre visible para mantener la línea de tiempo consistente (16) */}
+                {mostrarDisenoReserva ? (
                     <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
-                      <TimelineReservaHuespedes invitados={item.invitados} />
+                      <TimelineReservaHuespedes invitados={huespedesTimeline(item)} />
                     </div>
                   ) : (
                     <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        {item.invitados.map((inv, idx) => {
+                        {huespedesTimeline(item).map((inv, idx) => {
                           const completados = progresoInvitado(inv);
                           return (
                             <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -978,8 +1095,7 @@ export default function VisitasHistorialPage() {
                         })}
                       </div>
                     </div>
-                  )
-                )}
+                  )}
               </div>
             )];
           }
@@ -1025,6 +1141,15 @@ export default function VisitasHistorialPage() {
                     )}
                   </div>
                 </div>
+                {(esAdminRol || esGuardiaRol) && (
+                  <button
+                    onClick={e => { e.stopPropagation(); setParkingSpot(''); setParkingTarget({ visitaId: item.id, invitadoIdx: -1, nombre: item.esEvento ? item.nombreEvento : item.nombre, torre: item.torre, depto: item.depto }); setShowAsignarEstacionamiento(true); }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.colors.textSecondary, fontSize: '16px', padding: '4px', flexShrink: 0 }}
+                    title="Asignar estacionamiento"
+                  >
+                    🅿️
+                  </button>
+                )}
                 <button
                   onClick={e => { e.stopPropagation(); setMenuItem(item); }}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.colors.textSecondary, fontSize: '20px', padding: '4px', flexShrink: 0 }}
@@ -1056,6 +1181,11 @@ export default function VisitasHistorialPage() {
                 <span style={{ padding: '2px 8px', borderRadius: theme.radius.full, background: theme.colors.bgMuted, fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textSecondary }}>
                   📅 {item.fechaDesde}{item.fechaHasta ? ` a ${item.fechaHasta}` : ''}
                 </span>
+                {spotDeVisita(item.id) && (
+                  <span style={{ padding: '2px 8px', borderRadius: theme.radius.full, background: '#F0FDF4', fontSize: theme.fonts.sizes['2xs'], color: '#166534', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                    🅿️ {spotDeVisita(item.id)}
+                  </span>
+                )}
               </div>
 
               {/* Ingreso / Salida (cuando ocurran) */}
@@ -1244,6 +1374,15 @@ export default function VisitasHistorialPage() {
                     const t = inv.timeline || {};
                     const esAnfitrion = rolActivo === 'propietario' || rolActivo === 'inquilino-lider';
                     const puedeAprobar = esAnfitrion;
+                    const verAcciones = puedeAprobar || esAdminRol;
+                    const accionAnfitrion = { disabled: !puedeAprobar, title: !puedeAprobar ? 'Acción exclusiva del Anfitrión' : undefined };
+                    const estiloAccion = (bg) => ({
+                      padding: '4px 10px', borderRadius: theme.radius.full,
+                      background: bg, color: '#fff', border: 'none',
+                      cursor: puedeAprobar ? 'pointer' : 'not-allowed', fontSize: theme.fonts.sizes['2xs'],
+                      fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
+                      opacity: puedeAprobar ? 1 : 0.5,
+                    });
                     const rntCompleto = ubicacionActiva ? configHuespedesTemporales[ubicacionActiva.id]?.legal?.rnt?.trim()?.length > 0 : false;
                     const stepStatus = (key) => {
                       if (key === 'terminosAceptados') {
@@ -1301,24 +1440,20 @@ export default function VisitasHistorialPage() {
                                 </button>
                               )}
                               {/* Step 3 — Excepción T&C */}
-                              {step.key === 'terminosAceptados' && esExcepcionTc && puedeAprobar && (
+                              {step.key === 'terminosAceptados' && esExcepcionTc && verAcciones && (
                                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                                   <span style={{ fontSize: '12px', color: theme.colors.warning, fontWeight: theme.fonts.weights.bold }}>⚠</span>
                                   <button
-                                    onClick={() => { aprobarTerminosManual(detalleActual.id, i); addToast('Excepción T&C aceptada para ' + inv.nombre, 'success'); }}
-                                    style={{
-                                      padding: '4px 10px', borderRadius: theme.radius.full,
-                                      background: theme.colors.secondary, color: '#fff', border: 'none',
-                                      cursor: 'pointer', fontSize: theme.fonts.sizes['2xs'],
-                                      fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
-                                    }}
+                                    {...accionAnfitrion}
+                                    onClick={puedeAprobar ? () => { aprobarTerminosManual(detalleActual.id, i); addToast('Excepción T&C aceptada para ' + inv.nombre, 'success'); } : undefined}
+                                    style={estiloAccion(theme.colors.secondary)}
                                   >
                                     Aceptar excepción
                                   </button>
                                 </div>
                               )}
                               {/* Step 4 — Resultado de verificación + Aprobar */}
-                              {step.key === 'verificacionPasada' && puedeAprobar && !t.verificacionAprobada && (
+                              {step.key === 'verificacionPasada' && verAcciones && !t.verificacionAprobada && (
                                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                                   {t.verificacionHallazgos === true ? (
                                     <button
@@ -1338,50 +1473,38 @@ export default function VisitasHistorialPage() {
                                     </span>
                                   )}
                                   <button
-                                    onClick={() => { aprobarVerificacion(detalleActual.id, i); addToast('Verificación aprobada para ' + inv.nombre, 'success'); }}
-                                    style={{
-                                      padding: '4px 10px', borderRadius: theme.radius.full,
-                                      background: theme.colors.success, color: '#fff', border: 'none',
-                                      cursor: 'pointer', fontSize: theme.fonts.sizes['2xs'],
-                                      fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
-                                    }}
+                                    {...accionAnfitrion}
+                                    onClick={puedeAprobar ? () => { aprobarVerificacion(detalleActual.id, i); addToast('Verificación aprobada para ' + inv.nombre, 'success'); } : undefined}
+                                    style={estiloAccion(theme.colors.success)}
                                   >
                                     Aprobar
                                   </button>
                                 </div>
                               )}
                               {/* Step 5 — Reportar TRA (solo si ingresó) */}
-                              {step.key === 'trasideEntrada' && isCompleted && puedeAprobar && !inv.traSireReported && (
+                              {step.key === 'trasideEntrada' && isCompleted && verAcciones && !inv.traSireReported && (
                                 <button
-                                  onClick={() => {
+                                  {...accionAnfitrion}
+                                  onClick={puedeAprobar ? () => {
                                     if (!rntCompleto) { addToast('Completa tu RNT en la configuración de Huéspedes Temporales', 'warning'); return; }
                                     reportarTraSire(detalleActual.id, i);
                                     addToast('Reporte TRA enviado exitosamente', 'success');
-                                  }}
-                                  style={{
-                                    padding: '4px 10px', borderRadius: theme.radius.full,
-                                    background: theme.colors.secondary, color: '#fff', border: 'none',
-                                    cursor: 'pointer', fontSize: theme.fonts.sizes['2xs'],
-                                    fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
-                                  }}
+                                  } : undefined}
+                                  style={estiloAccion(theme.colors.secondary)}
                                 >
                                   Reportar TRA
                                 </button>
                               )}
                               {/* Step 6 — Reportar SIRE (solo si salió) */}
-                              {step.key === 'trasideSalida' && isCompleted && puedeAprobar && !inv.traSireReported && (
+                              {step.key === 'trasideSalida' && isCompleted && verAcciones && !inv.traSireReported && (
                                 <button
-                                  onClick={() => {
+                                  {...accionAnfitrion}
+                                  onClick={puedeAprobar ? () => {
                                     if (!rntCompleto) { addToast('Completa tu RNT en la configuración de Huéspedes Temporales', 'warning'); return; }
                                     reportarTraSire(detalleActual.id, i);
                                     addToast('Reporte SIRE enviado exitosamente', 'success');
-                                  }}
-                                  style={{
-                                    padding: '4px 10px', borderRadius: theme.radius.full,
-                                    background: theme.colors.secondary, color: '#fff', border: 'none',
-                                    cursor: 'pointer', fontSize: theme.fonts.sizes['2xs'],
-                                    fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
-                                  }}
+                                  } : undefined}
+                                  style={estiloAccion(theme.colors.secondary)}
                                 >
                                   Reportar SIRE
                                 </button>
@@ -2165,7 +2288,7 @@ export default function VisitasHistorialPage() {
                 </button>
                 {/* Asignar estacionamiento */}
                 <button
-                  onClick={() => { setParkingSpot(''); setShowAsignarEstacionamiento(true); }}
+                  onClick={() => { setParkingSpot(''); setParkingTarget({ visitaId: p.base.id, invitadoIdx: p.idx, nombre: p.persona.nombre, torre: p.base.torre, depto: p.base.depto }); setShowAsignarEstacionamiento(true); }}
                   style={{
                     flex: '1 1 auto', minWidth: '120px', padding: '10px', borderRadius: theme.radius.full,
                     background: theme.colors.bgMuted, color: theme.colors.text,
@@ -2202,49 +2325,61 @@ export default function VisitasHistorialPage() {
         })()}
       </Modal>
 
-      {/* Asignar estacionamiento modal — Guardia */}
+      {/* Asignar estacionamiento modal — sincronizado con la gestión central del Home (18) */}
       <Modal isOpen={showAsignarEstacionamiento} onClose={() => setShowAsignarEstacionamiento(false)} title="Asignar estacionamiento">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, textAlign: 'center' }}>
             Asigne un cupo disponible al visitante
           </div>
           <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>
-            Visitante: <strong>{detalleGuardia ? `${detalleGuardia.persona.nombre} (${detalleGuardia.base.torre}-${detalleGuardia.base.depto})` : ''}</strong>
+            Visitante: <strong>{parkingTarget ? `${parkingTarget.nombre} (${parkingTarget.torre}-${parkingTarget.depto})` : ''}</strong>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '360px', overflowY: 'auto' }}>
             {Array.from({ length: estacionamientosVisitantes?.total || 20 }, (_, i) => {
               const spot = `B${String(i + 1).padStart(2, '0')}`;
-              const libre = estacionamientosVisitantes.ocupados < estacionamientosVisitantes.total;
+              const ocupanteClave = (estacionamientosAsignados || {})[spot];
+              const esMismaVisita = parkingTarget && String(ocupanteClave) === `${parkingTarget.visitaId}-${parkingTarget.invitadoIdx}`;
+              const libre = !ocupanteClave || esMismaVisita;
+              const ocupanteNombre = ocupanteClave ? (() => {
+                const [vidStr, idxStr] = String(ocupanteClave).split('-');
+                const v = visitas.find(x => String(x.id) === vidStr);
+                if (!v) return 'Ocupado';
+                const idx = parseInt(idxStr, 10);
+                return idx >= 0 && v.invitados?.[idx] ? v.invitados[idx].nombre : v.nombre;
+              })() : null;
               return (
                 <button
                   key={spot}
+                  disabled={!libre}
                   onClick={() => setParkingSpot(spot)}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '10px 14px', borderRadius: theme.radius.lg,
                     border: `2px solid ${parkingSpot === spot ? theme.colors.primary : theme.colors.border}`,
-                    background: parkingSpot === spot ? theme.colors.primaryLight : theme.colors.bgMuted,
-                    cursor: 'pointer', fontFamily: theme.fonts.family,
+                    background: parkingSpot === spot ? theme.colors.primaryLight : (libre ? theme.colors.bgMuted : '#F3F4F6'),
+                    cursor: libre ? 'pointer' : 'not-allowed', fontFamily: theme.fonts.family,
                     fontSize: theme.fonts.sizes.sm, color: theme.colors.text,
+                    opacity: libre ? 1 : 0.7,
                   }}
                 >
                   <span style={{ fontWeight: theme.fonts.weights.bold }}>{spot}</span>
                   <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
-                    {parkingSpot === spot ? 'Seleccionado' : (libre ? 'Disponible' : 'Sin cupos libres')}
+                    {parkingSpot === spot ? 'Seleccionado' : (libre ? 'Disponible' : `Ocupado${ocupanteNombre ? ` · ${ocupanteNombre}` : ''}`)}
                   </span>
                 </button>
               );
             })}
           </div>
           <Button variant="primary" fullWidth disabled={!parkingSpot} onClick={() => {
-            if (parkingSpot && estacionamientosVisitantes.ocupados < estacionamientosVisitantes.total) {
-              actualizarEstacionamientosVisitantes({ ocupados: estacionamientosVisitantes.ocupados + 1 });
-              addToast(`Estacionamiento ${parkingSpot} asignado a ${detalleGuardia?.persona.nombre}`, 'success');
+            if (parkingSpot && !(estacionamientosAsignados || {})[parkingSpot]) {
+              asignarEstacionamientoVisita(parkingSpot, `${parkingTarget.visitaId}-${parkingTarget.invitadoIdx}`);
+              addToast(`Estacionamiento ${parkingSpot} asignado a ${parkingTarget.nombre}`, 'success');
             } else {
-              addToast('No hay cupos libres', 'warning');
+              addToast('Ese cupo ya está ocupado', 'warning');
             }
             setShowAsignarEstacionamiento(false);
             setParkingSpot('');
+            setParkingTarget(null);
           }}>
             Confirmar asignación
           </Button>
