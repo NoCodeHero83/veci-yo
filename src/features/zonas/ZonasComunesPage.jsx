@@ -1,8 +1,6 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell';
 import PageHeader from '../../components/layout/PageHeader';
-import Modal from '../../components/ui/Modal';
 import { ModuloGate, ModuloHeaderInfo } from '../../components/ui/ModuloEstado';
 import { zonasComunes } from '../../data/mockData';
 import theme from '../../config/theme';
@@ -14,12 +12,6 @@ export default function ZonasComunesPage() {
   const { rolActivo, esResidente } = useApp();
   const accesoBloqueado = rolActivo === 'propietario' && !esResidente;
   const esHuesped = rolActivo === 'huesped-temporal';
-  const [reglamentoZona, setReglamentoZona] = useState(null);
-
-  const aceptarReglamento = (id) => {
-    try { localStorage.setItem(`reglamento-aceptado-${id}`, '1'); } catch (e) { /* noop */ }
-    setReglamentoZona(null);
-  };
 
   return (
     <AppShell>
@@ -71,48 +63,12 @@ export default function ZonasComunesPage() {
               >
                 {zona.nombre}
               </span>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setReglamentoZona(zona); }}
-                style={{
-                  fontSize: theme.fonts.sizes['2xs'],
-                  color: theme.colors.primary,
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontWeight: theme.fonts.weights.semibold,
-                  textDecoration: 'underline',
-                  fontFamily: theme.fonts.family,
-                }}
-              >
-                Reglamento
-              </button>
             </button>
           ); })}
         </div>
       </div>
       </ModuloGate>
       </>)}
-
-      <Modal isOpen={!!reglamentoZona} onClose={() => setReglamentoZona(null)} title={`Reglamento — ${reglamentoZona?.nombre || ''}`}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <p style={{ margin: 0, fontSize: theme.fonts.sizes.sm, color: theme.colors.text, lineHeight: 1.6 }}>
-            {reglamentoZona?.reglamento}
-          </p>
-          <button
-            type="button"
-            onClick={() => aceptarReglamento(reglamentoZona.id)}
-            style={{
-              width: '100%', padding: '12px', borderRadius: theme.radius.full,
-              background: theme.colors.primary, color: theme.colors.text,
-              fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.md,
-              border: 'none', cursor: 'pointer', fontFamily: theme.fonts.family,
-            }}
-          >
-            Acepto el reglamento
-          </button>
-        </div>
-      </Modal>
     </AppShell>
   );
 }

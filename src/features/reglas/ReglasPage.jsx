@@ -262,14 +262,19 @@ export default function ReglasPage() {
 
       {/* Menú de acciones por departamento */}
       <Modal isOpen={!!accionesDept} onClose={() => setAccionesDept(null)}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <button type="button" onClick={() => { setAccionesDept(null); navigate('/perfil/soporte/reclamos/nuevo', { state: { tipo: 'Reglas' } }); }} style={{ ...pillButtonStyle, background: theme.colors.secondary, color: '#fff' }}>
-            Crear PQRS
-          </button>
-          <button type="button" onClick={() => { const d = accionesDept; setAccionesDept(null); navigate('/perfil/soporte/reclamos/nuevo', { state: { asunto: `Incidente departamento ${d?.departamento || ''}`, tipo: 'Reglas' } }); }} style={{ ...pillButtonStyle, background: theme.colors.primary, color: theme.colors.text }}>
-            Reportar incidente (PQRS)
-          </button>
-        </div>
+        {rolActivo === 'guardia' || rolActivo === 'huesped-temporal' || rolActivo === 'administrador' ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <button type="button" onClick={() => handleComunicacion('anfitrion')} style={pillButtonStyle}>1er Contacto: Llamar Anfitrión</button>
+            <button type="button" onClick={() => handleComunicacion('administrador')} style={pillButtonStyle}>2do Contacto: Llamar Administrador</button>
+            <button type="button" onClick={() => handleComunicacion('propietario')} style={pillButtonStyle}>3er Contacto: Llamar Propietario</button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <button type="button" onClick={() => { const d = accionesDept; setAccionesDept(null); navigate('/perfil/soporte/reclamos/nuevo', { state: { tipo: 'Reglas', asunto: `PQRS departamento ${d?.departamento || ''}` } }); }} style={{ ...pillButtonStyle, background: theme.colors.secondary, color: '#fff' }}>
+              Reportar PQRS con el departamento {accionesDept?.departamento || ''}
+            </button>
+          </div>
+        )}
       </Modal>
 
       {/* Popup de cumplimiento del departamento */}

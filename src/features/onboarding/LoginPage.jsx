@@ -27,7 +27,7 @@ const linkButtonStyle = {
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { iniciarSesion, ingresarIncognito, ingresarComoDemo } = useApp();
+  const { iniciarSesion, ingresarIncognito, ingresarComoDemo, setRolActivo } = useApp();
 
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
@@ -68,6 +68,7 @@ export default function LoginPage() {
 
   const handleGoogle = () => {
     iniciarSesion({ correo: 'usuario@gmail.com' });
+    setRolActivo('propietario');
     entrarAlInicio();
   };
 

@@ -21,6 +21,17 @@ const TIPOS_FECHA_ESPECIAL = [
   { value: 'horario_especial', label: 'Horario especial' },
 ];
 
+const OPCIONES_HORA = (() => {
+  const opts = [];
+  for (let h = 8; h <= 22; h++) {
+    for (const m of [0, 30]) {
+      if (h === 22 && m === 30) continue;
+      opts.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    }
+  }
+  return opts;
+})();
+
 function formDataToPayload(form) {
   return {
     id: form.id,
@@ -57,6 +68,12 @@ function validate(form) {
   if (form.costoLimpieza < 0) errors.push('El costo de limpieza no puede ser negativo.');
   if (form.costoReserva < 0) errors.push('El costo de reserva no puede ser negativo.');
   if (form.diasHabilitados.length === 0) errors.push('Debes habilitar al menos un día.');
+  if (form.usaSlots) {
+    form.bloques.slice(0, form.cantidadBloques).forEach((b, i) => {
+      if (!b.inicio || !b.fin) errors.push(`Bloque ${i + 1}: define la hora de inicio y fin.`);
+      else if (b.inicio >= b.fin) errors.push(`Bloque ${i + 1}: la hora de inicio debe ser anterior a la de fin.`);
+    });
+  }
   const fechasMap = {};
   form.fechasEspeciales.forEach((fe, i) => {
     if (!fe.fecha) { errors.push(`Fecha especial #${i + 1}: la fecha es obligatoria.`); return; }
@@ -156,9 +173,20 @@ export default function AdministradorGestionZonaFormPage() {
     permiteCorta: existing?.permiteCorta !== undefined ? existing.permiteCorta : true,
     permiteLarga: existing?.permiteLarga !== undefined ? existing.permiteLarga : true,
     usaSlots: existingConfig?.usaSlots || false,
-    duracionPermitida: existingConfig?.duracionPermitida || 2,
+    duracionPermitada: existingConfig?.duracionPermitada || 2,
     horariosDisponibles: (existingConfig?.horariosDisponibles || []).join(', '),
     reglamento: existingConfig?.reglas || '',
+    cantidadBloques: existingConfig?.horariosDisponibles?.length || 2,
+    bloques: (existingConfig?.horariosDisponibles || []).length
+      ? existingConfig.horariosDisponibles.map(h => {
+          const partes = String(h).split('-').map(s => s.trim());
+          return { inicio: partes[0] || '08:00', fin: partes[1] || '10:00' };
+        })
+      : [
+          { inicio: '08:00', fin: '10:00' },
+          { inicio: '10:00', fin: '12:00' },
+          { inicio: '14:00', fin: '16:00' },
+        ],
   }));
 
   const [errors, setErrors] = useState([]);
@@ -166,6 +194,11 @@ export default function AdministradorGestionZonaFormPage() {
   const [showSuccess, setShowSuccess] = useState(false);
 
   const setField = (key) => (value) => setForm(prev => ({ ...prev, [key]: value }));
+
+  const setBloque = (index, key) => (value) => setForm(prev => ({
+    ...prev,
+    bloques: prev.bloques.map((b, i) => i === index ? { ...b, [key]: value } : b),
+  }));
 
   const toggleDia = (dia) => {
     setForm(prev => ({
@@ -211,10 +244,12 @@ export default function AdministradorGestionZonaFormPage() {
     const zonaConfig = {
       usaSlots: form.usaSlots,
       duracionPermitada: Number(form.duracionPermitada) || 2,
-      horariosDisponibles: form.horariosDisponibles
-        .split(',')
-        .map(s => s.trim())
-        .filter(Boolean),
+      horariosDisponibles: form.usaSlots
+        ? form.bloques.slice(0, form.cantidadBloques).map(b => `${b.inicio} - ${b.fin}`)
+        : form.horariosDisponibles
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean),
       reglas: form.reglamento,
       requiereAprobacion: form.requiereAprobacion || false,
     };
@@ -327,18 +362,64 @@ export default function AdministradorGestionZonaFormPage() {
 
         {/* Configuración de reserva (la usa el residente al reservar) */}
         <SectionCard title="Configuración de reserva">
-          <Toggle value={form.usaSlots} onChange={setField('usaSlots')} labelRight="Reserva por slots (horarios fijos)" />
-          <div>
-            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Duración máxima de reserva (horas)</div>
-            <input type="number" min="1" value={form.duracionPermitada} onChange={e => setField('duracionPermitada')(e.target.value)}
-              style={{ width: '100%', padding: '11px 14px', borderRadius: theme.radius['2xl'], border: `1.5px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.base, fontFamily: theme.fonts.family, background: theme.colors.bgCard, outline: 'none', boxSizing: 'border-box' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Horarios disponibles (separados por coma)</div>
-            <input type="text" value={form.horariosDisponibles} onChange={e => setField('horariosDisponibles')(e.target.value)}
-              placeholder="Ej: 08:00 a 12:00, 14:00 a 18:00"
-              style={{ width: '100%', padding: '11px 14px', borderRadius: theme.radius['2xl'], border: `1.5px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.base, fontFamily: theme.fonts.family, background: theme.colors.bgCard, outline: 'none', boxSizing: 'border-box' }} />
-          </div>
+          <Toggle
+            value={form.usaSlots}
+            onChange={setField('usaSlots')}
+            labelRight={form.usaSlots ? 'Por bloques (horarios fijos)' : 'Horario libre'}
+          />
+          <p style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, margin: 0, lineHeight: 1.4 }}>
+            {form.usaSlots
+              ? 'Los residentes reservan uno de los bloques fijos que defines a continuación.'
+              : 'Los residentes reservan un rango de horas dentro del horario de apertura y cierre.'}
+          </p>
+
+          {form.usaSlots ? (
+            <>
+              <div>
+                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Número de bloques</div>
+                <select
+                  value={form.cantidadBloques}
+                  onChange={e => setField('cantidadBloques')(Number(e.target.value))}
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: theme.radius['2xl'], border: `1.5px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.base, fontFamily: theme.fonts.family, background: theme.colors.bgCard, outline: 'none', boxSizing: 'border-box' }}
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
+                    <option key={n} value={n}>{n} bloque{n > 1 ? 's' : ''}</option>
+                  ))}
+                </select>
+              </div>
+              {form.bloques.slice(0, form.cantidadBloques).map((b, i) => (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '10px 12px', background: theme.colors.bgMuted, borderRadius: theme.radius.lg, border: `1px solid ${theme.colors.border}` }}>
+                  <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.medium }}>Bloque {i + 1}</div>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <select value={b.inicio} onChange={setBloque(i, 'inicio')}
+                      style={{ flex: 1, padding: '9px 10px', borderRadius: theme.radius.md, border: `1px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.sm, fontFamily: theme.fonts.family, background: theme.colors.bgCard, outline: 'none', boxSizing: 'border-box' }}>
+                      {OPCIONES_HORA.map(h => <option key={h} value={h}>{h}</option>)}
+                    </select>
+                    <span style={{ color: theme.colors.textMuted, fontSize: theme.fonts.sizes.sm }}>a</span>
+                    <select value={b.fin} onChange={setBloque(i, 'fin')}
+                      style={{ flex: 1, padding: '9px 10px', borderRadius: theme.radius.md, border: `1px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.sm, fontFamily: theme.fonts.family, background: theme.colors.bgCard, outline: 'none', boxSizing: 'border-box' }}>
+                      {OPCIONES_HORA.map(h => <option key={h} value={h}>{h}</option>)}
+                    </select>
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <>
+              <div>
+                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Duración máxima de reserva (horas)</div>
+                <input type="number" min="1" value={form.duracionPermitada} onChange={e => setField('duracionPermitada')(e.target.value)}
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: theme.radius['2xl'], border: `1.5px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.base, fontFamily: theme.fonts.family, background: theme.colors.bgCard, outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Horarios disponibles (separados por coma)</div>
+                <input type="text" value={form.horariosDisponibles} onChange={e => setField('horariosDisponibles')(e.target.value)}
+                  placeholder="Ej: 08:00 - 12:00, 14:00 - 18:00"
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: theme.radius['2xl'], border: `1.5px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.base, fontFamily: theme.fonts.family, background: theme.colors.bgCard, outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+            </>
+          )}
+
           <div>
             <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Reglamento de la zona</div>
             <textarea value={form.reglamento} onChange={e => setField('reglamento')(e.target.value)} placeholder="Reglamento que verán los residentes"

@@ -217,7 +217,7 @@ export default function InquilinoLiderHome() {
       </button>}
 
       {/* Renta corta — acceso a departamentos habilitados (residentes) */}
-      {!esAdmin && !esGuardia && (
+      {esResidente && (
         <button
           type="button"
           onClick={() => navigate('/reglas')}
@@ -283,6 +283,29 @@ export default function InquilinoLiderHome() {
             }}
           >
             Ver Ranking →
+          </button>
+        </div>
+      )}
+
+      {rolActivo === 'propietario' && !esResidente && !esAdmin && (
+        <div style={{ padding: '0 16px' }}>
+          <button
+            type="button"
+            onClick={() => navigate('/reglas')}
+            style={{
+              width: '100%',
+              padding: '12px',
+              borderRadius: theme.radius.full,
+              background: theme.colors.primary,
+              color: theme.colors.text,
+              fontWeight: theme.fonts.weights.semibold,
+              fontSize: theme.fonts.sizes.sm,
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: theme.fonts.family,
+            }}
+          >
+            Ver departamentos habilitados para renta corta
           </button>
         </div>
       )}

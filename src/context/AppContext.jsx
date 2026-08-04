@@ -801,7 +801,7 @@ export function AppProvider({ children }) {
   return (
     <AppContext.Provider value={{
       edificioActivo, setEdificioActivo,
-      autenticado, modo, usuario, rolActivo,
+      autenticado, modo, usuario, rolActivo, setRolActivo,
       esIncognito, tienePropiedades, sinPropiedades,
       iniciarSesion, registrarUsuario, ingresarIncognito, ingresarComoDemo, completarVerificacion, cerrarSesion,
       mostrarBienvenida, cerrarBienvenida,
