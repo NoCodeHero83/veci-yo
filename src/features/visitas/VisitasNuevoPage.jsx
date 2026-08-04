@@ -318,33 +318,24 @@ export default function VisitasNuevoPage() {
                   <SelectField label="Depto:" value={depto} options={departamentos} onChange={setDepto} />
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-                  <input
-                    type="number"
-                    value={personas}
-                    onChange={e => setPersonas(e.target.value)}
-                    min="1"
-                    style={{ ...inputStyle, width: '80px' }}
-                  />
-                  <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>personas</span>
-                  <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, marginLeft: 'auto' }}>
-                    👶 {acompanantes.filter(a => a.esMenor).length} menores
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '10px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-                    <input
-                      type="number"
-                      value={cantidadMenores}
-                      onChange={e => setCantidadMenores(Math.max(0, Math.min(parseInt(e.target.value) || 0, Math.max(0, parseInt(personas) - 1))))}
-                      min="0"
-                      style={{ ...inputStyle, width: '80px' }}
-                    />
-                    <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>menores de edad (de los invitados)</span>
-                  </div>
-                </div>
-                
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <input
+                  type="number"
+                  value={personas}
+                  onChange={e => setPersonas(e.target.value)}
+                  min="1"
+                  style={{ ...inputStyle, width: '60px', flex: '0 0 auto', textAlign: 'center' }}
+                />
+                <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>personas</span>
+                <span style={{ margin: '0 2px', color: theme.colors.textMuted }}>·</span>
+                <input
+                  type="number"
+                  value={cantidadMenores}
+                  onChange={e => setCantidadMenores(Math.max(0, Math.min(parseInt(e.target.value) || 0, Math.max(0, parseInt(personas) - 1))))}
+                  min="0"
+                  style={{ ...inputStyle, width: '60px', flex: '0 0 auto', textAlign: 'center' }}
+                />
+                <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>👶 menores</span>
               </div>
             </div>
 
@@ -649,6 +640,11 @@ export default function VisitasNuevoPage() {
               </div>
             </div>
           </div>
+          {tipoSeleccionado === 'permanente' && (
+            <div style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '10px 12px', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, lineHeight: 1.5, textAlign: 'left' }}>
+              Recuerda indicar a tu invitado que debe presentar su documento (cédula, pasaporte o DNI) en portería al ingresar al edificio.
+            </div>
+          )}
           {tipoSeleccionado === 'huesped-temporal' && (
             <div style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.xl, padding: '14px', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>

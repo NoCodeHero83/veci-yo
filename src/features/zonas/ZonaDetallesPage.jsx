@@ -350,196 +350,174 @@ export default function ZonaDetallesPage() {
           )}
         </div>
 
-        {/* Disponibilidad */}
+        {/* Disponibilidad — vista estilo calendario Google Calendar mobile */}
         <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '12px', boxShadow: theme.shadows.card }}>
           <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, marginBottom: '8px' }}>
-            Disponibilidad{zona.usaSlots ? ' por slots' : ` · horario libre (máx ${zona.duracionMaxima} h)`}
+            {zona.usaSlots ? 'Horarios disponibles' : `Horario libre (máx ${zona.duracionMaxima} h)`}
           </div>
           {zona.usaSlots ? (
             diasRelevantes.length ? (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                {slotsDisponibles.map((s, i) => {
-                  const ocupado = s.libres <= 0;
-                  if (esGuardia || rolActivo === 'administrador') {
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                {(() => {
+                  const horasBase = [];
+                  for (let h = 8; h <= 22; h++) {
+                    horasBase.push(`${String(h).padStart(2, '0')}:00`);
+                    if (h < 22) horasBase.push(`${String(h).padStart(2, '0')}:30`);
+                  }
+                  const reservasPorHora = {};
+                  zonasReservas.forEach(r => {
+                    if (!r.horario) return;
+                    const matchDay = !diasRelevantes.length || diasRelevantes.some(d => (r.horario || '').toLowerCase().includes(d.toLowerCase()));
+                    if (!matchDay) return;
+                    const partes = r.horario.split('-');
+                    if (partes.length < 2) return;
+                    const inicio = partes[0].trim();
+                    const fin = partes[1].trim();
+                    const iniParts = inicio.split(':').map(Number);
+                    const finParts = fin.split(':').map(Number);
+                    if (isNaN(iniParts[0]) || isNaN(finParts[0])) return;
+                    const iniMin = iniParts[0] * 60 + (iniParts[1] || 0);
+                    const finMin = finParts[0] * 60 + (finParts[1] || 0);
+                    horasBase.forEach(h => {
+                      const [hh, mm] = h.split(':').map(Number);
+                      const slotMin = hh * 60 + mm;
+                      if (slotMin >= iniMin && slotMin < finMin) {
+                        if (!reservasPorHora[h]) reservasPorHora[h] = [];
+                        reservasPorHora[h].push(r);
+                      }
+                    });
+                  });
+                  const esGuardiaAdmin = esGuardia || rolActivo === 'administrador';
+                  return horasBase.map(h => {
+                    const reservasEnSlot = reservasPorHora[h] || [];
+                    const ocupado = reservasEnSlot.length >= (zona.total || 1);
                     return (
-                      <div key={i} style={{ padding: '10px 12px', borderRadius: theme.radius.lg, background: ocupado ? theme.colors.bgMuted : theme.colors.successLight, display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <span style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>{s.slot}</span>
-                        <span style={{ fontSize: theme.fonts.sizes['2xs'], color: ocupado ? theme.colors.danger : theme.colors.success }}>
-                          {ocupado ? 'Ocupado' : `${s.libres} disponibles`}
-                        </span>
-                        {s.reservas.length > 0 && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
-                            {s.reservas.map(res => (
-                              <div key={res.id} style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textSecondary, background: theme.colors.bgCard, borderRadius: theme.radius.md, padding: '4px 8px' }}>
-                                {res.depto} · {res.nombre} · {res.horario}
+                      <div key={h} style={{ display: 'flex', borderBottom: `1px solid ${theme.colors.borderLight}` }}>
+                        <div style={{ width: '50px', flexShrink: 0, padding: '8px 0', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.medium, textAlign: 'right', paddingRight: '8px' }}>
+                          {h}
+                        </div>
+                        <div style={{ flex: 1, minHeight: '36px', padding: '4px 0 4px 8px', borderLeft: `1px solid ${theme.colors.borderLight}`, position: 'relative' }}>
+                          {reservasEnSlot.length > 0 ? (
+                            reservasEnSlot.map((res, ri) => {
+                              const esMiReserva = !esGuardiaAdmin && res.nombre?.toLowerCase().includes((usuario?.nombre?.toLowerCase().split(' ')[0] || ''));
+                              const borderColor = res.estado === 'Aprobado' ? theme.colors.success : res.estado === 'Pendiente' ? theme.colors.warning : theme.colors.secondary;
+                              return (
+                                <div
+                                  key={res.id}
+                                  onClick={() => esGuardiaAdmin ? setMenuItem(res) : (esMiReserva ? setMenuItem(res) : null)}
+                                  style={{
+                                    marginBottom: '2px',
+                                    padding: '4px 8px',
+                                    borderRadius: theme.radius.md,
+                                    background: esGuardiaAdmin || esMiReserva ? `${borderColor}18` : theme.colors.bgMuted,
+                                    borderLeft: `3px solid ${borderColor}`,
+                                    cursor: esGuardiaAdmin || esMiReserva ? 'pointer' : 'default',
+                                    opacity: esGuardiaAdmin || esMiReserva ? 1 : 0.5,
+                                  }}
+                                >
+                                  <div style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>
+                                    {esGuardiaAdmin ? `${res.depto} · ${res.nombre}` : (esMiReserva ? `Reserva N°:${res.reservaNum}` : 'Ocupado')}
+                                  </div>
+                                  <div style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textSecondary }}>
+                                    {res.horario}
+                                  </div>
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <div style={{ padding: '4px 8px', fontSize: theme.fonts.sizes['2xs'], color: theme.colors.success, fontWeight: theme.fonts.weights.medium }}>
+                              Disponible
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            ) : (
+              <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>Selecciona Hoy, Mañana o un rango de fechas para ver los horarios.</div>
+            )
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+              {(() => {
+                const horasBase = [];
+                for (let h = 8; h <= 22; h++) {
+                  horasBase.push(`${String(h).padStart(2, '0')}:00`);
+                  if (h < 22) horasBase.push(`${String(h).padStart(2, '0')}:30`);
+                }
+                const reservasPorHora = {};
+                zonasReservas.forEach(r => {
+                  if (!r.horario) return;
+                  const partes = r.horario.split('-');
+                  if (partes.length < 2) return;
+                  const inicio = partes[0].trim();
+                  const fin = partes[1].trim();
+                  const iniParts = inicio.split(':').map(Number);
+                  const finParts = fin.split(':').map(Number);
+                  if (isNaN(iniParts[0]) || isNaN(finParts[0])) return;
+                  const iniMin = iniParts[0] * 60 + (iniParts[1] || 0);
+                  const finMin = finParts[0] * 60 + (finParts[1] || 0);
+                  horasBase.forEach(h => {
+                    const [hh, mm] = h.split(':').map(Number);
+                    const slotMin = hh * 60 + mm;
+                    if (slotMin >= iniMin && slotMin < finMin) {
+                      if (!reservasPorHora[h]) reservasPorHora[h] = [];
+                      reservasPorHora[h].push(r);
+                    }
+                  });
+                });
+                const esGuardiaAdmin = esGuardia || rolActivo === 'administrador';
+                return horasBase.map(h => {
+                  const reservasEnSlot = reservasPorHora[h] || [];
+                  const ocupado = reservasEnSlot.length >= (zona.total || 1);
+                  return (
+                    <div key={h} style={{ display: 'flex', borderBottom: `1px solid ${theme.colors.borderLight}` }}>
+                      <div style={{ width: '50px', flexShrink: 0, padding: '8px 0', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.medium, textAlign: 'right', paddingRight: '8px' }}>
+                        {h}
+                      </div>
+                      <div style={{ flex: 1, minHeight: '36px', padding: '4px 0 4px 8px', borderLeft: `1px solid ${theme.colors.borderLight}`, position: 'relative' }}>
+                        {reservasEnSlot.length > 0 ? (
+                          reservasEnSlot.map((res, ri) => {
+                            const esMiReserva = !esGuardiaAdmin && res.nombre?.toLowerCase().includes((usuario?.nombre?.toLowerCase().split(' ')[0] || ''));
+                            const borderColor = res.estado === 'Aprobado' ? theme.colors.success : res.estado === 'Pendiente' ? theme.colors.warning : theme.colors.secondary;
+                            return (
+                              <div
+                                key={res.id}
+                                onClick={() => esGuardiaAdmin || esMiReserva ? setMenuItem(res) : null}
+                                style={{
+                                  marginBottom: '2px',
+                                  padding: '4px 8px',
+                                  borderRadius: theme.radius.md,
+                                  background: esGuardiaAdmin || esMiReserva ? `${borderColor}18` : theme.colors.bgMuted,
+                                  borderLeft: `3px solid ${borderColor}`,
+                                  cursor: esGuardiaAdmin || esMiReserva ? 'pointer' : 'default',
+                                  opacity: esGuardiaAdmin || esMiReserva ? 1 : 0.5,
+                                }}
+                              >
+                                <div style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>
+                                  {esGuardiaAdmin ? `${res.depto} · ${res.nombre}` : (esMiReserva ? `Reserva N°:${res.reservaNum}` : 'Ocupado')}
+                                </div>
+                                <div style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textSecondary }}>
+                                  {res.horario}
+                                </div>
                               </div>
-                            ))}
+                            );
+                          })
+                        ) : (
+                          <div style={{ padding: '4px 8px', fontSize: theme.fonts.sizes['2xs'], color: theme.colors.success, fontWeight: theme.fonts.weights.medium }}>
+                            Disponible
                           </div>
                         )}
                       </div>
-                    );
-                  }
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      disabled={ocupado}
-                      onClick={() => navigate(`/zonas-comunes/${zonaId}/reservar`)}
-                      style={{
-                        padding: '10px 12px',
-                        borderRadius: theme.radius.lg,
-                        background: ocupado ? theme.colors.bgMuted : theme.colors.successLight,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '2px',
-                        border: 'none',
-                        cursor: ocupado ? 'not-allowed' : 'pointer',
-                        textAlign: 'left',
-                        fontFamily: theme.fonts.family,
-                      }}
-                    >
-                      <span style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>{s.slot}</span>
-                      <span style={{ fontSize: theme.fonts.sizes['2xs'], color: ocupado ? theme.colors.danger : theme.colors.success }}>
-                        {ocupado ? 'Ocupado' : `${s.libres} disponibles`}
-                      </span>
-                    </button>
+                    </div>
                   );
-                })}
-              </div>
-            ) : (
-              <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>Selecciona Hoy, Mañana o un rango de fechas para ver los slots.</div>
-            )
-          ) : (
-            <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
-              Reserva por bloque de tiempo con duración máxima de {zona.duracionMaxima} {zona.duracionMaxima === 1 ? 'hora' : 'horas'}. No se muestran los detalles de otras reservas.
+                });
+              })()}
             </div>
           )}
         </div>
 
-        {/* Reservation list */}
-        {filtered.length === 0 && (
-          <div style={{ textAlign: 'center', color: theme.colors.textMuted, padding: '32px 0', fontSize: theme.fonts.sizes.base }}>
-            No hay reservas para esta zona
-          </div>
-        )}
-
-        {/* Legend: vigente vs terminada */}
-        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textMuted }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '2px', background: theme.colors.secondary, display: 'inline-block' }} /> Programado
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '2px', background: '#fff', border: `1px solid ${theme.colors.border}`, display: 'inline-block' }} /> Terminado
-          </span>
-        </div>
-
-        {(() => {
-          const ahora = new Date();
-          const ahoraMin = ahora.getHours() * 60 + ahora.getMinutes();
-
-          function esTerminada(item) {
-            if (!item.horario) return false;
-            const partes = item.horario.split('-');
-            if (partes.length < 2) return false;
-            const finStr = partes[1].trim();
-            const [h, m] = finStr.split(':').map(Number);
-            if (isNaN(h) || isNaN(m)) return false;
-            return (h * 60 + m) < ahoraMin;
-          }
-
-          const borderColor = (item) => esGuardia
-            ? (borderByEstadoGuardia[item.estado] || 'transparent')
-            : (borderByEstado[item.estado] || 'transparent');
-
-          return filtered.map(item => {
-            const terminada = esTerminada(item);
-            return (
-          <div
-            key={item.id}
-            style={{
-              background: terminada ? theme.colors.bgCard : theme.colors.secondaryLight,
-              borderRadius: theme.radius.xl,
-              padding: '14px 16px',
-              boxShadow: theme.shadows.card,
-              borderBottom: `4px solid ${borderColor(item)}`,
-              position: 'relative',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, marginBottom: '8px' }}>
-                  {item.depto}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                  {zonaIcons[zona.id] ? (
-                    <img
-                      src={zonaIcons[zona.id]}
-                      alt={zona.nombre}
-                      style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <span style={{ fontSize: '20px' }}>{zona.emoji}</span>
-                  )}
-                  <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>
-                    {item.nombre}
-                    {item.acompanantes !== undefined && item.acompanantes > 0 && (
-                      <span style={{ color: theme.colors.primary, marginLeft: '6px' }}>+{item.acompanantes}</span>
-                    )}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '14px', color: theme.colors.textSecondary }}>🪪</span>
-                  <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>Reserva N°:{item.reservaNum}.</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '14px', color: theme.colors.textSecondary }}>🕐</span>
-                  <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{item.horario}</span>
-                </div>
-                {/* 1. Cupos liberados dinámicamente */}
-                {item.personas?.filter(p => p.llego === 'salio').length > 0 && (
-                  <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: theme.fonts.sizes.xs, color: theme.colors.success, fontWeight: theme.fonts.weights.semibold }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    {item.personas.filter(p => p.llego === 'salio').length} cupos libres
-                  </div>
-                )}
-                {/* 4. Indicador de huésped temporal */}
-                {item.personas?.some(p => p.tipoParticipante === 'Huésped Temporal') && (
-                  <div style={{ marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '2px 8px', borderRadius: theme.radius.full, background: '#FEF3C7', fontSize: theme.fonts.sizes['2xs'], color: '#92400E' }}>
-                    Reservada por huésped temporal
-                  </div>
-                )}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                {terminada && (
-                  <span style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textMuted, whiteSpace: 'nowrap' }}>
-                    Reserva terminada
-                  </span>
-                )}
-                <button
-                  onClick={() => setMenuItem(item)}
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    background: theme.colors.bgMuted,
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '18px',
-                    color: theme.colors.textSecondary,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  ⋮
-                </button>
-              </div>
-            </div>
-          </div>
-            );
-          });
-        })()}
       </div>
 
       {/* Bottom sheet */}

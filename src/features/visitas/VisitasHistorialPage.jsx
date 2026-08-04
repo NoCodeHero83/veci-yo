@@ -368,7 +368,32 @@ export default function VisitasHistorialPage() {
       <ModuloGate helpKey="visitas">
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {!reservaDetail && !detalleItem && !detalleGuardia && (<>
-        {/* Type tabs: Visitas / Huéspedes */}
+        {/* Opción 2 (vista combinada): tipos de visita directos para registrar — arriba de los tabs */}
+        {vistaCreacionAB === 'opcion2' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            {(rolActivo === 'guardia' || rolActivo === 'huesped-temporal' || rolActivo === 'administrador'
+              ? ['amigos', 'temporal']
+              : ['amigos', 'temporal', 'permanente', 'huesped-temporal']
+            ).map(id => (
+              <button
+                key={id}
+                onClick={() => navigate('/visitas/nuevo', { state: { tipoPreseleccionado: id } })}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '10px 12px', borderRadius: theme.radius.lg,
+                  border: `1px solid ${theme.colors.border}`, background: theme.colors.bgCard,
+                  boxShadow: theme.shadows.card, cursor: 'pointer', fontFamily: theme.fonts.family,
+                  textAlign: 'left',
+                }}
+              >
+                <img src={tipoVisitaIcons[id]} alt={TIPO_LABELS[id]} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>{TIPO_LABELS[id]}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Type tabs: Visitas / Huéspedes / Calendario */}
         <Tabs tabs={TIPO_TABS} active={tipoTab} onChange={handleTipoTabChange} centered />
 
         {/* Prueba A/B: comparar vista separada (opción 1) vs vista combinada (opción 2) */}
@@ -394,32 +419,8 @@ export default function VisitasHistorialPage() {
           </div>
         )}
 
-        {/* Opción 2 (vista combinada): tipos de visita directos para registrar con menos clics */}
-        {vistaCreacionAB === 'opcion2' && tipoTab !== 'calendario' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-            {(rolActivo === 'guardia' || rolActivo === 'huesped-temporal' || rolActivo === 'administrador'
-              ? ['amigos', 'temporal']
-              : ['amigos', 'temporal', 'permanente', 'huesped-temporal']
-            ).map(id => (
-              <button
-                key={id}
-                onClick={() => navigate('/visitas/nuevo', { state: { tipoPreseleccionado: id } })}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '10px 12px', borderRadius: theme.radius.lg,
-                  border: `1px solid ${theme.colors.border}`, background: theme.colors.bgCard,
-                  boxShadow: theme.shadows.card, cursor: 'pointer', fontFamily: theme.fonts.family,
-                  textAlign: 'left',
-                }}
-              >
-                <img src={tipoVisitaIcons[id]} alt={TIPO_LABELS[id]} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>{TIPO_LABELS[id]}</span>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Filter card */}
+        {/* Filter card — oculto en tab calendario */}
+        {tipoTab !== 'calendario' && (
         <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '12px', boxShadow: theme.shadows.card }}>
           <SearchBar value={search} onChange={setSearch} />
           {tipoTab === 'huespedes' && (
@@ -553,7 +554,7 @@ export default function VisitasHistorialPage() {
              </button>
            )}
            </div>
-           </>)}
+        )}
 
         {/* Calendar tab — todas las visitas con color según estado */}
         {tipoTab === 'calendario' && (() => {
@@ -1273,6 +1274,7 @@ export default function VisitasHistorialPage() {
             Mostrando {filtered.length} de {visitas.length} visitas
           </div>
         )}
+        </>)}
       </div>
       </ModuloGate>
 
@@ -1365,6 +1367,22 @@ export default function VisitasHistorialPage() {
                 </div>
               )}
 
+              {/* Admin: botón asignar estacionamiento — visitas normales */}
+              {esAdminRol && detalleActual.tipo !== 'huesped-temporal' && (
+                <button
+                  onClick={() => { setParkingSpot(''); setParkingTarget({ visitaId: detalleActual.id, invitadoIdx: -1, nombre: detalleActual.nombre, torre: detalleActual.torre, depto: detalleActual.depto }); setShowAsignarEstacionamiento(true); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    padding: '10px', borderRadius: theme.radius.full,
+                    background: theme.colors.bgMuted, color: theme.colors.text,
+                    border: `1px solid ${theme.colors.border}`, cursor: 'pointer', fontFamily: theme.fonts.family,
+                    fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold,
+                  }}
+                >
+                  🅿️ Asignar estacionamiento
+                </button>
+              )}
+
             {/* Invitados list — solo para huésped-temporal (6 pasos) */}
             {detalleActual.tipo === 'huesped-temporal' && detalleActual.invitados.length > 0 && (
               <div>
@@ -1374,15 +1392,7 @@ export default function VisitasHistorialPage() {
                     const t = inv.timeline || {};
                     const esAnfitrion = rolActivo === 'propietario' || rolActivo === 'inquilino-lider';
                     const puedeAprobar = esAnfitrion;
-                    const verAcciones = puedeAprobar || esAdminRol;
-                    const accionAnfitrion = { disabled: !puedeAprobar, title: !puedeAprobar ? 'Acción exclusiva del Anfitrión' : undefined };
-                    const estiloAccion = (bg) => ({
-                      padding: '4px 10px', borderRadius: theme.radius.full,
-                      background: bg, color: '#fff', border: 'none',
-                      cursor: puedeAprobar ? 'pointer' : 'not-allowed', fontSize: theme.fonts.sizes['2xs'],
-                      fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
-                      opacity: puedeAprobar ? 1 : 0.5,
-                    });
+                    const verAcciones = puedeAprobar;
                     const rntCompleto = ubicacionActiva ? configHuespedesTemporales[ubicacionActiva.id]?.legal?.rnt?.trim()?.length > 0 : false;
                     const stepStatus = (key) => {
                       if (key === 'terminosAceptados') {
@@ -1426,7 +1436,7 @@ export default function VisitasHistorialPage() {
                                 )}
                               </span>
                               {/* Step 2 — Ver documentación */}
-                              {step.key === 'documentacionCompleta' && isCompleted && inv.documentos?.length > 0 && (
+                              {step.key === 'documentacionCompleta' && isCompleted && inv.documentos?.length > 0 && verAcciones && (
                                 <button
                                   onClick={(e) => { e.stopPropagation(); setDocumentacionDetail({ invitado: inv, item: detalleActual }); }}
                                   style={{
@@ -1444,9 +1454,13 @@ export default function VisitasHistorialPage() {
                                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                                   <span style={{ fontSize: '12px', color: theme.colors.warning, fontWeight: theme.fonts.weights.bold }}>⚠</span>
                                   <button
-                                    {...accionAnfitrion}
-                                    onClick={puedeAprobar ? () => { aprobarTerminosManual(detalleActual.id, i); addToast('Excepción T&C aceptada para ' + inv.nombre, 'success'); } : undefined}
-                                    style={estiloAccion(theme.colors.secondary)}
+                                    onClick={() => { aprobarTerminosManual(detalleActual.id, i); addToast('Excepción T&C aceptada para ' + inv.nombre, 'success'); }}
+                                    style={{
+                                      padding: '4px 10px', borderRadius: theme.radius.full,
+                                      background: theme.colors.secondary, color: '#fff', border: 'none',
+                                      cursor: 'pointer', fontSize: theme.fonts.sizes['2xs'],
+                                      fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
+                                    }}
                                   >
                                     Aceptar excepción
                                   </button>
@@ -1473,9 +1487,13 @@ export default function VisitasHistorialPage() {
                                     </span>
                                   )}
                                   <button
-                                    {...accionAnfitrion}
-                                    onClick={puedeAprobar ? () => { aprobarVerificacion(detalleActual.id, i); addToast('Verificación aprobada para ' + inv.nombre, 'success'); } : undefined}
-                                    style={estiloAccion(theme.colors.success)}
+                                    onClick={() => { aprobarVerificacion(detalleActual.id, i); addToast('Verificación aprobada para ' + inv.nombre, 'success'); }}
+                                    style={{
+                                      padding: '4px 10px', borderRadius: theme.radius.full,
+                                      background: theme.colors.success, color: '#fff', border: 'none',
+                                      cursor: 'pointer', fontSize: theme.fonts.sizes['2xs'],
+                                      fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
+                                    }}
                                   >
                                     Aprobar
                                   </button>
@@ -1484,13 +1502,17 @@ export default function VisitasHistorialPage() {
                               {/* Step 5 — Reportar TRA (solo si ingresó) */}
                               {step.key === 'trasideEntrada' && isCompleted && verAcciones && !inv.traSireReported && (
                                 <button
-                                  {...accionAnfitrion}
-                                  onClick={puedeAprobar ? () => {
+                                  onClick={() => {
                                     if (!rntCompleto) { addToast('Completa tu RNT en la configuración de Huéspedes Temporales', 'warning'); return; }
                                     reportarTraSire(detalleActual.id, i);
                                     addToast('Reporte TRA enviado exitosamente', 'success');
-                                  } : undefined}
-                                  style={estiloAccion(theme.colors.secondary)}
+                                  }}
+                                  style={{
+                                    padding: '4px 10px', borderRadius: theme.radius.full,
+                                    background: theme.colors.secondary, color: '#fff', border: 'none',
+                                    cursor: 'pointer', fontSize: theme.fonts.sizes['2xs'],
+                                    fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
+                                  }}
                                 >
                                   Reportar TRA
                                 </button>
@@ -1498,13 +1520,17 @@ export default function VisitasHistorialPage() {
                               {/* Step 6 — Reportar SIRE (solo si salió) */}
                               {step.key === 'trasideSalida' && isCompleted && verAcciones && !inv.traSireReported && (
                                 <button
-                                  {...accionAnfitrion}
-                                  onClick={puedeAprobar ? () => {
+                                  onClick={() => {
                                     if (!rntCompleto) { addToast('Completa tu RNT en la configuración de Huéspedes Temporales', 'warning'); return; }
                                     reportarTraSire(detalleActual.id, i);
                                     addToast('Reporte SIRE enviado exitosamente', 'success');
-                                  } : undefined}
-                                  style={estiloAccion(theme.colors.secondary)}
+                                  }}
+                                  style={{
+                                    padding: '4px 10px', borderRadius: theme.radius.full,
+                                    background: theme.colors.secondary, color: '#fff', border: 'none',
+                                    cursor: 'pointer', fontSize: theme.fonts.sizes['2xs'],
+                                    fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
+                                  }}
                                 >
                                   Reportar SIRE
                                 </button>
@@ -1512,7 +1538,7 @@ export default function VisitasHistorialPage() {
                             </div>
                           );
                         })}
-                        {/* TRA/SIRE — badge de estado (vista consolidada) */}
+                        {/* TRA/SIRE — badge de estado */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
                           {inv.traSireReported ? (
                             <Badge status="Aceptado">TRA/SIRE reportado</Badge>
@@ -1520,6 +1546,21 @@ export default function VisitasHistorialPage() {
                             <Badge status="Pendiente">TRA/SIRE pendiente</Badge>
                           )}
                         </div>
+                        {/* Admin: botón asignar estacionamiento por huésped */}
+                        {esAdminRol && (
+                          <button
+                            onClick={() => { setParkingSpot(''); setParkingTarget({ visitaId: detalleActual.id, invitadoIdx: i, nombre: inv.nombre, torre: detalleActual.torre, depto: detalleActual.depto }); setShowAsignarEstacionamiento(true); }}
+                            style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                              padding: '8px', borderRadius: theme.radius.full, marginTop: '8px',
+                              background: theme.colors.bgMuted, color: theme.colors.text,
+                              border: `1px solid ${theme.colors.border}`, cursor: 'pointer', fontFamily: theme.fonts.family,
+                              fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold,
+                            }}
+                          >
+                            🅿️ Asignar estacionamiento
+                          </button>
+                        )}
                       </div>
                     );
                   })}
