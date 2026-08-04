@@ -80,6 +80,7 @@ export default function ZonaDetallesPage() {
   const { reservas, actualizarEstadoReserva, eliminarReserva, addToast, rolActivo, actualizarPersonaReserva, usuario, zonasComunesConfig } = useApp();
 
   const zona = zonasComunes.find(z => z.id === zonaId) || { nombre: zonaId, emoji: '🏢' };
+  const zonasReservasAll = reservas.filter(r => r.zonaId === zonaId);
   const zonasReservas = reservas.filter(r => {
     if (r.zonaId !== zonaId) return false;
     if (rolActivo === 'guardia' || rolActivo === 'administrador') return true;
@@ -355,130 +356,34 @@ export default function ZonaDetallesPage() {
           <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, marginBottom: '8px' }}>
             {zona.usaSlots ? 'Horarios disponibles' : `Horario libre (máx ${zona.duracionMaxima} h)`}
           </div>
-          {zona.usaSlots ? (
-            diasRelevantes.length ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-                {(() => {
-                  const horasBase = [];
-                  for (let h = 8; h <= 22; h++) {
-                    horasBase.push(`${String(h).padStart(2, '0')}:00`);
-                    if (h < 22) horasBase.push(`${String(h).padStart(2, '0')}:30`);
-                  }
-                  const reservasPorHora = {};
-                  zonasReservas.forEach(r => {
-                    if (!r.horario) return;
-                    const matchDay = !diasRelevantes.length || diasRelevantes.some(d => (r.horario || '').toLowerCase().includes(d.toLowerCase()));
-                    if (!matchDay) return;
-                    const partes = r.horario.split('-');
-                    if (partes.length < 2) return;
-                    const inicio = partes[0].trim();
-                    const fin = partes[1].trim();
-                    const iniParts = inicio.split(':').map(Number);
-                    const finParts = fin.split(':').map(Number);
-                    if (isNaN(iniParts[0]) || isNaN(finParts[0])) return;
-                    const iniMin = iniParts[0] * 60 + (iniParts[1] || 0);
-                    const finMin = finParts[0] * 60 + (finParts[1] || 0);
-                    horasBase.forEach(h => {
-                      const [hh, mm] = h.split(':').map(Number);
-                      const slotMin = hh * 60 + mm;
-                      if (slotMin >= iniMin && slotMin < finMin) {
-                        if (!reservasPorHora[h]) reservasPorHora[h] = [];
-                        reservasPorHora[h].push(r);
-                      }
-                    });
-                  });
-                  const esGuardiaAdmin = esGuardia || rolActivo === 'administrador';
-                  const fechaSlot = filtroDia === 'hoy' ? new Date() : filtroDia === 'manana' ? new Date(Date.now() + 86400000) : (fechaDesde ? new Date(fechaDesde + 'T00:00:00') : new Date());
-                  return horasBase.map(h => {
-                    const reservasEnSlot = reservasPorHora[h] || [];
-                    const ocupado = reservasEnSlot.length >= (zona.total || 1);
-                    const handleClickSlot = !esGuardiaAdmin && !ocupado
-                      ? () => navigate(`/zonas-comunes/${zonaId}/reservar`, { state: { horaPre: h, fechaPre: fechaSlot.toISOString() } })
-                      : undefined;
-                    return (
-                      <div key={h} style={{ display: 'flex', borderBottom: `1px solid ${theme.colors.borderLight}` }}>
-                        <div style={{ width: '50px', flexShrink: 0, padding: '8px 0', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.medium, textAlign: 'right', paddingRight: '8px' }}>
-                          {h}
-                        </div>
-                        <div style={{ flex: 1, minHeight: '36px', padding: '4px 0 4px 8px', borderLeft: `1px solid ${theme.colors.borderLight}`, position: 'relative' }}>
-                          {reservasEnSlot.length > 0 ? (
-                            reservasEnSlot.map((res, ri) => {
-                              const esMiReserva = !esGuardiaAdmin && res.nombre?.toLowerCase().includes((usuario?.nombre?.toLowerCase().split(' ')[0] || ''));
-                              const borderColor = res.estado === 'Aprobado' ? theme.colors.success : res.estado === 'Pendiente' ? theme.colors.warning : theme.colors.secondary;
-                              return (
-                                <div
-                                  key={res.id}
-                                  onClick={() => esGuardiaAdmin ? setMenuItem(res) : (esMiReserva ? setMenuItem(res) : null)}
-                                  style={{
-                                    marginBottom: '2px',
-                                    padding: '4px 8px',
-                                    borderRadius: theme.radius.md,
-                                    background: esGuardiaAdmin || esMiReserva ? `${borderColor}18` : theme.colors.bgMuted,
-                                    borderLeft: `3px solid ${borderColor}`,
-                                    cursor: esGuardiaAdmin || esMiReserva ? 'pointer' : 'default',
-                                    opacity: esGuardiaAdmin || esMiReserva ? 1 : 0.5,
-                                  }}
-                                >
-                                  <div style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>
-                                    {esGuardiaAdmin ? `${res.depto} · ${res.nombre}` : (esMiReserva ? `Reserva N°:${res.reservaNum}` : 'Ocupado')}
-                                  </div>
-                                  <div style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textSecondary }}>
-                                    {res.horario}
-                                  </div>
-                                </div>
-                              );
-                            })
-                          ) : esGuardiaAdmin ? (
-                            <div style={{ padding: '4px 8px', fontSize: theme.fonts.sizes['2xs'], color: theme.colors.success, fontWeight: theme.fonts.weights.medium }}>
-                              Disponible
-                            </div>
-                          ) : (
-                            <button
-                              onClick={handleClickSlot}
-                              style={{
-                                display: 'block', width: '100%', padding: '4px 8px', fontSize: theme.fonts.sizes['2xs'], color: theme.colors.success, fontWeight: theme.fonts.weights.medium,
-                                background: 'none', border: 'none', cursor: 'pointer', fontFamily: theme.fonts.family, textAlign: 'left',
-                                borderRadius: theme.radius.md, transition: 'background 150ms',
-                              }}
-                              onMouseEnter={e => { e.target.style.background = '#F0FDF4'; }}
-                              onMouseLeave={e => { e.target.style.background = 'none'; }}
-                            >
-                              Disponible — reservar
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  });
-                })()}
-              </div>
-            ) : (
-              <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>Selecciona Hoy, Mañana o un rango de fechas para ver los horarios.</div>
-            )
-          ) : (
+          {diasRelevantes.length ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
               {(() => {
+                const parseHorario = (horario) => {
+                  if (!horario) return null;
+                  const h = horario.toLowerCase();
+                  const match = h.match(/(\d{1,2})[:\s]*(\d{2})?\s*(hs|-)\s*(\d{1,2})[:\s]*(\d{2})?/);
+                  if (!match) return null;
+                  const iniH = parseInt(match[1]); const iniM = parseInt(match[2] || '0');
+                  const finH = parseInt(match[4]); const finM = parseInt(match[5] || '0');
+                  if (isNaN(iniH) || isNaN(finH)) return null;
+                  return { iniMin: iniH * 60 + iniM, finMin: finH * 60 + finM };
+                };
                 const horasBase = [];
                 for (let h = 8; h <= 22; h++) {
                   horasBase.push(`${String(h).padStart(2, '0')}:00`);
                   if (h < 22) horasBase.push(`${String(h).padStart(2, '0')}:30`);
                 }
                 const reservasPorHora = {};
-                zonasReservas.forEach(r => {
-                  if (!r.horario) return;
-                  const partes = r.horario.split('-');
-                  if (partes.length < 2) return;
-                  const inicio = partes[0].trim();
-                  const fin = partes[1].trim();
-                  const iniParts = inicio.split(':').map(Number);
-                  const finParts = fin.split(':').map(Number);
-                  if (isNaN(iniParts[0]) || isNaN(finParts[0])) return;
-                  const iniMin = iniParts[0] * 60 + (iniParts[1] || 0);
-                  const finMin = finParts[0] * 60 + (finParts[1] || 0);
+                zonasReservasAll.forEach(r => {
+                  const parsed = parseHorario(r.horario);
+                  if (!parsed) return;
+                  const matchDay = !diasRelevantes.length || diasRelevantes.some(d => (r.horario || '').toLowerCase().includes(d.toLowerCase()));
+                  if (!matchDay) return;
                   horasBase.forEach(h => {
                     const [hh, mm] = h.split(':').map(Number);
                     const slotMin = hh * 60 + mm;
-                    if (slotMin >= iniMin && slotMin < finMin) {
+                    if (slotMin >= parsed.iniMin && slotMin < parsed.finMin) {
                       if (!reservasPorHora[h]) reservasPorHora[h] = [];
                       reservasPorHora[h].push(r);
                     }
@@ -499,7 +404,7 @@ export default function ZonaDetallesPage() {
                       </div>
                       <div style={{ flex: 1, minHeight: '36px', padding: '4px 0 4px 8px', borderLeft: `1px solid ${theme.colors.borderLight}`, position: 'relative' }}>
                         {reservasEnSlot.length > 0 ? (
-                          reservasEnSlot.map((res, ri) => {
+                          reservasEnSlot.map((res) => {
                             const esMiReserva = !esGuardiaAdmin && res.nombre?.toLowerCase().includes((usuario?.nombre?.toLowerCase().split(' ')[0] || ''));
                             const borderColor = res.estado === 'Aprobado' ? theme.colors.success : res.estado === 'Pendiente' ? theme.colors.warning : theme.colors.secondary;
                             return (
@@ -549,6 +454,8 @@ export default function ZonaDetallesPage() {
                 });
               })()}
             </div>
+          ) : (
+            <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>Selecciona Hoy, Mañana o un rango de fechas para ver los horarios.</div>
           )}
         </div>
 
