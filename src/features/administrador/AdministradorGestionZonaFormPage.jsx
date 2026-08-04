@@ -411,12 +411,14 @@ export default function AdministradorGestionZonaFormPage() {
             <input type="number" min="1" value={form.duracionPermitada} onChange={e => setField('duracionPermitada')(e.target.value)}
               style={{ width: '100%', padding: '11px 14px', borderRadius: theme.radius['2xl'], border: `1.5px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.base, fontFamily: theme.fonts.family, background: theme.colors.bgCard, outline: 'none', boxSizing: 'border-box' }} />
           </div>
-          <div>
-            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Horarios disponibles (separados por coma)</div>
-            <input type="text" value={form.horariosDisponibles} onChange={e => setField('horariosDisponibles')(e.target.value)}
-              placeholder="Ej: 08:00 - 12:00, 14:00 - 18:00"
-              style={{ width: '100%', padding: '11px 14px', borderRadius: theme.radius['2xl'], border: `1.5px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.base, fontFamily: theme.fonts.family, background: theme.colors.bgCard, outline: 'none', boxSizing: 'border-box' }} />
-          </div>
+          {form.usaSlots && (
+            <div>
+              <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Horarios disponibles (separados por coma)</div>
+              <input type="text" value={form.horariosDisponibles} onChange={e => setField('horariosDisponibles')(e.target.value)}
+                placeholder="Ej: 08:00 - 12:00, 14:00 - 18:00"
+                style={{ width: '100%', padding: '11px 14px', borderRadius: theme.radius['2xl'], border: `1.5px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.base, fontFamily: theme.fonts.family, background: theme.colors.bgCard, outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+          )}
 
           <div>
             <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Reglamento de la zona</div>
