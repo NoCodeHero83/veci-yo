@@ -367,7 +367,7 @@ export default function VisitasHistorialPage() {
 
       <ModuloGate helpKey="visitas">
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {!reservaDetail && !detalleItem && !detalleGuardia && (<>
+        {!detalleItem && !detalleGuardia && (<>
         {/* Opción 2 (vista combinada): tipos de visita directos para registrar — arriba de los tabs */}
         {vistaCreacionAB === 'opcion2' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
