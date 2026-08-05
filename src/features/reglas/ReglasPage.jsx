@@ -17,9 +17,7 @@ import {
   reglasPisos,
 } from '../../data/mockData';
 import iconDepartamento from '../../assets/icons/inquilino-lider/reconocimiento-hero.png';
-import iconResidentePermanente from '../../assets/icons/reglas/residente-permanente.png';
 import iconResidentePermanente1 from '../../assets/icons/reglas/residente-permanente-1.png';
-import iconResidenteTemporal from '../../assets/icons/reglas/residente-temporal.png';
 import iconResidenteTemporal1 from '../../assets/icons/reglas/residente-temporal-1.png';
 import iconGuardiaSeguridad1 from '../../assets/icons/reglas/guardia-seguridad-1.png';
 import iconRnt from '../../assets/icons/shared/rnt.png';
@@ -144,9 +142,9 @@ export default function ReglasPage() {
             <TipoCard icon={iconResidenteTemporal} label="Huésped Temporal" onClick={() => navigate('/reglas/huesped-temporal')} />
           ) : (
             <>
-              <TipoCard icon={rolActivo === 'guardia' ? iconResidentePermanente1 : iconResidentePermanente} label="Residente Permanente" onClick={() => navigate('/reglas/residente-permanente')} />
-              <TipoCard icon={rolActivo === 'guardia' ? iconResidenteTemporal1 : iconResidenteTemporal} label="Huésped Temporal" onClick={() => navigate('/reglas/huesped-temporal')} />
-              <TipoCard icon={rolActivo === 'guardia' ? iconGuardiaSeguridad1 : null} label="Guardia de Seguridad" emoji={rolActivo === 'guardia' ? null : "🔒"} onClick={() => navigate('/reglas/guardia-seguridad')} />
+              <TipoCard icon={iconResidentePermanente1} label="Residente Permanente" onClick={() => navigate('/reglas/residente-permanente')} />
+              <TipoCard icon={iconResidenteTemporal1} label="Huésped Temporal" onClick={() => navigate('/reglas/huesped-temporal')} />
+              <TipoCard icon={iconGuardiaSeguridad1} label="Guardia de Seguridad" onClick={() => navigate('/reglas/guardia-seguridad')} />
             </>
           )}
         </div>
