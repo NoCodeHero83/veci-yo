@@ -6,6 +6,7 @@ import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
 import CommsFab from './components/CommsFab';
 import InquilinoLiderHome from './components/InquilinoLiderHome';
+import ViviendaResumen from './components/ViviendaResumen';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export default function HomePage() {
 
   return (
     <AppShell>
-      <InquilinoLiderHome />
+      {rolActivo ? <InquilinoLiderHome /> : <ViviendaResumen />}
       <CommsFab />
 
       {/* Bienvenida — aparece sobre el Home real tras registrarse, con el nombre ingresado */}
