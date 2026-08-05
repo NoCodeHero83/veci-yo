@@ -139,7 +139,7 @@ export default function ReglasPage() {
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: rolActivo === 'huesped-temporal' ? '1fr' : '1fr 1fr 1fr', gap: '12px' }}>
           {rolActivo === 'huesped-temporal' ? (
-            <TipoCard icon={iconResidenteTemporal} label="Huésped Temporal" onClick={() => navigate('/reglas/huesped-temporal')} />
+            <TipoCard icon={iconResidenteTemporal1} label="Huésped Temporal" onClick={() => navigate('/reglas/huesped-temporal')} />
           ) : (
             <>
               <TipoCard icon={iconResidentePermanente1} label="Residente Permanente" onClick={() => navigate('/reglas/residente-permanente')} />
