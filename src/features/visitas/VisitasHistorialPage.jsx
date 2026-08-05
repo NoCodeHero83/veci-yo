@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell';
 import PageHeader from '../../components/layout/PageHeader';
@@ -368,7 +369,6 @@ export default function VisitasHistorialPage() {
 
       <ModuloGate helpKey="visitas">
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {(<>}
         {/* Opción 2 (vista combinada): tipos de visita directos para registrar — arriba de los tabs */}
         {vistaCreacionAB === 'opcion2' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -591,9 +591,9 @@ export default function VisitasHistorialPage() {
           return (
             <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, boxShadow: theme.shadows.card }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px' }}>
-                <button onClick={() => setCalendarioMonth(new Date(año, mes - 1, 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '22px', color: theme.colors.text, padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px' }}>‹</button>
+                <button onClick={() => setCalendarioMonth(new Date(año, mes - 1, 1))} aria-label="Mes anterior" style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.colors.text, padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px' }}><ChevronLeft size={22} /></button>
                 <span style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base }}>{hoy.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</span>
-                <button onClick={() => setCalendarioMonth(new Date(año, mes + 1, 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '22px', color: theme.colors.text, padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px' }}>›</button>
+                <button onClick={() => setCalendarioMonth(new Date(año, mes + 1, 1))} aria-label="Mes siguiente" style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.colors.text, padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '44px' }}><ChevronRight size={22} /></button>
               </div>
               <div style={{ overflow: 'hidden' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: `${GAP}px`, background: theme.colors.borderLight, padding: '0 8px 8px', position: 'relative' }}>
@@ -1275,7 +1275,6 @@ export default function VisitasHistorialPage() {
             Mostrando {filtered.length} de {visitas.length} visitas
           </div>
         )}
-        </>)}
       </div>
       </ModuloGate>
 
