@@ -5,7 +5,9 @@ import PageHeader from '../../components/layout/PageHeader';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
+import SelectField from '../../components/ui/SelectField';
 import { useApp } from '../../context/AppContext';
+import { departamentos } from '../../data/mockData';
 import theme from '../../config/theme';
 import { zonaBanners } from '../../assets/icons/zonas';
 
@@ -85,6 +87,7 @@ export default function AdministradorGestionZonaReservasPage() {
   const [filtroFecha, setFiltroFecha] = useState('todas');
   const [sortAsc, setSortAsc] = useState(true);
   const [modalCrear, setModalCrear] = useState(searchParams.get('crear') === '1');
+  const [deptoReserva, setDeptoReserva] = useState('');
   const [modalEditar, setModalEditar] = useState(null);
   const [modalCancelar, setModalCancelar] = useState(null);
   const [modalEliminar, setModalEliminar] = useState(null);
@@ -136,35 +139,11 @@ export default function AdministradorGestionZonaReservasPage() {
   };
 
   const handleCrear = () => {
-    const { residenteNombre, residenteId, depto, fecha, horaInicio, horaFin, observaciones } = form;
-    if (!residenteNombre || !depto || !fecha || !horaInicio || !horaFin) {
-      setFormError('Completa todos los campos obligatorios');
-      return;
-    }
-    if (horaInicio >= horaFin) {
-      setFormError('La hora de fin debe ser posterior a la de inicio');
-      return;
-    }
-    const conflicto = reservas.some(r =>
-      r.zonaId === zonaId && r.fecha === fecha &&
-      ((r.horaInicio <= horaInicio && r.horaFin > horaInicio) ||
-       (r.horaInicio < horaFin && r.horaFin >= horaFin) ||
-       (r.horaInicio >= horaInicio && r.horaFin <= horaFin))
-    );
-    if (conflicto) {
-      setFormError('Ya existe una reserva en ese horario');
-      return;
-    }
-    const num = String(100000 + Math.floor(Math.random() * 900000));
-    agregarReserva({
-      zonaId, residenteNombre, residenteId, depto,
-      fecha, horaInicio, horaFin, observaciones,
-      estado: 'Pendiente', reservaNum: num,
-    });
+    if (!deptoReserva) return;
     setModalCrear(false);
     setForm(emptyForm());
     setFormError('');
-    addToast('Reserva creada correctamente');
+    navigate(`/zonas-comunes/${zonaId}/reservar`, { state: { deptoReserva } });
   };
 
   const handleEditar = () => {
@@ -185,6 +164,7 @@ export default function AdministradorGestionZonaReservasPage() {
   };
 
   const startCrear = () => {
+    setDeptoReserva('');
     setModalCrear(true);
     setForm(emptyForm());
     setFormError('');
@@ -501,8 +481,14 @@ export default function AdministradorGestionZonaReservasPage() {
       {/* Crear Modal */}
       <Modal isOpen={modalCrear} onClose={() => { setModalCrear(false); setFormError(''); }} title="Nueva Reserva">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {renderFormFields(false)}
-          <Button variant="primary" fullWidth onClick={handleCrear}>Crear Reserva</Button>
+          <SelectField
+            label="¿Para qué departamento es la reserva?"
+            value={deptoReserva}
+            options={departamentos}
+            onChange={setDeptoReserva}
+            placeholder="Seleccione el departamento"
+          />
+          <Button variant="primary" fullWidth disabled={!deptoReserva} onClick={handleCrear}>Continuar</Button>
         </div>
       </Modal>
 
