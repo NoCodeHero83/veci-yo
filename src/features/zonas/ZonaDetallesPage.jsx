@@ -112,6 +112,8 @@ export default function ZonaDetallesPage() {
   const [liberarCuposInput, setLiberarCuposInput] = useState(0);
   const [reemplazoInput, setReemplazoInput] = useState({});
 
+  const esGuardia = rolActivo === 'guardia';
+
   // Guardia/Admin: antes de crear una reserva deben indicar para qué departamento
   const esGuardiaAdmin = esGuardia || rolActivo === 'administrador';
   const [deptoReservaOpen, setDeptoReservaOpen] = useState(false);
@@ -134,8 +136,6 @@ export default function ZonaDetallesPage() {
       state: { ...deptoReservaTarget, deptoReserva },
     });
   };
-
-  const esGuardia = rolActivo === 'guardia';
 
   const nombreDia = (fecha) => ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][fecha.getDay()];
   const hoy = new Date();
