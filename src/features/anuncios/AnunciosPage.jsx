@@ -264,11 +264,15 @@ export default function AnunciosPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Fecha de publicación*</div>
-                <input type="date" value={form.fechaPublicada} onChange={e => setField('fechaPublicada')(e.target.value)} style={dateInputStyle} />
+                <div style={{ width: '100%', overflow: 'hidden', borderRadius: theme.radius['2xl'], border: `1.5px solid ${theme.colors.border}`, background: theme.colors.bgCard }}>
+                  <input type="date" value={form.fechaPublicada} onChange={e => setField('fechaPublicada')(e.target.value)} style={{ ...dateInputStyle, display: 'block', border: 'none', background: 'transparent', maxWidth: '100%' }} />
+                </div>
               </div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Fecha de finalización</div>
-                <input type="date" value={form.fechaFinalizacion} onChange={e => setField('fechaFinalizacion')(e.target.value)} style={dateInputStyle} />
+                <div style={{ width: '100%', overflow: 'hidden', borderRadius: theme.radius['2xl'], border: `1.5px solid ${theme.colors.border}`, background: theme.colors.bgCard }}>
+                  <input type="date" value={form.fechaFinalizacion} onChange={e => setField('fechaFinalizacion')(e.target.value)} style={{ ...dateInputStyle, display: 'block', border: 'none', background: 'transparent', maxWidth: '100%' }} />
+                </div>
               </div>
             </div>
           ) : (
@@ -335,11 +339,15 @@ export default function AnunciosPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Fecha de publicación*</div>
-                  <input type="date" value={form.fechaPublicada} onChange={e => setField('fechaPublicada')(e.target.value)} style={dateInputStyle} />
+                  <div style={{ width: '100%', overflow: 'hidden', borderRadius: theme.radius['2xl'], border: `1.5px solid ${theme.colors.border}`, background: theme.colors.bgCard }}>
+                    <input type="date" value={form.fechaPublicada} onChange={e => setField('fechaPublicada')(e.target.value)} style={{ ...dateInputStyle, display: 'block', border: 'none', background: 'transparent', maxWidth: '100%' }} />
+                  </div>
                 </div>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Fecha de finalización</div>
-                  <input type="date" value={form.fechaFinalizacion} onChange={e => setField('fechaFinalizacion')(e.target.value)} style={dateInputStyle} />
+                  <div style={{ width: '100%', overflow: 'hidden', borderRadius: theme.radius['2xl'], border: `1.5px solid ${theme.colors.border}`, background: theme.colors.bgCard }}>
+                    <input type="date" value={form.fechaFinalizacion} onChange={e => setField('fechaFinalizacion')(e.target.value)} style={{ ...dateInputStyle, display: 'block', border: 'none', background: 'transparent', maxWidth: '100%' }} />
+                  </div>
                 </div>
               </div>
             </>
