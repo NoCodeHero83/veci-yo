@@ -23,6 +23,7 @@ export default function CorrespondenciaAgregarPage() {
   const informarItem = location.state?.informar || null;
   const { agregarCorrespondencia, rolActivo, esResidente } = useApp();
   const accesoBloqueado = rolActivo === 'propietario' && !esResidente;
+  const puedeCorrespondenciaMasiva = rolActivo === 'guardia' || rolActivo === 'administrador';
 
   const [categoria, setCategoria] = useState('');
   const [logistica, setLogistica] = useState('');
@@ -69,6 +70,10 @@ export default function CorrespondenciaAgregarPage() {
   const quitarFoto = (idx) => setFotos(prev => prev.filter((_, i) => i !== idx));
 
   const toggleUnidad = (u) => {
+    if (!puedeCorrespondenciaMasiva) {
+      setSelectedUnidades(prev => prev.includes(u) ? [] : [u]);
+      return;
+    }
     setSelectedUnidades(prev =>
       prev.includes(u) ? prev.filter(x => x !== u) : [...prev, u]
     );
@@ -342,10 +347,12 @@ export default function CorrespondenciaAgregarPage() {
               <p style={{ textAlign: 'center', fontSize: theme.fonts.sizes.sm, color: theme.colors.text, margin: '6px 0 14px', lineHeight: 1.4 }}>
                 Seleccione el departamento al cual va destinado la correspondencia recibida
               </p>
+              {puedeCorrespondenciaMasiva && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
                 <Toggle value={selectAll} onChange={toggleSelectAll} />
                 <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>Seleccionar todo</span>
               </div>
+              )}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))',
