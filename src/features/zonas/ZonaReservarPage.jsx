@@ -60,7 +60,7 @@ export default function ZonaReservarPage() {
   const [nombresPersonas, setNombresPersonas] = useState([]);
   const [tiposPersonas, setTiposPersonas] = useState([]);
   const [comentarios, setComentarios] = useState('');
-  const [depto, setDepto] = useState('506 C');
+  const [depto, setDepto] = useState(location.state?.deptoReserva || '506 C');
   const [cargoCuota, setCargoCuota] = useState(false);
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);

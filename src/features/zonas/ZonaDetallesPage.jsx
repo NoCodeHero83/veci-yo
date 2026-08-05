@@ -10,7 +10,7 @@ import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import SelectField from '../../components/ui/SelectField';
 import { useApp } from '../../context/AppContext';
-import { zonasComunes, cantidadPersonas, horasReserva } from '../../data/mockData';
+import { zonasComunes, cantidadPersonas, horasReserva, departamentos } from '../../data/mockData';
 import theme from '../../config/theme';
 import zonaIcons, { zonaBanners } from '../../assets/icons/zonas';
 
@@ -111,6 +111,29 @@ export default function ZonaDetallesPage() {
   const [liberarItem, setLiberarItem] = useState(null);
   const [liberarCuposInput, setLiberarCuposInput] = useState(0);
   const [reemplazoInput, setReemplazoInput] = useState({});
+
+  // Guardia/Admin: antes de crear una reserva deben indicar para qué departamento
+  const esGuardiaAdmin = esGuardia || rolActivo === 'administrador';
+  const [deptoReservaOpen, setDeptoReservaOpen] = useState(false);
+  const [deptoReserva, setDeptoReserva] = useState('');
+  const [deptoReservaTarget, setDeptoReservaTarget] = useState(null);
+
+  const abrirReserva = (horaPre, fechaPre) => {
+    if (esGuardiaAdmin) {
+      setDeptoReserva('');
+      setDeptoReservaTarget({ horaPre, fechaPre });
+      setDeptoReservaOpen(true);
+    } else {
+      navigate(`/zonas-comunes/${zonaId}/reservar`, { state: { horaPre, fechaPre } });
+    }
+  };
+
+  const confirmarReserva = () => {
+    setDeptoReservaOpen(false);
+    navigate(`/zonas-comunes/${zonaId}/reservar`, {
+      state: { ...deptoReservaTarget, deptoReserva },
+    });
+  };
 
   const esGuardia = rolActivo === 'guardia';
 
@@ -216,7 +239,7 @@ export default function ZonaDetallesPage() {
         title={zona.nombre}
         action={
           <button
-            onClick={() => navigate(`/zonas-comunes/${zonaId}/reservar`)}
+            onClick={() => abrirReserva('', '')}
             style={{
               width: '36px',
               height: '36px',
@@ -405,7 +428,7 @@ export default function ZonaDetallesPage() {
                 return horasBase.map(h => {
                   const reservasEnSlot = reservasPorHora[h] || [];
                   const ocupado = reservasEnSlot.length >= (zona.total || 1);
-                  const handleClickSlot = () => navigate(`/zonas-comunes/${zonaId}/reservar`, { state: { horaPre: h, fechaPre: fechaSlot.toISOString() } });
+                  const handleClickSlot = () => abrirReserva(h, fechaSlot.toISOString());
                   return (
                     <div key={h} style={{ display: 'flex', borderBottom: `1px solid ${theme.colors.borderLight}` }}>
                       <div style={{ width: '50px', flexShrink: 0, padding: '10px 0', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.medium, textAlign: 'right', paddingRight: '8px' }}>
@@ -440,10 +463,6 @@ export default function ZonaDetallesPage() {
                               </div>
                             );
                           })
-                        ) : esGuardiaAdmin ? (
-                          <div style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.success, fontWeight: theme.fonts.weights.medium }}>
-                            Disponible
-                          </div>
                         ) : (
                           <button
                             onClick={handleClickSlot}
@@ -769,6 +788,27 @@ export default function ZonaDetallesPage() {
             {reglamentoTexto}
           </div>
           <Button variant="primary" fullWidth onClick={() => setReglamentoOpen(false)}>Entendido</Button>
+        </div>
+      </Modal>
+
+      {/* Selector de departamento — Guardia/Admin crean reserva a nombre de un departamento */}
+      <Modal isOpen={deptoReservaOpen} onClose={() => setDeptoReservaOpen(false)} title="¿Para qué departamento es la reserva?">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <SelectField
+            label="Departamento"
+            value={deptoReserva}
+            options={departamentos}
+            onChange={setDeptoReserva}
+            placeholder="Seleccione el departamento"
+          />
+          <Button
+            variant="primary"
+            fullWidth
+            disabled={!deptoReserva}
+            onClick={confirmarReserva}
+          >
+            Continuar
+          </Button>
         </div>
       </Modal>
     </AppShell>

@@ -261,7 +261,7 @@ export default function AnunciosPage() {
           <InputField label="Descripción*" value={form.descripcion} onChange={setField('descripcion')} placeholder="Describa con el mayor detalle posible" multiline rows={3} />
 
           {form.tipo === 'Anuncio' ? (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Fecha de publicación*</div>
                 <input type="date" value={form.fechaPublicada} onChange={e => setField('fechaPublicada')(e.target.value)} style={dateInputStyle} />
@@ -332,7 +332,7 @@ export default function AnunciosPage() {
                 <InputField value={form.tiempoMaximo} onChange={setField('tiempoMaximo')} placeholder="Tiempo máximo" />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Fecha de publicación*</div>
                   <input type="date" value={form.fechaPublicada} onChange={e => setField('fechaPublicada')(e.target.value)} style={dateInputStyle} />

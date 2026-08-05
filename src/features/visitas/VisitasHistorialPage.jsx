@@ -180,8 +180,9 @@ export default function VisitasHistorialPage() {
     const t = inv.timeline || {};
     const esAnfitrion = rolActivo === 'propietario' || rolActivo === 'inquilino-lider';
     const puedeAprobar = esAnfitrion;
-    // 15a: el Administrador ve las acciones exclusivas del Anfitrión, pero no puede ejecutarlas
-    const verAcciones = puedeAprobar || esAdminRol;
+    // Las acciones exclusivas del Anfitrión solo las ve el Anfitrión.
+    // Administrador y Guardia no deben ver estos botones (no solo deshabilitados).
+    const verAcciones = puedeAprobar;
     const rntCompleto = ubicacionActiva ? configHuespedesTemporales[ubicacionActiva.id]?.legal?.rnt?.trim()?.length > 0 : false;
     const stepStatus = (key) => {
       if (key === 'terminosAceptados') {
@@ -219,7 +220,7 @@ export default function VisitasHistorialPage() {
                 {isAprobadoManual && <span style={{ color: theme.colors.secondary, fontWeight: theme.fonts.weights.semibold, marginLeft: '4px' }}>(aprobado por anfitrión)</span>}
                 {st === 'aprobada' && <span style={{ color: theme.colors.success, fontWeight: theme.fonts.weights.semibold, marginLeft: '4px' }}>(aprobada)</span>}
               </span>
-              {step.key === 'documentacionCompleta' && isCompleted && inv.documentos?.length > 0 && (
+              {step.key === 'documentacionCompleta' && isCompleted && inv.documentos?.length > 0 && verAcciones && (
                 <button onClick={(e) => { e.stopPropagation(); setDocumentacionDetail({ invitado: inv, item }); }} style={btn(theme.colors.primary)}>Ver documentación</button>
               )}
               {step.key === 'terminosAceptados' && esExcepcionTc && verAcciones && (
@@ -367,7 +368,7 @@ export default function VisitasHistorialPage() {
 
       <ModuloGate helpKey="visitas">
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {!detalleItem && !detalleGuardia && (<>
+        {(<>}
         {/* Opción 2 (vista combinada): tipos de visita directos para registrar — arriba de los tabs */}
         {vistaCreacionAB === 'opcion2' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>

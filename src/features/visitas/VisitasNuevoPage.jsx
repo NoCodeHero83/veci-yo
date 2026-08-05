@@ -95,6 +95,7 @@ export default function VisitasNuevoPage() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [codigoAcceso, setCodigoAcceso] = useState('');
   const [numeroReserva, setNumeroReserva] = useState('');
+  const [paraAdministracion, setParaAdministracion] = useState(false);
 
   const horaEstimada = formatTimeRange(horaInicio, horaFin);
   const horaEstimadaSalida = formatTimeRange(horaSalidaInicio, horaSalidaFin);
@@ -236,6 +237,7 @@ export default function VisitasNuevoPage() {
       qrUrl: `wwww.veciyolink/reserva-${num}`,
       torre,
       depto,
+      paraAdministracion,
       personas: parseInt(personas),
       horaEstimadaLlegada: horaEstimada,
       horaEstimadaSalida: horaEstimadaSalida || undefined,
@@ -320,6 +322,17 @@ export default function VisitasNuevoPage() {
                   <SelectField label="Depto:" value={depto} options={departamentos} onChange={setDepto} />
                 </div>
               </div>
+              {rolActivo === 'administrador' && (
+                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontFamily: theme.fonts.family, userSelect: 'none' }}>
+                  <input
+                    type="checkbox"
+                    checked={paraAdministracion}
+                    onChange={e => setParaAdministracion(e.target.checked)}
+                    style={{ width: '18px', height: '18px', accentColor: theme.colors.primary }}
+                  />
+                  <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>Visita para administración</span>
+                </label>
+              )}
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                 <input
                   type="number"
