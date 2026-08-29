@@ -25,12 +25,12 @@ const CONFIG_ADMIN_OPCIONES = [
 ];
 
 const modules = [
-  { label: 'Correspondencia', icon: iconCorrespondencia, path: '/correspondencia', helpKey: 'correspondencia' },
-  { label: 'Visitas',         icon: iconVisitas,         path: '/visitas',        helpKey: 'visitas' },
-  { label: 'Zonas Comunes',   icon: iconZonasComunes,    path: '/zonas-comunes',  helpKey: 'zonas' },
-  { label: 'Anuncios',        icon: iconAnuncios,        path: '/anuncios',       helpKey: 'anuncios' },
-  { label: 'Ranking',         icon: iconRanking,         path: '/cuadro-honor',   helpKey: 'ranking' },
-  { label: 'Reglas',          icon: iconReglas,          path: '/reglas',         helpKey: 'reglas' },
+  { id: 'correspondencia', label: 'Correspondencia',            icon: iconCorrespondencia, path: '/correspondencia', helpKey: 'correspondencia' },
+  { id: 'visitas',         label: 'Visitas',                   icon: iconVisitas,         path: '/visitas',        helpKey: 'visitas' },
+  { id: 'zonas-comunes',   label: 'Zonas Comunes',             icon: iconZonasComunes,    path: '/zonas-comunes',  helpKey: 'zonas' },
+  { id: 'anuncios',        label: 'Anuncios y encuestas',      icon: iconAnuncios,        path: '/anuncios',       helpKey: 'anuncios' },
+  { id: 'ranking',         label: 'Cuadro de Honor',           icon: iconRanking,         path: '/cuadro-honor',   helpKey: 'ranking' },
+  { id: 'reglas',          label: 'Reglamentos y renta corta', icon: iconReglas,          path: '/reglas',         helpKey: 'reglas' },
 ];
 
 // Resumen de "Vivienda": tarjeta del edificio + grilla de módulos.
@@ -165,15 +165,15 @@ export default function ViviendaResumen() {
           gap: '12px',
         }}
       >
-        {(esHuespedTemporal ? modules.filter(m => m.label !== 'Ranking') : (noResidente ? modules.filter(m => !['Correspondencia', 'Visitas', 'Zonas Comunes'].includes(m.label)) : modules)).map(mod => {
+        {(esHuespedTemporal ? modules.filter(m => m.id !== 'ranking') : (noResidente ? modules.filter(m => !['correspondencia', 'visitas', 'zonas-comunes'].includes(m.id)) : modules)).map(mod => {
           const help = HELP[mod.helpKey];
           const bloqueado = sinPropiedades;
           return (
             <div
-              key={mod.label}
+              key={mod.id}
               onClick={() => {
                 if (bloqueado || esIncognito) setPopupKey(mod.helpKey);
-                else navigate(mod.label === 'Zonas Comunes' && esAdministrador ? '/admin/gestion-zonas' : mod.path);
+                else navigate(mod.id === 'zonas-comunes' && esAdministrador ? '/admin/gestion-zonas' : mod.path);
               }}
               role={'button'}
               style={{
@@ -215,7 +215,7 @@ export default function ViviendaResumen() {
                 </div>
               )}
 
-              <img src={mod.icon} alt={mod.label} style={{ width: mod.label === 'Ranking' || mod.label === 'Visitas' ? '120px' : '88px', height: mod.label === 'Ranking' || mod.label === 'Visitas' ? '120px' : '88px', objectFit: 'contain' }} />
+              <img src={mod.icon} alt={mod.label} style={{ width: mod.id === 'ranking' || mod.id === 'visitas' ? '120px' : '88px', height: mod.id === 'ranking' || mod.id === 'visitas' ? '120px' : '88px', objectFit: 'contain' }} />
               <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.medium }}>
                 {mod.label}
               </span>
