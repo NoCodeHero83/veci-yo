@@ -332,6 +332,157 @@ export default function VisitasHistorialPage() {
     setDeleteItem(null);
   };
 
+  const renderTarjetaVisitaNormal = (item, onOpen) => (
+    <div
+      key={item.id}
+      onClick={onOpen}
+      style={{
+        background: theme.colors.bgCard,
+        borderRadius: theme.radius.xl,
+        padding: '14px 16px',
+        boxShadow: theme.shadows.card,
+        cursor: 'pointer',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+          <img
+            src={tipoVisitaIcons[item.tipo]}
+            alt={TIPO_LABELS[item.tipo]}
+            style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+          />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>
+              {item.esEvento ? item.nombreEvento : item.nombre}
+            </div>
+            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginTop: '1px' }}>
+              {item.torre || item.depto ? `${item.torre} - ${item.depto}` : 'Sin departamento asociado'} · {TIPO_LABELS[item.tipo]}
+              {rolActivo === 'administrador' && !item.torre && !item.depto && (
+                <span style={{ marginLeft: '6px', fontSize: theme.fonts.sizes['2xs'], fontWeight: theme.fonts.weights.bold, color: '#1E40AF', background: '#DBEAFE', padding: '1px 6px', borderRadius: theme.radius.full }}>Administración</span>
+              )}
+            </div>
+            {item.tipo === 'temporal' && item.ci && (
+              <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginTop: '2px' }}>
+                DNI: {item.ci}
+              </div>
+            )}
+            {item.tipo === 'permanente' && (
+              <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, marginTop: '2px' }}>
+                Registro permanente · {item.diasLaborales || 'Lun – Vie'} · Vigencia: {item.fechaDesde}{item.fechaHasta ? ` a ${item.fechaHasta}` : ''}
+              </div>
+            )}
+            {(item.tipo === 'temporal' || item.tipo === 'permanente') && item.profesion && (
+              <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginTop: '2px' }}>
+                Profesión: {item.profesion}{item.profesionOtro ? ` (${item.profesionOtro})` : ''}
+              </div>
+            )}
+            {item.registradoPor && (
+              <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, marginTop: '2px' }}>
+                Registró: {item.registradoPor}
+              </div>
+            )}
+          </div>
+        </div>
+        {(esAdminRol || esGuardiaRol) && (
+          <button
+            onClick={e => { e.stopPropagation(); setParkingSpot(''); setParkingTarget({ visitaId: item.id, invitadoIdx: -1, nombre: item.esEvento ? item.nombreEvento : item.nombre, torre: item.torre, depto: item.depto }); setShowAsignarEstacionamiento(true); }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.colors.textSecondary, fontSize: '16px', padding: '4px', flexShrink: 0 }}
+            title="Asignar estacionamiento"
+          >
+            🅿️
+          </button>
+        )}
+        <button
+          onClick={e => { e.stopPropagation(); setMenuItem(item); }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.colors.textSecondary, fontSize: '20px', padding: '4px', flexShrink: 0 }}
+        >
+          ⋮
+        </button>
+      </div>
+
+      {/* Chips: notificación + vehículo/placa */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
+        {item.tipoNotificacion && (
+          <span style={{ padding: '2px 8px', borderRadius: theme.radius.full, background: '#F3F4F6', fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textSecondary, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+            🔔 {item.tipoNotificacion === 'notificar-y-anunciar' ? 'Notificar y anunciar' : 'Notificar'}
+          </span>
+        )}
+        {item.tieneVehiculo && (
+          <span style={{ padding: '2px 8px', borderRadius: theme.radius.full, background: theme.colors.bgMuted, fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textSecondary, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+            🚗 {item.vehiculos?.length > 0 ? item.vehiculos.map(v => v.placa).filter(Boolean).join(', ') : 'Con vehículo'}
+          </span>
+        )}
+        <span style={{ padding: '2px 8px', borderRadius: theme.radius.full, background: theme.colors.bgMuted, fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textSecondary }}>
+          📅 {item.fechaDesde}{item.fechaHasta ? ` a ${item.fechaHasta}` : ''}
+        </span>
+        {spotDeVisita(item.id) && (
+          <span style={{ padding: '2px 8px', borderRadius: theme.radius.full, background: '#F0FDF4', fontSize: theme.fonts.sizes['2xs'], color: '#166534', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+            🅿️ {spotDeVisita(item.id)}
+          </span>
+        )}
+      </div>
+
+      {/* Ingreso / Salida (cuando ocurran) */}
+      {(item.invitados?.some(inv => inv.horaIngreso) || item.horaIngreso) && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '8px', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
+          {item.invitados?.length > 0 ? (
+            item.invitados.map((inv, i) => inv.horaIngreso && (
+              <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                {inv.nombre}: Ingreso {inv.horaIngreso}
+                {inv.horaSalida && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#92400E', background: '#FEF3C7', padding: '1px 5px', borderRadius: theme.radius.full }}>
+                    ⚠ Salida {inv.horaSalida}
+                  </span>
+                )}
+              </span>
+            ))
+          ) : (
+            item.horaIngreso && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                Ingreso {item.horaIngreso}
+                {item.horaSalida && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#92400E', background: '#FEF3C7', padding: '1px 5px', borderRadius: theme.radius.full }}>
+                    ⚠ Salida {item.horaSalida}
+                  </span>
+                )}
+              </span>
+            )
+          )}
+        </div>
+      )}
+
+      {/* Anotaciones y fotos de ingreso / salida — profesionales */}
+      {(item.tipo === 'temporal' || item.tipo === 'permanente') && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
+          {item.anotacionesIngreso ? (
+            <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
+              <span style={{ fontWeight: theme.fonts.weights.semibold }}>Anotaciones ingreso:</span> {item.anotacionesIngreso}
+            </div>
+          ) : null}
+          {item.fotosIngreso?.length > 0 && (
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {item.fotosIngreso.map((f, i) => (
+                <img key={i} src={f} alt={`ingreso ${i}`} style={{ width: '48px', height: '48px', borderRadius: theme.radius.md, objectFit: 'cover', border: `1px solid ${theme.colors.border}` }} />
+              ))}
+            </div>
+          )}
+          {item.anotacionesSalida ? (
+            <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
+              <span style={{ fontWeight: theme.fonts.weights.semibold }}>Anotaciones salida:</span> {item.anotacionesSalida}
+            </div>
+          ) : null}
+          {item.fotosSalida?.length > 0 && (
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {item.fotosSalida.map((f, i) => (
+                <img key={i} src={f} alt={`salida ${i}`} style={{ width: '48px', height: '48px', borderRadius: theme.radius.md, objectFit: 'cover', border: `1px solid ${theme.colors.border}` }} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <AppShell>
       {accesoBloqueado ? (
@@ -873,6 +1024,9 @@ export default function VisitasHistorialPage() {
 
         {/* Vista de reservas para Guardia (15b) — con mini línea de tiempo y Torre/Depto (16/19) */}
         {vistaSub === 'lista' && esGuardiaRol && !reservaGuardia && filtered.map(item => {
+          if (item.tipo !== 'huesped-temporal') {
+            return renderTarjetaVisitaNormal(item, () => setReservaGuardia(item));
+          }
           const invitadosTimeline = huespedesTimeline(item);
           return (
             <div
