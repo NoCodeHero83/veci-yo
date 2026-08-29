@@ -215,8 +215,10 @@ export default function ViviendaResumen() {
                 </div>
               )}
 
-              <img src={mod.icon} alt={mod.label} style={{ width: mod.id === 'ranking' || mod.id === 'visitas' ? '120px' : '88px', height: mod.id === 'ranking' || mod.id === 'visitas' ? '120px' : '88px', objectFit: 'contain' }} />
-              <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.medium }}>
+              <div style={{ width: '100%', height: '120px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img src={mod.icon} alt={mod.label} style={{ width: mod.id === 'ranking' || mod.id === 'visitas' ? '120px' : '88px', height: mod.id === 'ranking' || mod.id === 'visitas' ? '120px' : '88px', objectFit: 'contain' }} />
+              </div>
+              <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.medium, minHeight: '2.4em', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', lineHeight: 1.2 }}>
                 {mod.label}
               </span>
             </div>
