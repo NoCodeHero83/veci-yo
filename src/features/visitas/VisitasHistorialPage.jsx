@@ -105,9 +105,6 @@ export default function VisitasHistorialPage() {
   const [reservaGuardia, setReservaGuardia] = useState(null);
   const [parkingTarget, setParkingTarget] = useState(null);
   const [calendarioMonth, setCalendarioMonth] = useState(new Date());
-  // Prueba A/B de creación de visita: 'opcion1' = flujo separado (botón +),
-  // 'opcion2' = vista combinada con los tipos de visita directos en la lista.
-  const [vistaCreacionAB, setVistaCreacionAB] = useState('opcion1');
 
   const algunFiltroActivo = search || fechaDesdeFilter || fechaHastaFilter || torreFilter || deptoFilter || tipoFilter !== 'Todos';
 
@@ -369,56 +366,31 @@ export default function VisitasHistorialPage() {
 
       <ModuloGate helpKey="visitas">
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {/* Opción 2 (vista combinada): tipos de visita directos para registrar — arriba de los tabs */}
-        {vistaCreacionAB === 'opcion2' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-            {(rolActivo === 'guardia' || rolActivo === 'huesped-temporal' || rolActivo === 'administrador'
-              ? ['amigos', 'temporal']
-              : ['amigos', 'temporal', 'permanente', 'huesped-temporal']
-            ).map(id => (
-              <button
-                key={id}
-                onClick={() => navigate('/visitas/nuevo', { state: { tipoPreseleccionado: id } })}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '10px 12px', borderRadius: theme.radius.lg,
-                  border: `1px solid ${theme.colors.border}`, background: theme.colors.bgCard,
-                  boxShadow: theme.shadows.card, cursor: 'pointer', fontFamily: theme.fonts.family,
-                  textAlign: 'left',
-                }}
-              >
-                <img src={tipoVisitaIcons[id]} alt={TIPO_LABELS[id]} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>{TIPO_LABELS[id]}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Tipos de visita directos para registrar (vista combinada, opción 2) */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          {(rolActivo === 'guardia' || rolActivo === 'huesped-temporal' || rolActivo === 'administrador'
+            ? ['amigos', 'temporal']
+            : ['amigos', 'temporal', 'permanente', 'huesped-temporal']
+          ).map(id => (
+            <button
+              key={id}
+              onClick={() => navigate('/visitas/nuevo', { state: { tipoPreseleccionado: id } })}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '10px 12px', borderRadius: theme.radius.lg,
+                border: `1px solid ${theme.colors.border}`, background: theme.colors.bgCard,
+                boxShadow: theme.shadows.card, cursor: 'pointer', fontFamily: theme.fonts.family,
+                textAlign: 'left',
+              }}
+            >
+              <img src={tipoVisitaIcons[id]} alt={TIPO_LABELS[id]} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+              <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>{TIPO_LABELS[id]}</span>
+            </button>
+          ))}
+        </div>
 
         {/* Type tabs: Visitas / Huéspedes / Calendario */}
         <Tabs tabs={TIPO_TABS} active={tipoTab} onChange={handleTipoTabChange} centered />
-
-        {/* Prueba A/B: comparar vista separada (opción 1) vs vista combinada (opción 2) */}
-        {tipoTab !== 'calendario' && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            <span style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textMuted }}>Prueba A/B:</span>
-            {[{ id: 'opcion1', label: 'Opción 1' }, { id: 'opcion2', label: 'Opción 2' }].map(op => (
-              <button
-                key={op.id}
-                onClick={() => setVistaCreacionAB(op.id)}
-                style={{
-                  padding: '4px 12px', borderRadius: theme.radius.full,
-                  border: `1.5px solid ${vistaCreacionAB === op.id ? theme.colors.primary : theme.colors.border}`,
-                  background: vistaCreacionAB === op.id ? theme.colors.primary : theme.colors.bgCard,
-                  color: vistaCreacionAB === op.id ? '#fff' : theme.colors.textSecondary,
-                  fontSize: theme.fonts.sizes.xs, fontFamily: theme.fonts.family, cursor: 'pointer',
-                  fontWeight: theme.fonts.weights.medium,
-                }}
-              >
-                {op.label}
-              </button>
-            ))}
-          </div>
-        )}
 
         {/* Filter card — oculto en tab calendario */}
         {tipoTab !== 'calendario' && (

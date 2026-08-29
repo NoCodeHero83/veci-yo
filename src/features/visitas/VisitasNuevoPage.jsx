@@ -152,6 +152,16 @@ export default function VisitasNuevoPage() {
     setAcompanantes(prev => prev.map((a, i) => ({ ...a, esMenor: i < n })));
   }, [personas, cantidadMenores]);
 
+  // Si se llega con "Huésped Temporal" preseleccionado pero sin suscripción,
+  // abrimos el flujo de suscripción. Esto evita la pantalla en blanco que
+  // ocurría antes (el selector de tipo se ocultaba y no se seleccionaba ninguno).
+  const llegoComoHuespedPre = tipoPreseleccionado === 'huesped-temporal' && !suscripcionActiva;
+  useEffect(() => {
+    if (llegoComoHuespedPre) {
+      setShowSuscripcionModal(true);
+    }
+  }, []);
+
   const handleCardNumberInput = (value) => {
     const digits = value.replace(/\D/g, '').slice(0, 16);
     const formatted = digits.replace(/(\d{4})(?=\d)/g, '$1 ');
@@ -182,7 +192,7 @@ export default function VisitasNuevoPage() {
       setShowPaymentModal(false);
       setShowSuscripcionModal(false);
       setPaymentForm({ cardNumber: '', cardName: '', cardExpiry: '', cardCvv: '' });
-      navigate('/propietario/configuracion/huespedes-temporales', { state: { from: '/visitas/nuevo' } });
+      setTipoSeleccionado('huesped-temporal');
     }, 1500);
   };
 
@@ -601,7 +611,13 @@ export default function VisitasNuevoPage() {
       </div>
 
       {/* Modal suscripcion — Huesped Temporal sin suscripcion */}
-      <Modal isOpen={showSuscripcionModal} onClose={() => setShowSuscripcionModal(false)} title="VeciYo Huesped Temporal">
+      <Modal isOpen={showSuscripcionModal} onClose={() => {
+        if (llegoComoHuespedPre && !suscripcionActiva) {
+          navigate('/visitas');
+        } else {
+          setShowSuscripcionModal(false);
+        }
+      }} title="VeciYo Huesped Temporal">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', textAlign: 'center' }}>
           <div style={{ width: '100%', height: '180px', borderRadius: theme.radius.xl, background: theme.colors.bgMuted, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px' }}>
             ▶️
