@@ -268,7 +268,7 @@ export default function ReglasPage() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <button type="button" onClick={() => { const d = accionesDept; setAccionesDept(null); navigate('/perfil/soporte/reclamos/nuevo', { state: { tipo: 'Reglas', asunto: `PQRS departamento ${d?.departamento || ''}` } }); }} style={{ ...pillButtonStyle, background: theme.colors.secondary, color: '#fff' }}>
+            <button type="button" onClick={() => { const d = accionesDept; setAccionesDept(null); navigate('/perfil/soporte/reclamos/nuevo', { state: { tipo: 'Reglas', titulo: d?.departamento || '' } }); }} style={{ ...pillButtonStyle, background: theme.colors.secondary, color: '#fff' }}>
               Reportar PQRS con el departamento {accionesDept?.departamento || ''}
             </button>
           </div>

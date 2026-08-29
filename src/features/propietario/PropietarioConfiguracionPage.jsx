@@ -24,7 +24,7 @@ const ROL_COLORES = {
 };
 
 const GRUPOS_JERARQUIA = [
-  { titulo: 'Inquilino líder', roles: ['Inquilino Lider'], indent: false },
+  { titulo: 'Residente Inquilino Lider', roles: ['Inquilino Lider'], indent: false },
   { titulo: 'Residente', roles: ['Residente', 'Corresidente'], indent: true },
   { titulo: 'Coadministrador', roles: ['Coadministrador'], indent: false },
 ];
@@ -238,7 +238,7 @@ const handleAgregarFamiliar = () => {
           Residentes actuales ({residentesPropietario.length})
         </div>
         <p style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, lineHeight: theme.fonts.lineHeights.relaxed, margin: 0 }}>
-          El Inquilino líder o el Propietario son quienes pueden agregar o editar los residentes de la propiedad.
+          El Residente Inquilino Lider o el Propietario son quienes pueden agregar o editar los residentes de la propiedad.
         </p>
 
         {GRUPOS_JERARQUIA.map(grupo => {
@@ -302,7 +302,7 @@ const handleAgregarFamiliar = () => {
 
       {/* Menú + */}
       <BottomSheet isOpen={showAddMenu} onClose={() => setShowAddMenu(false)}>
-        <BottomSheetOption label="Agregar Inquilino Líder" onPress={() => { setShowAddMenu(false); navigate(`${basePath}/crear-rol`, { state: { rolPreseleccionado: 'Inquilino Lider' } }); }} />
+        <BottomSheetOption label="Agregar Residente Inquilino Lider" onPress={() => { setShowAddMenu(false); navigate(`${basePath}/crear-rol`, { state: { rolPreseleccionado: 'Inquilino Lider' } }); }} />
         <BottomSheetOption label="Agregar Coadministrador" onPress={() => { setShowAddMenu(false); navigate(`${basePath}/crear-rol`, { state: { rolPreseleccionado: 'Coadministrador' } }); }} />
         <BottomSheetOption label="Agregar Residente / Corresidente" onPress={() => { setShowAddMenu(false); navigate(`${basePath}/crear-rol`, { state: { rolPreseleccionado: 'Residente' } }); }} />
         <BottomSheetOption label="Agregar familiar" onPress={() => { setShowAddMenu(false); setShowFamiliar(true); }} />

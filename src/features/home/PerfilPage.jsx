@@ -11,7 +11,7 @@ import iconSOS from '../../assets/icons/perfil/sos.png';
 const ROL_NOMBRES = {
   guardia: 'Demo Seguridad',
   administrador: 'Demo Administrador',
-  'inquilino-lider': 'Demo Inquilino Líder',
+  'inquilino-lider': 'Demo Residente Inquilino Lider',
   'huesped-temporal': 'Demo Huésped Temporal',
 };
 

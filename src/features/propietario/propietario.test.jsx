@@ -37,7 +37,7 @@ describe('Batch A/B/C — Propietario', () => {
 
   it('Configuración: muestra títulos jerárquicos y aclaración de edición', () => {
     renderWithProviders(<PropietarioConfiguracionPage />, { route: '/propietario/configuracion' });
-    expect(screen.getByText('Inquilino líder')).toBeInTheDocument();
+    expect(screen.getByText('Residente Inquilino Lider')).toBeInTheDocument();
     expect(screen.getByText(/pueden agregar o editar los residentes/i)).toBeInTheDocument();
   });
 });

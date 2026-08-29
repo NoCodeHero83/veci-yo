@@ -15,7 +15,7 @@ export const DEMO_ROLES = [
   { key: 'propietario-sin-propiedades', label: 'Demo Propietario (sin propiedades)', emoji: '🏚️', available: true },
   { key: 'guardia', label: 'Demo Seguridad', emoji: '🛡️', available: true },
   { key: 'administrador', label: 'Demo Administrador', emoji: '🗂️', available: true },
-  { key: 'inquilino-lider', label: 'Demo Inquilino Líder', emoji: '🔑', available: true },
+  { key: 'inquilino-lider', label: 'Demo Residente Inquilino Lider', emoji: '🔑', available: true },
   { key: 'huesped-temporal', label: 'Demo Huésped Temporal', emoji: '🧳', available: true },
 ];
 

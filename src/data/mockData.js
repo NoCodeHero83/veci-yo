@@ -1283,7 +1283,7 @@ export const faqItems = [
   { id: 2, categoria: 'Seguridad', pregunta: '¿Cómo configuro mi F2A?', respuesta: 'En Perfil > Seguridad > Usabilidad, activa el interruptor "Factor F2A" y sigue los pasos para vincular tu app de autenticación.' },
   { id: 3, categoria: 'Comunidad', pregunta: '¿Cómo uso el chat?', respuesta: 'Desde el inicio, toca el ícono de mensaje flotante para abrir el chat con portería o administración.' },
   { id: 4, categoria: 'Comunidad', pregunta: '¿Me puede escribir el portero?', respuesta: 'Sí, el personal de portería puede iniciar una conversación contigo a través del chat de la app cuando sea necesario.' },
-  { id: 5, categoria: 'Puntos', pregunta: '¿Cómo sumo puntos?', respuesta: 'Sumas puntos al participar en actividades de la comunidad, reciclar y completar tu agenda de tareas como Inquilino Líder.' },
+  { id: 5, categoria: 'Puntos', pregunta: '¿Cómo sumo puntos?', respuesta: 'Sumas puntos al participar en actividades de la comunidad, reciclar y completar tu agenda de tareas como Residente Inquilino Lider.' },
   { id: 6, categoria: 'Puntos', pregunta: '¿Se vencen los puntos?', respuesta: 'Sí, los puntos acumulados vencen a los 12 meses de haber sido otorgados si no se canjean.' },
   { id: 7, categoria: 'Puntos', pregunta: '¿Qué beneficio me dan los puntos?', respuesta: 'Los puntos pueden canjearse por descuentos en cuotas, beneficios con comercios aliados y reconocimientos dentro de tu nivel de reputación.' },
 ];

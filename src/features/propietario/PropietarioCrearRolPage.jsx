@@ -11,7 +11,7 @@ import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
 import { tiposDocumentoPorPais } from '../../data/mockData';
 
-const ROLES_OPCIONES = ['Inquilino Líder', 'Coadministrador', 'Residente'];
+const ROLES_OPCIONES = ['Residente Inquilino Lider', 'Coadministrador', 'Residente'];
 const TIPO_DOC_OPCIONES = tiposDocumentoPorPais?.default || ['Cedula', 'Pasaporte', 'DNI'];
 const SERVICIOS_INIT = { luz: false, agua: false, gas: false, internet: false, mantenimiento: false, alquiler: false };
 
