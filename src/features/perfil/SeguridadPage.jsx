@@ -22,14 +22,32 @@ const TOGGLES = [
   { key: 'pausarCuenta', label: 'Pausar cuenta' },
 ];
 
+const RAZONES_ELIMINAR = [
+  'Ya no resido en este condominio',
+  'Cambio de condominio',
+  'No uso la aplicación',
+  'Problemas con la app',
+  'Otro',
+];
+
 export default function SeguridadPage() {
-  const { seguridad, actualizarSeguridad, pausarCuenta } = useApp();
+  const { seguridad, actualizarSeguridad, pausarCuenta, addToast } = useApp();
   const [showCambiarPass, setShowCambiarPass] = useState(false);
+  const [showPausar, setShowPausar] = useState(false);
   const [showEliminar, setShowEliminar] = useState(false);
+  const [razonEliminar, setRazonEliminar] = useState(RAZONES_ELIMINAR[0]);
+  const [otraRazon, setOtraRazon] = useState('');
+
+  const confirmarPausar = () => {
+    pausarCuenta();
+    setShowPausar(false);
+    addToast('Cuenta pausada. Ahora estás invisible y no recibirás notificaciones.', 'success');
+  };
 
   const confirmarEliminar = () => {
-    pausarCuenta();
+    const razon = razonEliminar === 'Otro' ? (otraRazon.trim() || 'Otro') : razonEliminar;
     setShowEliminar(false);
+    addToast(`Cuenta eliminada (demo). Razón: ${razon}`, 'success');
   };
 
   return (
@@ -66,7 +84,17 @@ export default function SeguridadPage() {
               }}
             >
               <span style={{ fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>{t.label}</span>
-              <Toggle value={seguridad[t.key]} onChange={v => actualizarSeguridad({ [t.key]: v })} />
+              <Toggle
+                value={seguridad[t.key]}
+                onChange={v => {
+                  if (t.key === 'pausarCuenta') {
+                    if (v) setShowPausar(true);
+                    else actualizarSeguridad({ pausarCuenta: false });
+                  } else {
+                    actualizarSeguridad({ [t.key]: v });
+                  }
+                }}
+              />
             </div>
           ))}
         </div>
@@ -92,16 +120,59 @@ export default function SeguridadPage() {
         </div>
       </Modal>
 
+      {/* Pausar cuenta — popup informativo al activar el toggle */}
+      <Modal isOpen={showPausar} onClose={() => setShowPausar(false)} title="Pausar cuenta">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', textAlign: 'center', padding: '8px 0' }}>
+          <span style={{ fontSize: '48px' }}>⏸️</span>
+          <p style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, lineHeight: 1.6, margin: 0 }}>
+            Al pausar la cuenta te invisibilizas en todo lugar de la aplicación, pero tampoco recibirás notificaciones.
+          </p>
+          <Button variant="primary" fullWidth onClick={confirmarPausar}>Pausar cuenta</Button>
+          <Button variant="ghost" fullWidth onClick={() => setShowPausar(false)}>Cancelar</Button>
+        </div>
+      </Modal>
+
       {/* Eliminar Cuenta */}
       <Modal isOpen={showEliminar} onClose={() => setShowEliminar(false)} title="Eliminar cuenta">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', textAlign: 'center' }}>
-          <h3 style={{ fontSize: theme.fonts.sizes.lg, fontWeight: theme.fonts.weights.bold, color: theme.colors.text }}>
-            ¿Está seguro de pausar la cuenta?
-          </h3>
-          <p style={{ fontSize: theme.fonts.sizes.base, color: theme.colors.textSecondary, lineHeight: theme.fonts.lineHeights.relaxed }}>
-            Al iniciar sesión nuevamente se reactivará la cuenta
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <p style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, textAlign: 'center', margin: 0 }}>
+            ¿Es porque ya no resides en este condominio o cuál es la razón?
           </p>
-          <Button variant="primary" fullWidth onClick={confirmarEliminar}>Eliminar</Button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {RAZONES_ELIMINAR.map(r => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setRazonEliminar(r)}
+                style={{
+                  textAlign: 'left',
+                  padding: '12px 14px',
+                  borderRadius: theme.radius.md,
+                  border: `1.5px solid ${razonEliminar === r ? theme.colors.primary : theme.colors.border}`,
+                  background: razonEliminar === r ? (theme.colors.primaryLight || '#EFF6FF') : theme.colors.bgCard,
+                  cursor: 'pointer',
+                  fontFamily: theme.fonts.family,
+                  fontSize: theme.fonts.sizes.sm,
+                  fontWeight: theme.fonts.weights.medium,
+                  color: theme.colors.text,
+                }}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+          {razonEliminar === 'Otro' && (
+            <InputField
+              label="Cuéntanos la razón"
+              value={otraRazon}
+              onChange={setOtraRazon}
+              placeholder="Escribe tu razón"
+              multiline
+              rows={2}
+            />
+          )}
+          <Button variant="danger" fullWidth onClick={confirmarEliminar}>Eliminar cuenta</Button>
+          <Button variant="ghost" fullWidth onClick={() => setShowEliminar(false)}>Cancelar</Button>
         </div>
       </Modal>
     </AppShell>
