@@ -40,6 +40,29 @@ function IconoImagen() {
   return <img src={iconAdjuntarImagen} alt="Adjuntar Imagen" style={{ width: '60px', height: '60px', borderRadius: theme.radius.lg, objectFit: 'cover', cursor: 'pointer' }} />;
 }
 
+function mensajeResidencia(esResidente) {
+  if (esResidente) {
+    return {
+      titulo: 'Declaración de residencia',
+      icono: '🏠',
+      parrafos: [
+        'Al configurarte como residente, tendrás acceso al contenido detallado de las funcionalidades: Visitas, Correspondencia y Zonas comunes.',
+        'Los demás co-residentes de la propiedad podrán saber que estas visualizando esta información.',
+        'Si tienes inquilinos y no vives en esta propiedad, recomendamos configurarte como NO residente, para mantener la privacidad de los residentes, sin embargo tu como propietario seguirás teniendo acceso a la información de tu propiedad, y funcionalidades como: notificaciones y encuestas, cuadro de honor, reglamentos, chats de propietarios y encuestas para propietarios.',
+      ],
+    };
+  }
+  return {
+    titulo: 'Declaración de no residencia',
+    icono: '🚫',
+    parrafos: [
+      'Al configurarte como NO residente, dejaras de acceder al contenido de las funcionalidades: visitas, correspondencia y zonas comunes, sin embargo, tu como propietario seguirás teniendo acceso a la información de tu propiedad, y funcionalidades como: notificaciones y encuestas, cuadro de honor, reglamentos, chats de propietarios y encuestas para propietarios.',
+      'Solo quienes sean residentes, por ejemplo tus inquilinos, tendrán acceso al contenido de visitas, correspondencia y zonas comunes.',
+      'Quienes configures como residentes sabrán si te has configurado o no como residente.',
+    ],
+  };
+}
+
 export default function PropietarioConfiguracionPage({ basePath = '/propietario/configuracion' } = {}) {
   const navigate = useNavigate();
   const { residentesPropietario, eliminarResidente, agregarResidente, addToast, rolActivo, unidades, propietariosInvited, aceptarInvitacion, agregarUbicacion, usuario, tipologias, esResidente, togglePropietarioResidente } = useApp();
@@ -159,23 +182,6 @@ const handleAgregarFamiliar = () => {
                 }}>
                   Aceptar invitación
                 </Button>
-                <Modal isOpen={showResidentePopup} onClose={() => setShowResidentePopup(false)} title="Declaración de Residencia">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', textAlign: 'center', padding: '8px 0' }}>
-                    <span style={{ fontSize: '48px' }}>{pendienteResidenteValue ? '🏠' : '🚫'}</span>
-                    <p style={{ fontSize: theme.fonts.sizes.base, color: theme.colors.text, lineHeight: 1.5, margin: 0 }}>
-                      {pendienteResidenteValue
-                        ? 'Al marcarte como Residente, tendrás acceso a Visitas, Correspondencia y Zonas Comunes.'
-                        : 'Al desmarcarte como Residente, perderás acceso a Visitas, Correspondencia y Zonas Comunes.'}
-                    </p>
-                    <p style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, lineHeight: 1.5, margin: 0 }}>
-                      Los demás co-residentes de la propiedad podrán saber que estás visualizando esa información.
-                    </p>
-                    <Button variant="primary" fullWidth onClick={() => {
-                      togglePropietarioResidente(usuario?.correo, pendienteResidenteValue);
-                      setShowResidentePopup(false);
-                    }}>Confirmar</Button>
-                  </div>
-                </Modal>
               </div>
             );
           })}
@@ -325,6 +331,24 @@ const handleAgregarFamiliar = () => {
           </p>
           <Button variant="danger" fullWidth onClick={handleEliminar}>Eliminar</Button>
           <Button variant="ghost" fullWidth onClick={() => setDeleteResidente(null)}>Cancelar</Button>
+        </div>
+      </Modal>
+
+      {/* Declaración de residencia / no residencia (toggle Propietario) */}
+      <Modal isOpen={showResidentePopup} onClose={() => setShowResidentePopup(false)} title={mensajeResidencia(pendienteResidenteValue).titulo}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', textAlign: 'center', padding: '8px 0' }}>
+          <span style={{ fontSize: '48px' }}>{mensajeResidencia(pendienteResidenteValue).icono}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
+            {mensajeResidencia(pendienteResidenteValue).parrafos.map((p, i) => (
+              <p key={i} style={{ fontSize: theme.fonts.sizes.sm, color: i === 0 ? theme.colors.text : theme.colors.textSecondary, fontWeight: i === 0 ? theme.fonts.weights.semibold : theme.fonts.weights.normal, lineHeight: 1.6, margin: 0 }}>
+                {p}
+              </p>
+            ))}
+          </div>
+          <Button variant="primary" fullWidth onClick={() => {
+            togglePropietarioResidente(usuario?.correo, pendienteResidenteValue);
+            setShowResidentePopup(false);
+          }}>Confirmar</Button>
         </div>
       </Modal>
 
