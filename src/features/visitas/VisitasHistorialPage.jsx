@@ -917,6 +917,53 @@ export default function VisitasHistorialPage() {
               <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
                 <TimelineReservaHuespedes invitados={invitadosTimeline} />
               </div>
+              {(item.tipo === 'temporal' || item.tipo === 'permanente') && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
+                  {item.profesion && (
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
+                      Profesión: {item.profesion}{item.profesionOtro ? ` (${item.profesionOtro})` : ''}
+                    </div>
+                  )}
+                  {item.registradoPor && (
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>
+                      Registró: {item.registradoPor}
+                    </div>
+                  )}
+                  {(item.horaIngreso || item.invitados?.some(inv => inv.horaIngreso)) && (
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {item.horaIngreso && <span>Ingreso {item.horaIngreso}</span>}
+                      {item.horaSalida && <span>Salida {item.horaSalida}</span>}
+                      {item.invitados?.filter(inv => inv.horaIngreso).map((inv, i) => (
+                        <span key={i}>{inv.nombre}: Ingreso {inv.horaIngreso}{inv.horaSalida ? ` / Salida ${inv.horaSalida}` : ''}</span>
+                      ))}
+                    </div>
+                  )}
+                  {item.anotacionesIngreso && (
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
+                      <span style={{ fontWeight: theme.fonts.weights.semibold }}>Anot. ingreso:</span> {item.anotacionesIngreso}
+                    </div>
+                  )}
+                  {item.fotosIngreso?.length > 0 && (
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {item.fotosIngreso.map((f, i) => (
+                        <img key={i} src={f} alt={`ingreso ${i}`} style={{ width: '44px', height: '44px', borderRadius: theme.radius.md, objectFit: 'cover', border: `1px solid ${theme.colors.border}` }} />
+                      ))}
+                    </div>
+                  )}
+                  {item.anotacionesSalida && (
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
+                      <span style={{ fontWeight: theme.fonts.weights.semibold }}>Anot. salida:</span> {item.anotacionesSalida}
+                    </div>
+                  )}
+                  {item.fotosSalida?.length > 0 && (
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {item.fotosSalida.map((f, i) => (
+                        <img key={i} src={f} alt={`salida ${i}`} style={{ width: '44px', height: '44px', borderRadius: theme.radius.md, objectFit: 'cover', border: `1px solid ${theme.colors.border}` }} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
@@ -1390,6 +1437,52 @@ export default function VisitasHistorialPage() {
                   <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{detalleActual.torre} - {detalleActual.depto}</div>
                 </div>
               </div>
+
+              {/* Info profesional — temporal/permanente */}
+              {(detalleActual.tipo === 'temporal' || detalleActual.tipo === 'permanente') && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '10px 14px' }}>
+                  <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>Datos del profesional</div>
+                  {detalleActual.profesion && (
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
+                      Profesión: {detalleActual.profesion}{detalleActual.profesionOtro ? ` (${detalleActual.profesionOtro})` : ''}
+                    </div>
+                  )}
+                  {detalleActual.ci && (
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
+                      Identificación: {detalleActual.ci}
+                    </div>
+                  )}
+                  {detalleActual.registradoPor && (
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>
+                      Registró: {detalleActual.registradoPor}
+                    </div>
+                  )}
+                  {detalleActual.anotacionesIngreso && (
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
+                      <span style={{ fontWeight: theme.fonts.weights.semibold }}>Anotaciones ingreso:</span> {detalleActual.anotacionesIngreso}
+                    </div>
+                  )}
+                  {detalleActual.fotosIngreso?.length > 0 && (
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {detalleActual.fotosIngreso.map((f, i) => (
+                        <img key={i} src={f} alt={`ingreso ${i}`} style={{ width: '56px', height: '56px', borderRadius: theme.radius.md, objectFit: 'cover', border: `1px solid ${theme.colors.border}` }} />
+                      ))}
+                    </div>
+                  )}
+                  {detalleActual.anotacionesSalida && (
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
+                      <span style={{ fontWeight: theme.fonts.weights.semibold }}>Anotaciones salida:</span> {detalleActual.anotacionesSalida}
+                    </div>
+                  )}
+                  {detalleActual.fotosSalida?.length > 0 && (
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {detalleActual.fotosSalida.map((f, i) => (
+                        <img key={i} src={f} alt={`salida ${i}`} style={{ width: '56px', height: '56px', borderRadius: theme.radius.md, objectFit: 'cover', border: `1px solid ${theme.colors.border}` }} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Parking info */}
               {detalleActual.estacionamientosAsignados > 0 && (
