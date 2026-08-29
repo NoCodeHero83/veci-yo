@@ -63,7 +63,7 @@ export default function VisitasHistorialPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const fromHome = location.state?.fromHome || false;
-  const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado, aprobarInvitado, rolActivo, addToast, verificaciones, actualizarVerificacion, actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion, toggleInstruccionCumplida, estacionamientosVisitantes, estacionamientosAsignados, asignarEstacionamientoVisita, configHuespedesTemporales, ubicacionActiva, suscripcionActiva, reportarTraSire, usuario, actualizarConfigHuespedTemporal, esResidente, actualizarTimeline, aprobarTerminosManual, aprobarVerificacion, aprobarVerificacionConHallazgos } = useApp();
+  const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado, aprobarInvitado, rolActivo, addToast, verificaciones, actualizarVerificacion, actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion, toggleInstruccionCumplida, estacionamientosVisitantes, estacionamientosAsignados, asignarEstacionamientoVisita, configHuespedesTemporales, ubicacionActiva, suscripcionActiva, reportarTraSire, usuario, actualizarConfigHuespedTemporal, esResidente, actualizarTimeline, aprobarTerminosManual, aprobarVerificacion, aprobarVerificacionConHallazgos, actualizarVisita } = useApp();
 
   const esAdminRol = rolActivo === 'administrador';
   const esGuardiaRol = rolActivo === 'guardia';
@@ -1140,6 +1140,16 @@ export default function VisitasHistorialPage() {
                         Registro permanente · {item.diasLaborales || 'Lun – Vie'} · Vigencia: {item.fechaDesde}{item.fechaHasta ? ` a ${item.fechaHasta}` : ''}
                       </div>
                     )}
+                    {(item.tipo === 'temporal' || item.tipo === 'permanente') && item.profesion && (
+                      <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginTop: '2px' }}>
+                        Profesión: {item.profesion}{item.profesionOtro ? ` (${item.profesionOtro})` : ''}
+                      </div>
+                    )}
+                    {item.registradoPor && (
+                      <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, marginTop: '2px' }}>
+                        Registró: {item.registradoPor}
+                      </div>
+                    )}
                   </div>
                 </div>
                 {(esAdminRol || esGuardiaRol) && (
@@ -1190,7 +1200,7 @@ export default function VisitasHistorialPage() {
               </div>
 
               {/* Ingreso / Salida (cuando ocurran) */}
-              {item.tipo !== 'permanente' && (item.invitados?.some(inv => inv.horaIngreso) || item.horaIngreso) && (
+              {(item.invitados?.some(inv => inv.horaIngreso) || item.horaIngreso) && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '8px', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
                   {item.invitados?.length > 0 ? (
                     item.invitados.map((inv, i) => inv.horaIngreso && (
@@ -1214,6 +1224,36 @@ export default function VisitasHistorialPage() {
                         )}
                       </span>
                     )
+                  )}
+                </div>
+              )}
+
+              {/* Anotaciones y fotos de ingreso / salida */}
+              {(item.tipo === 'temporal' || item.tipo === 'permanente') && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
+                  {item.anotacionesIngreso ? (
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
+                      <span style={{ fontWeight: theme.fonts.weights.semibold }}>Anotaciones ingreso:</span> {item.anotacionesIngreso}
+                    </div>
+                  ) : null}
+                  {item.fotosIngreso?.length > 0 && (
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {item.fotosIngreso.map((f, i) => (
+                        <img key={i} src={f} alt={`ingreso ${i}`} style={{ width: '48px', height: '48px', borderRadius: theme.radius.md, objectFit: 'cover', border: `1px solid ${theme.colors.border}` }} />
+                      ))}
+                    </div>
+                  )}
+                  {item.anotacionesSalida ? (
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
+                      <span style={{ fontWeight: theme.fonts.weights.semibold }}>Anotaciones salida:</span> {item.anotacionesSalida}
+                    </div>
+                  ) : null}
+                  {item.fotosSalida?.length > 0 && (
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {item.fotosSalida.map((f, i) => (
+                        <img key={i} src={f} alt={`salida ${i}`} style={{ width: '48px', height: '48px', borderRadius: theme.radius.md, objectFit: 'cover', border: `1px solid ${theme.colors.border}` }} />
+                      ))}
+                    </div>
                   )}
                 </div>
               )}
@@ -2292,6 +2332,62 @@ export default function VisitasHistorialPage() {
                       )}
                     </div>
                   </div>
+                  )}
+                  {esGuardiaRol && (p.base.tipo === 'temporal' || p.base.tipo === 'permanente') && (
+                    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
+                      <div>
+                        <div style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.textSecondary, marginBottom: '3px' }}>
+                          Anotaciones de ingreso
+                        </div>
+                        <textarea
+                          value={p.base.anotacionesIngreso || ''}
+                          onChange={e => actualizarVisita(p.base.id, { anotacionesIngreso: e.target.value })}
+                          rows={2}
+                          placeholder="Observaciones al recibir al profesional"
+                          style={{ width: '100%', background: theme.colors.bgMuted, borderRadius: theme.radius.lg, border: `1px solid ${theme.colors.border}`, outline: 'none', fontSize: theme.fonts.sizes.xs, fontFamily: theme.fonts.family, color: theme.colors.text, padding: '8px 10px', boxSizing: 'border-box', resize: 'vertical' }}
+                        />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={e => {
+                            const files = Array.from(e.target.files || []);
+                            files.forEach(f => {
+                              const reader = new FileReader();
+                              reader.onload = () => actualizarVisita(p.base.id, { fotosIngreso: [...(p.base.fotosIngreso || []), reader.result] });
+                              reader.readAsDataURL(f);
+                            });
+                          }}
+                          style={{ marginTop: '4px', fontSize: theme.fonts.sizes.xs }}
+                        />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.textSecondary, marginBottom: '3px' }}>
+                          Anotaciones de salida
+                        </div>
+                        <textarea
+                          value={p.base.anotacionesSalida || ''}
+                          onChange={e => actualizarVisita(p.base.id, { anotacionesSalida: e.target.value })}
+                          rows={2}
+                          placeholder="Observaciones al retirarse el profesional"
+                          style={{ width: '100%', background: theme.colors.bgMuted, borderRadius: theme.radius.lg, border: `1px solid ${theme.colors.border}`, outline: 'none', fontSize: theme.fonts.sizes.xs, fontFamily: theme.fonts.family, color: theme.colors.text, padding: '8px 10px', boxSizing: 'border-box', resize: 'vertical' }}
+                        />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={e => {
+                            const files = Array.from(e.target.files || []);
+                            files.forEach(f => {
+                              const reader = new FileReader();
+                              reader.onload = () => actualizarVisita(p.base.id, { fotosSalida: [...(p.base.fotosSalida || []), reader.result] });
+                              reader.readAsDataURL(f);
+                            });
+                          }}
+                          style={{ marginTop: '4px', fontSize: theme.fonts.sizes.xs }}
+                        />
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>

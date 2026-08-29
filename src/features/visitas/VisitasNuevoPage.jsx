@@ -29,6 +29,15 @@ const TIPO_LABELS = {
   'huesped-temporal': 'Huésped Temporal',
 };
 
+const PROFESIONES = {
+  permanente: ['Cuidado de menores', 'Profesional de la salud', 'Limpieza y servicios generales', 'Atencion a mascotas', 'Conductor', 'Jardinero', 'Otros'],
+  temporal: ['Domiciliario', 'Pintor', 'carpintero', 'electricista', 'Profesional de la salud', 'Limpieza y servicios generales', 'atención a mascotas', 'Cuidado de menores', 'Peluquero o maquillador', 'Fontanero', 'otros'],
+};
+
+const esProfesional = (tipo) => tipo === 'temporal' || tipo === 'permanente';
+const profesionOtra = (tipo, valor) =>
+  (tipo === 'permanente' && valor === 'Otros') || (tipo === 'temporal' && valor === 'otros');
+
 const inputStyle = {
   width: '100%',
   background: theme.colors.bgMuted,
@@ -52,7 +61,7 @@ function formatTimeRange(start, end) {
 export default function VisitasNuevoPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { agregarVisita, rolActivo, suscripcionActiva, activarSuscripcion, ubicacionActiva, addToast, unidades, configHuespedesTemporales, actualizarConfigHuespedTemporal, permisos, esResidente } = useApp();
+  const { agregarVisita, rolActivo, suscripcionActiva, activarSuscripcion, ubicacionActiva, addToast, unidades, configHuespedesTemporales, actualizarConfigHuespedTemporal, permisos, esResidente, usuario } = useApp();
   const TIPOS = rolActivo === 'guardia'
     ? TIPOS_BASE.filter(t => t.id !== 'permanente')
     : rolActivo === 'huesped-temporal'
@@ -96,6 +105,8 @@ export default function VisitasNuevoPage() {
   const [codigoAcceso, setCodigoAcceso] = useState('');
   const [numeroReserva, setNumeroReserva] = useState('');
   const [paraAdministracion, setParaAdministracion] = useState(false);
+  const [profesion, setProfesion] = useState('');
+  const [profesionOtro, setProfesionOtro] = useState('');
 
   const horaEstimada = formatTimeRange(horaInicio, horaFin);
   const horaEstimadaSalida = formatTimeRange(horaSalidaInicio, horaSalidaFin);
@@ -110,6 +121,15 @@ export default function VisitasNuevoPage() {
       setHoraSalidaInicio('10:00');
       setHoraSalidaFin('11:00');
     }
+  }, [tipoSeleccionado]);
+
+  useEffect(() => {
+    if (tipoSeleccionado === 'permanente') {
+      setPersonas('1');
+      setCantidadMenores(0);
+    }
+    setProfesion('');
+    setProfesionOtro('');
   }, [tipoSeleccionado]);
 
   useEffect(() => {
@@ -219,6 +239,10 @@ export default function VisitasNuevoPage() {
   };
 
   const handleAceptarContinuar = () => {
+    if (!identificacion.trim()) {
+      addToast('La identificación es obligatoria', 'error');
+      return;
+    }
     const invitados = acompanantes
       .filter(a => a.nombre.trim())
       .map(a => ({ nombre: a.nombre, ci: a.ci || '', esMenor: !!a.esMenor, llego: false }));
@@ -252,6 +276,13 @@ export default function VisitasNuevoPage() {
       horaEstimadaLlegada: horaEstimada,
       horaEstimadaSalida: horaEstimadaSalida || undefined,
       vehiculos: vehiculosValidos,
+      profesion: esProfesional(tipoSeleccionado) ? profesion : undefined,
+      profesionOtro: esProfesional(tipoSeleccionado) && profesionOtra(tipoSeleccionado, profesion) ? profesionOtro : undefined,
+      registradoPor: usuario?.nombre || usuario?.correo || 'Usuario',
+      anotacionesIngreso: '',
+      fotosIngreso: [],
+      anotacionesSalida: '',
+      fotosSalida: [],
     };
     agregarVisita(visita);
     setShowSuccess(true);
@@ -343,6 +374,7 @@ export default function VisitasNuevoPage() {
                   <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>Visita para administración</span>
                 </label>
               )}
+              {tipoSeleccionado !== 'permanente' && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                 <input
                   type="number"
@@ -362,7 +394,14 @@ export default function VisitasNuevoPage() {
                 />
                 <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>👶 menores</span>
               </div>
+              )}
             </div>
+
+            {tipoSeleccionado === 'permanente' && (
+              <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card, fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, lineHeight: 1.5 }}>
+                El profesional permanente se registra de a uno. Podés registrar visitas adicionales creando una nueva visita.
+              </div>
+            )}
 
             {/* Calendar */}
             <Calendar selected={selectedDate} onSelect={setSelectedDate} />
@@ -387,11 +426,12 @@ export default function VisitasNuevoPage() {
                   </select>
                 </div>
                 <div>
-                  <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Identificación</div>
+                  <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Identificación <span style={{ color: theme.colors.danger }}>*</span></div>
                   <input
                     type="text"
                     value={identificacion}
                     onChange={e => setIdentificacion(e.target.value)}
+                    required
                     style={inputStyle}
                   />
                 </div>
@@ -401,9 +441,8 @@ export default function VisitasNuevoPage() {
                 Recuerda indicar a tu invitado que debe presentar su documento (cédula, pasaporte o DNI) en portería al ingresar al edificio.
               </div>
 
-              {tipoSeleccionado !== 'temporal' && (
               <div>
-                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Correo electronico</div>
+                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Correo electrónico (opcional)</div>
                 <input
                   type="email"
                   value={email}
@@ -411,10 +450,9 @@ export default function VisitasNuevoPage() {
                   style={inputStyle}
                 />
               </div>
-              )}
 
               <div>
-                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Teléfono</div>
+                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Teléfono (opcional)</div>
                 <input
                   type="tel"
                   value={telefono}
@@ -422,6 +460,28 @@ export default function VisitasNuevoPage() {
                   style={inputStyle}
                 />
               </div>
+
+              {esProfesional(tipoSeleccionado) && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Profesión</div>
+                  <SelectField
+                    label=""
+                    value={profesion}
+                    options={PROFESIONES[tipoSeleccionado] || []}
+                    onChange={setProfesion}
+                    placeholder="Seleccione profesión"
+                  />
+                  {profesionOtra(tipoSeleccionado, profesion) && (
+                    <input
+                      type="text"
+                      value={profesionOtro}
+                      onChange={e => setProfesionOtro(e.target.value)}
+                      placeholder="Especifique la profesión"
+                      style={inputStyle}
+                    />
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Acompañantes */}

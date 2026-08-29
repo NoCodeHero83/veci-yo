@@ -258,6 +258,10 @@ export function AppProvider({ children }) {
     }));
   }, []);
 
+  const actualizarVisita = useCallback((id, patch) => {
+    setVisitas(prev => prev.map(v => v.id === id ? { ...v, ...patch } : v));
+  }, []);
+
   const setLlegoInvitado = useCallback((visitaId, invitadoIdx, llego) => {
     setVisitas(prev => prev.map(v => {
       if (v.id !== visitaId) return v;
@@ -832,7 +836,7 @@ export function AppProvider({ children }) {
       mostrarBienvenida, cerrarBienvenida,
       correspondencia, agregarCorrespondencia, actualizarEstadoCorrespondencia, eliminarCorrespondencia,
       visitas, agregarVisita, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado,
-      toggleFavoritoInvitado, agregarInvitado, aprobarInvitado, actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion,
+      toggleFavoritoInvitado, agregarInvitado, aprobarInvitado,       actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion, actualizarVisita,
       actualizarInstruccionDocumento, actualizarTipoNotificacion, toggleInstruccionCumplida,
       ubicacionActiva, suscripcionActiva, suscripciones, activarSuscripcion,
       configHuespedesTemporales, actualizarConfigHuespedTemporal,
