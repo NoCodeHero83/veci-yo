@@ -56,6 +56,7 @@ export default function ConfiguracionPage() {
 
   const [showPausar, setShowPausar] = useState(false);
   const [showEliminar, setShowEliminar] = useState(false);
+  const [pausaActiva, setPausaActiva] = useState(false);
   const [razonEliminar, setRazonEliminar] = useState(RAZONES_ELIMINAR[0]);
   const [otraRazon, setOtraRazon] = useState('');
 
@@ -63,6 +64,7 @@ export default function ConfiguracionPage() {
 
   const confirmarPausar = () => {
     pausarCuenta();
+    setPausaActiva(true);
     setShowPausar(false);
     addToast('Cuenta pausada. Ahora estás invisible y no recibirás notificaciones.', 'success');
   };
@@ -180,24 +182,18 @@ export default function ConfiguracionPage() {
             Cuenta
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <button
-              type="button"
-              onClick={() => setShowPausar(true)}
-              style={{
-                width: '100%',
-                padding: '14px',
-                borderRadius: theme.radius.full,
-                background: theme.colors.bgMuted,
-                color: theme.colors.text,
-                fontWeight: theme.fonts.weights.semibold,
-                fontSize: theme.fonts.sizes.sm,
-                border: `1px solid ${theme.colors.border}`,
-                cursor: 'pointer',
-                fontFamily: theme.fonts.family,
-              }}
-            >
-              Pausar cuenta
-            </button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>
+                Pausar cuenta
+              </span>
+              <Toggle
+                value={pausaActiva}
+                onChange={(v) => {
+                  if (v) setShowPausar(true);
+                  else setPausaActiva(false);
+                }}
+              />
+            </div>
             <button
               type="button"
               onClick={() => setShowEliminar(true)}
@@ -238,7 +234,7 @@ export default function ConfiguracionPage() {
       <Modal isOpen={showEliminar} onClose={() => setShowEliminar(false)} title="Eliminar cuenta">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <p style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, textAlign: 'center', margin: 0 }}>
-            ¿Por qué deseas eliminar tu cuenta?
+            ¿Es porque ya no resides en este condominio o cuál es la razón?
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {RAZONES_ELIMINAR.map(r => (
