@@ -473,6 +473,20 @@ export const reservasZona = [
     reservaNum: '901206', horario: '16:00 - 18:00', estado: 'Aprobado',
     personas: generarPersonas('Valentina Ríos', 5),
   },
+  {
+    id: 22, zonaId: 'lavanderia', depto: 'Departamento 105', nombre: 'Guillermo Paredes', acompanantes: 0,
+    reservaNum: '901207', horario: '10:00 - 11:00', estado: 'Aprobado',
+    personas: generarPersonas('Guillermo Paredes', 0),
+    fecha: (() => { const d = new Date(); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; })(),
+    esMia: true,
+  },
+  {
+    id: 23, zonaId: 'piscina', depto: 'Departamento 105', nombre: 'Guillermo Paredes', acompanantes: 2,
+    reservaNum: '901208', horario: '16:00 - 18:00', estado: 'Pendiente',
+    personas: generarPersonas('Guillermo Paredes', 2),
+    fecha: (() => { const d = new Date(); d.setDate(d.getDate() + 1); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; })(),
+    esMia: true,
+  },
 ];
 
 export const horasReserva = [

@@ -9,6 +9,7 @@ import { inquilinoLiderReputacion, agendaHoyInquilinoLider, ingresosSalidasHoy, 
 import iconReputacion from '../../../assets/icons/inquilino-lider/reputacion.png';
 import imagenGratitud from '../../../assets/imagenes/gratitud.webp';
 import GratitudPopup from '../../inquilino-lider/components/GratitudPopup';
+import MisReservas from '../../zonas/components/MisReservas';
 import iconRegalos from '../../../assets/icons/inquilino-lider/regalos.png';
 import iconReciclador from '../../../assets/icons/inquilino-lider/medalla-reciclador.png';
 import iconAtento from '../../../assets/icons/inquilino-lider/medalla-atento.png';
@@ -807,6 +808,10 @@ export default function InquilinoLiderHome() {
             <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{item.hora}</span>
           </div>
         ))}
+
+        <div style={{ borderTop: `1px solid ${theme.colors.borderLight}`, marginTop: '4px' }}>
+          <MisReservas hideIfEmpty />
+        </div>
       </div>}
 
       <div style={{ height: '24px' }} />

@@ -9,6 +9,7 @@ import { zonasComunes } from '../../data/mockData';
 import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
 import zonaIcons from '../../assets/icons/zonas';
+import MisReservas from './components/MisReservas';
 
 export default function ZonasComunesPage() {
   const navigate = useNavigate();
@@ -26,6 +27,9 @@ export default function ZonasComunesPage() {
         </div>
       ) : (<>
       <PageHeader title="Zonas Comunes" action={<ModuloHeaderInfo helpKey="zonas" />} />
+      <div style={{ padding: '16px 16px 0' }}>
+        <MisReservas collapsible />
+      </div>
       <ModuloGate helpKey="zonas">
       <div style={{ padding: '16px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
