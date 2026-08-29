@@ -32,8 +32,6 @@ const badgeStyle = {
   lineHeight: 1.4,
 };
 
-const CUOTA_MENSUAL = 150;
-
 export default function CuadroHonorPage() {
   const navigate = useNavigate();
   const { addToast, rolActivo, esResidente } = useApp();
@@ -41,13 +39,6 @@ export default function CuadroHonorPage() {
   const [search, setSearch] = useState('');
   const [showReconocimientoPopup, setShowReconocimientoPopup] = useState(false);
   const [reconocimientoDestinatario, setReconocimientoDestinatario] = useState('');
-
-  const totalDeptos = cuadroHonorDepartamentos.length;
-  const alDiaCount = cuadroHonorDepartamentos.filter(d => d.estado === 'Al día').length;
-  const atrasadoCount = cuadroHonorDepartamentos.filter(d => d.estado === 'Atrasado' || d.estado === 'Deudor').length;
-  const porcentajeCobranza = totalDeptos > 0 ? Math.round((alDiaCount / totalDeptos) * 100) : 0;
-  const totalEsperado = totalDeptos * CUOTA_MENSUAL;
-  const totalRecibido = alDiaCount * CUOTA_MENSUAL;
 
   const filtered = cuadroHonorDepartamentos.filter(d => {
     const matchSearch = !search
@@ -73,47 +64,7 @@ export default function CuadroHonorPage() {
       <ModuloGate helpKey="ranking">
       {puedeVerPagina && (
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        {/* Payment statistics */}
-        <div style={{ ...cardStyle, padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginBottom: '2px' }}>
-              Cobranza del mes — Cuota de administración
-            </div>
-            <div style={{
-              fontSize: '40px',
-              fontWeight: theme.fonts.weights.bold,
-              color: porcentajeCobranza >= 80 ? theme.colors.success : porcentajeCobranza >= 50 ? theme.colors.primary : theme.colors.danger,
-            }}>
-              {porcentajeCobranza}%
-            </div>
-            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginTop: '2px' }}>
-              ${totalRecibido.toLocaleString()} de ${totalEsperado.toLocaleString()} recibido
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginBottom: '4px' }}>
-                <span>Al día</span>
-                <span>{alDiaCount} / {totalDeptos}</span>
-              </div>
-              <div style={{ width: '100%', height: '10px', background: theme.colors.bgMuted, borderRadius: theme.radius.full, overflow: 'hidden' }}>
-                <div style={{ width: `${(alDiaCount / totalDeptos) * 100}%`, height: '100%', background: theme.colors.success, borderRadius: theme.radius.full, transition: 'width 300ms' }} />
-              </div>
-            </div>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginBottom: '4px' }}>
-                <span>Con retraso / Deudor</span>
-                <span>{atrasadoCount} / {totalDeptos}</span>
-              </div>
-              <div style={{ width: '100%', height: '10px', background: theme.colors.bgMuted, borderRadius: theme.radius.full, overflow: 'hidden' }}>
-                <div style={{ width: `${(atrasadoCount / totalDeptos) * 100}%`, height: '100%', background: theme.colors.dangerLight || '#FECACA', borderRadius: theme.radius.full, transition: 'width 300ms' }} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Histórico de cuota de administración por mes (carrusel) */}
+        {/* Histórico de cuota de administración por mes (carrusel, incluye mes actual) */}
         <CarruselCuotas historial={cuotaAdministracionHistorial} />
 
         {/* Dar reconocimiento button */}
