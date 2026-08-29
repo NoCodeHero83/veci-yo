@@ -21,6 +21,9 @@ export const correspondenciaItems = [
     torre: 'Torre 1',
     piso: '5',
     estadoEncomienda: 'Buen estado',
+    fechaRegistro: '15/05/2024', horaRegistro: '16:20', registradoPor: 'Javier Lopez',
+    fechaRecibido: '15/05/2024', horaRecibido: '18:05', recibidoPor: 'Jose Perez (Seguridad)',
+    fechaEntregado: '15/05/2024', horaEntregado: '09:30', entregadoA: 'Javier Lopez',
   },
   {
     id: 2,
@@ -37,6 +40,8 @@ export const correspondenciaItems = [
     torre: 'Torre 1',
     piso: '5',
     estadoEncomienda: 'Buen estado',
+    fechaRegistro: '15/05/2024', horaRegistro: '10:00', registradoPor: 'Javier Lopez',
+    fechaRecibido: '15/05/2024', horaRecibido: '12:30', recibidoPor: 'Jose Perez (Seguridad)',
   },
   {
     id: 3,
@@ -53,6 +58,7 @@ export const correspondenciaItems = [
     torre: 'Torre 1',
     piso: '5',
     estadoEncomienda: 'Estado intermedio',
+    fechaRegistro: '15/05/2024', horaRegistro: '11:15', registradoPor: 'Javier Lopez',
   },
   {
     id: 4,
@@ -69,6 +75,9 @@ export const correspondenciaItems = [
     torre: 'Torre 1',
     piso: '5',
     estadoEncomienda: 'Buen estado',
+    fechaRegistro: '14/05/2024', horaRegistro: '09:00', registradoPor: 'Javier Lopez',
+    fechaRecibido: '14/05/2024', horaRecibido: '10:40', recibidoPor: 'Jose Perez (Seguridad)',
+    fechaEntregado: '14/05/2024', horaEntregado: '15:10', entregadoA: 'Javier Lopez',
   },
   {
     id: 5,
@@ -85,6 +94,8 @@ export const correspondenciaItems = [
     torre: 'Torre 2',
     piso: '3',
     estadoEncomienda: 'Buen estado',
+    fechaRegistro: '13/05/2024', horaRegistro: '13:00', registradoPor: 'Javier Lopez',
+    fechaRecibido: '13/05/2024', horaRecibido: '14:32', recibidoPor: 'Jose Perez (Seguridad)',
     informarInfo: {
       descripcion: 'El paquete llegó con la caja ligeramente abollada en una esquina. Se notificó al destinatario.',
       fotos: [],

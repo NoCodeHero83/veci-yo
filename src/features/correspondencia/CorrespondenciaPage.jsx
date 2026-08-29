@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell';
 import PageHeader from '../../components/layout/PageHeader';
 import SearchBar from '../../components/ui/SearchBar';
-import StatusTabs from '../../components/ui/StatusTabs';
 import Badge from '../../components/ui/Badge';
 import BottomSheet, { BottomSheetOption } from '../../components/ui/BottomSheet';
 import Modal from '../../components/ui/Modal';
@@ -15,13 +14,56 @@ import { useApp } from '../../context/AppContext';
 import theme from '../../config/theme';
 import { categorias } from '../../data/mockData';
 
-const TABS = ['Todos', 'No Recibido', 'En Portería', 'Entregado'];
+// Filtros de estado con sus colores (checkbox multi-selección)
+const FILTROS_ESTADO = [
+  { value: 'No Recibido', label: 'No recibido', color: '#111827' }, // negro
+  { value: 'En Portería', label: 'En portería', color: '#CA8A04' },  // amarillo
+  { value: 'Entregado', label: 'Entregado', color: '#6B7280' },      // gris
+];
+const COLOR_TODOS = theme.colors.primary; // azul
+
+// Texto de un paso del progreso de entrega
+const textoPaso = (tipo, datos) => {
+  if (!datos || !datos.fecha) {
+    if (tipo === 'registro') return 'Registro: Pendiente';
+    if (tipo === 'recibido') return 'Recibido: Pendiente';
+    return 'Entregado: Pendiente';
+  }
+  if (tipo === 'registro') return `Registrado ${datos.fecha} hora ${datos.hora} por ${datos.por}`;
+  if (tipo === 'recibido') return `Recibido ${datos.fecha} hora ${datos.hora} por ${datos.por}`;
+  return `Entregado ${datos.fecha} hora ${datos.hora} a ${datos.a || datos.por}`;
+};
+
+// Progreso de entrega: Registrado → Recibido → Entregado
+const ProgresoEntrega = ({ item }) => {
+  const registro = item.fechaRegistro ? { fecha: item.fechaRegistro, hora: item.horaRegistro, por: item.registradoPor } : null;
+  const recibido = item.fechaRecibido ? { fecha: item.fechaRecibido, hora: item.horaRecibido, por: item.recibidoPor } : null;
+  const entregado = item.fechaEntregado ? { fecha: item.fechaEntregado, hora: item.horaEntregado, a: item.entregadoA } : null;
+  const pasos = [
+    { tipo: 'registro', datos: registro },
+    { tipo: 'recibido', datos: recibido },
+    { tipo: 'entregado', datos: entregado },
+  ];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      {pasos.map((p, i) => {
+        const pendiente = !p.datos || !p.datos.fecha;
+        return (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: theme.fonts.sizes.xs, color: pendiente ? theme.colors.textMuted : theme.colors.text }}>
+            <span style={{ fontSize: '15px', flexShrink: 0 }}>{pendiente ? '⏳' : '✅'}</span>
+            <span>{textoPaso(p.tipo, p.datos)}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 export default function CorrespondenciaPage() {
   const navigate = useNavigate();
   const { correspondencia, actualizarEstadoCorrespondencia, eliminarCorrespondencia, rolActivo, esResidente, usuario } = useApp();
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState('Todos');
+  const [estadoSeleccionados, setEstadoSeleccionados] = useState([]); // vacío = Todos
   const [filterOpen, setFilterOpen] = useState(false);
   const [fechaDesde, setFechaDesde] = useState('2025-05-14');
   const [fechaHasta, setFechaHasta] = useState('2025-07-30');
@@ -34,9 +76,19 @@ export default function CorrespondenciaPage() {
 
   const puedeModificarEstado = rolActivo === 'administrador' || rolActivo === 'guardia';
 
+  const toggleEstado = (value) => {
+    setEstadoSeleccionados(prev =>
+      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
+    );
+  };
+  const toggleTodos = () => {
+    setEstadoSeleccionados(prev => (prev.length === 0 || prev.length === FILTROS_ESTADO.length ? [] : FILTROS_ESTADO.map(f => f.value)));
+  };
+  const todosActivo = estadoSeleccionados.length === 0 || estadoSeleccionados.length === FILTROS_ESTADO.length;
+
   const filtered = correspondencia.filter(c => {
-    const matchSearch = !search || c.nombre.toLowerCase().includes(search.toLowerCase()) || c.empresa.toLowerCase().includes(search.toLowerCase());
-    const matchTab = activeTab === 'Todos' || c.estado === activeTab;
+    const matchSearch = !search || c.nombre.toLowerCase().includes(search.toLowerCase()) || c.empresa.toLowerCase().includes(c.empresa.toLowerCase());
+    const matchTab = estadoSeleccionados.length === 0 || estadoSeleccionados.includes(c.estado);
     const matchCat = !catFilter || c.categoria === catFilter;
     const matchGuest = rolActivo !== 'huesped-temporal' || (usuario?.nombre && c.nombre?.toLowerCase().includes(usuario.nombre.toLowerCase().split(' ')[0]));
     return matchSearch && matchTab && matchCat && matchGuest;
@@ -129,13 +181,55 @@ export default function CorrespondenciaPage() {
         {/* Filters card */}
         <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '12px', boxShadow: theme.shadows.card }}>
           <SearchBar value={search} onChange={setSearch} />
-          <div style={{ marginTop: '10px' }}>
-            <StatusTabs
-              tabs={TABS}
-              active={activeTab}
-              onChange={tab => setActiveTab(tab || 'Todos')}
-              centered
-            />
+          <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+            {FILTROS_ESTADO.map(f => {
+              const sel = estadoSeleccionados.includes(f.value);
+              return (
+                <button
+                  key={f.value}
+                  onClick={() => toggleEstado(f.value)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                    padding: '7px 12px', borderRadius: theme.radius.full,
+                    border: `1.5px solid ${f.color}`,
+                    background: sel ? f.color : 'transparent',
+                    color: sel ? '#fff' : f.color,
+                    fontFamily: theme.fonts.family, fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <span style={{
+                    width: '14px', height: '14px', borderRadius: '4px',
+                    border: `1.5px solid ${sel ? '#fff' : f.color}`,
+                    background: sel ? '#fff' : 'transparent',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '10px', color: f.color, lineHeight: 1,
+                  }}>{sel ? '✓' : ''}</span>
+                  {f.label}
+                </button>
+              );
+            })}
+            <button
+              onClick={toggleTodos}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                padding: '7px 12px', borderRadius: theme.radius.full,
+                border: `1.5px solid ${COLOR_TODOS}`,
+                background: todosActivo ? COLOR_TODOS : 'transparent',
+                color: todosActivo ? '#fff' : COLOR_TODOS,
+                fontFamily: theme.fonts.family, fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold,
+                cursor: 'pointer',
+              }}
+            >
+              <span style={{
+                width: '14px', height: '14px', borderRadius: '4px',
+                border: `1.5px solid ${todosActivo ? '#fff' : COLOR_TODOS}`,
+                background: todosActivo ? '#fff' : 'transparent',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '10px', color: COLOR_TODOS, lineHeight: 1,
+              }}>{todosActivo ? '✓' : ''}</span>
+              Todos
+            </button>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
@@ -313,6 +407,12 @@ export default function CorrespondenciaPage() {
                 <Badge status={detailItem.estado} />
                 <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{detailItem.fecha}</span>
               </div>
+            </div>
+
+            {/* Progreso de entrega */}
+            <div style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.xl, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.sm, color: theme.colors.text, marginBottom: '2px' }}>Progreso de entrega</div>
+              <ProgresoEntrega item={detailItem} />
             </div>
 
             {detailItem.informarInfo && (
