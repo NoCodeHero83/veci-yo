@@ -856,7 +856,7 @@ export const porteriasData = [
 
 export const estacionamientosVisitantesData = {
   total: 20,
-  ocupados: 3,
+  ocupados: 5,
   reglas: 'Máximo 2 horas. Registro obligatorio en portería. No reservar con más de 24h de anticipación.',
 };
 

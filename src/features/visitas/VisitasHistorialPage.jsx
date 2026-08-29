@@ -130,7 +130,7 @@ const BloqueInfoVisitaNormal = ({ item, compact }) => {
   const anotaciones = item.anotacionesIngreso || item.anotacionesSalida;
   const fotos = [...(item.fotosIngreso || []), ...(item.fotosSalida || [])];
 
-  if (!autorizo && personas.length === 0 && !anotaciones && (!compact || fotos.length === 0)) return null;
+  if (!autorizo && personas.length === 0 && (!compact || (!anotaciones && fotos.length === 0))) return null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
@@ -159,7 +159,7 @@ const BloqueInfoVisitaNormal = ({ item, compact }) => {
           </span>
         </div>
       ))}
-      {anotaciones && (
+      {!compact && anotaciones && (
         <div style={{ ...lineaInfoStyle, alignItems: 'flex-start' }}>
           <span style={{ fontSize: '13px', flexShrink: 0 }}>📝</span>
           <span style={{ color: theme.colors.textSecondary }}>
@@ -295,6 +295,10 @@ export default function VisitasHistorialPage() {
 
   // 18: estacionamiento ya asignado a una visita (mapa compartido Home ⇄ Visitas)
   const spotDeVisita = (visitaId) => Object.entries(estacionamientosAsignados || {}).find(([, clave]) => String(clave).startsWith(`${visitaId}-`))?.[0] || null;
+  // Todos los cupos asignados a una visita (puede haber más de uno por invitado)
+  const spotsDeVisita = (visitaId) => Object.entries(estacionamientosAsignados || {})
+    .filter(([, clave]) => String(clave).startsWith(`${visitaId}-`))
+    .map(([spot]) => spot);
 
   const renderGuestDetailInline = (inv, idx, item) => {
     const t = inv.timeline || {};
@@ -1642,11 +1646,20 @@ export default function VisitasHistorialPage() {
               )}
 
               {/* Parking info */}
-              {detalleActual.estacionamientosAsignados > 0 && (
+              {(detalleActual.estacionamientosAsignados > 0 || spotsDeVisita(detalleActual.id).length > 0) && (
                 <div style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>
-                    🚗 Estacionamientos asignados: {detalleActual.estacionamientosAsignados}
+                    🚗 Estacionamientos asignados: {Math.max(detalleActual.estacionamientosAsignados || 0, spotsDeVisita(detalleActual.id).length)}
                   </div>
+                  {spotsDeVisita(detalleActual.id).length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {spotsDeVisita(detalleActual.id).map((spot, i) => (
+                        <span key={i} style={{ padding: '2px 8px', borderRadius: theme.radius.full, background: '#F0FDF4', fontSize: theme.fonts.sizes['2xs'], color: '#166534', fontWeight: theme.fonts.weights.semibold, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                          🅿️ {spot}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   {detalleActual.vehiculos?.length > 0 && detalleActual.vehiculos.map((v, i) => (
                     <div key={i} style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <span>🅿️ Vehículo {i + 1}:</span>

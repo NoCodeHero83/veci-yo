@@ -611,7 +611,7 @@ export function AppProvider({ children }) {
 
   // Estacionamientos de visita asignados por cupo (spot -> "visitaId-invitadoIdx").
   // Fuente única de verdad: la usan tanto la gestión central del Home como la card de visitas.
-  const [estacionamientosAsignados, setEstacionamientosAsignados] = useState({});
+  const [estacionamientosAsignados, setEstacionamientosAsignados] = useState(() => ({ 'B03': '1-0', 'B07': '1-2' }));
 
   const asignarEstacionamientoVisita = (spot, clave) => {
     if (estacionamientosAsignados[spot]) return;
