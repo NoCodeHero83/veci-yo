@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, List } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell';
 import PageHeader from '../../components/layout/PageHeader';
@@ -377,29 +377,43 @@ export default function VisitasHistorialPage() {
         {/* Type tabs: Visitas / Huéspedes */}
         <Tabs tabs={TIPO_TABS} active={tipoTab} onChange={handleTipoTabChange} centered />
 
-        {/* Sub-vista dentro de cada tab: Lista (cards) o Calendario */}
+        {/* Sub-vista dentro de cada tab: Lista (cards) o Calendario.
+            Control segmentado compacto y neutral para que quede subordinado
+            a los tabs principales (Visitas / Huéspedes), que son los que
+            deben llevar la jerarquía visual. */}
         {!sinCalendario && (
-          <div style={{ display: 'flex', gap: '8px' }}>
-            {[{ value: 'lista', label: 'Lista' }, { value: 'calendario', label: 'Calendario' }].map(op => (
-              <button
-                key={op.value}
-                onClick={() => setVistaSub(op.value)}
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  borderRadius: theme.radius.lg,
-                  border: `1.5px solid ${vistaSub === op.value ? theme.colors.primary : theme.colors.border}`,
-                  background: vistaSub === op.value ? theme.colors.primary : theme.colors.bgCard,
-                  color: vistaSub === op.value ? '#fff' : theme.colors.textSecondary,
-                  fontSize: theme.fonts.sizes.sm,
-                  fontWeight: theme.fonts.weights.medium,
-                  cursor: 'pointer',
-                  fontFamily: theme.fonts.family,
-                }}
-              >
-                {op.label}
-              </button>
-            ))}
+          <div style={{ alignSelf: 'center', display: 'inline-flex', background: theme.colors.bgMuted, borderRadius: theme.radius.full, padding: '3px', gap: '2px' }}>
+            {[
+              { value: 'lista', label: 'Lista', Icon: List },
+              { value: 'calendario', label: 'Calendario', Icon: Calendar },
+            ].map(op => {
+              const active = vistaSub === op.value;
+              return (
+                <button
+                  key={op.value}
+                  onClick={() => setVistaSub(op.value)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: theme.fonts.family,
+                    fontSize: theme.fonts.sizes.xs,
+                    fontWeight: active ? theme.fonts.weights.bold : theme.fonts.weights.medium,
+                    padding: '6px 16px',
+                    borderRadius: theme.radius.full,
+                    background: active ? theme.colors.bgCard : 'transparent',
+                    color: active ? theme.colors.text : theme.colors.textSecondary,
+                    boxShadow: active ? theme.shadows.card : 'none',
+                    transition: 'all 150ms',
+                  }}
+                >
+                  <op.Icon size={14} />
+                  {op.label}
+                </button>
+              );
+            })}
           </div>
         )}
 
