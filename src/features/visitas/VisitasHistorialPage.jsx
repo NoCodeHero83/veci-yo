@@ -345,22 +345,7 @@ export default function VisitasHistorialPage() {
         title="Visitas"
         onBack={fromHome ? () => navigate('/', { replace: true }) : undefined}
         action={
-          <ModuloHeaderInfo
-            helpKey="visitas"
-            action={
-              <button
-                onClick={() => navigate('/visitas/nuevo')}
-                style={{
-                  width: '36px', height: '36px', borderRadius: theme.radius.md,
-                  background: theme.colors.primary, color: '#fff', fontSize: '22px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: 'none', cursor: 'pointer', fontWeight: 'bold',
-                }}
-              >
-                +
-              </button>
-            }
-          />
+          <ModuloHeaderInfo helpKey="visitas" />
         }
       />
 
