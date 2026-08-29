@@ -1,5 +1,10 @@
 // ─── CORRESPONDENCIA ────────────────────────────────────────────────────────
 
+// Imagen de marcador de posición para fotos de ingreso/salida (demo offline)
+const FOTO_VISITA = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  "<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='120' height='120' fill='#E5E7EB'/><g fill='none' stroke='#9CA3AF' stroke-width='4' stroke-linejoin='round'><rect x='28' y='38' width='64' height='48' rx='6'/><circle cx='60' cy='62' r='12'/><path d='M44 38l6-8h20l6 8'/></g><text x='50%' y='100' text-anchor='middle' font-size='10' fill='#6B7280' font-family='sans-serif'>Foto</text></svg>"
+);
+
 export const correspondenciaItems = [
   {
     id: 1,
@@ -117,10 +122,19 @@ export const visitasItems = [
     fechaDesde: '01/12/2025',
     fechaHasta: '15/01/2026',
     esEvento: false,
+    registradoPor: 'Roberto Hornado (Residente 105)',
+    autorizadoPor: 'J. Méndez',
+    autorizadoPorRol: 'guardia',
+    horaIngreso: '09:15',
+    horaSalida: '12:40',
+    anotacionesIngreso: 'Ingresó en vehículo ABC-123. Se dirigió al depto. 105.',
+    anotacionesSalida: 'Retiro sin novedades. Dejó el estacionamiento asignado libre.',
+    fotosIngreso: [FOTO_VISITA, FOTO_VISITA],
+    fotosSalida: [FOTO_VISITA],
     invitados: [
-      { nombre: 'Marilu Esterla', llego: false, aprobado: 'pendiente', documentos: [], esMenor: false },
-      { nombre: 'Mario Bonefi', llego: false, aprobado: 'pendiente', documentos: [], esMenor: false },
-      { nombre: 'guilermo star', llego: false, aprobado: 'aprobado', documentos: [], esMenor: false },
+      { nombre: 'Marilu Esterla', llego: false, aprobado: 'pendiente', documentos: [], esMenor: false, horaIngreso: '09:20', horaSalida: '12:30' },
+      { nombre: 'Mario Bonefi', llego: false, aprobado: 'pendiente', documentos: [], esMenor: false, horaIngreso: '09:25', horaSalida: '12:35' },
+      { nombre: 'guilermo star', llego: false, aprobado: 'aprobado', documentos: [], esMenor: false, horaIngreso: '09:15', horaSalida: '12:40' },
     ],
     qrUrl: 'wwww.veciyolink/2342342.com',
     reserva: 'N°: 656587',
@@ -172,6 +186,10 @@ export const visitasItems = [
     fechaDesde: '01/12/2025',
     fechaHasta: '15/01/2026',
     esEvento: false,
+    registradoPor: 'Administración VeciYO',
+    autorizadoPor: 'L. Cáceres',
+    autorizadoPorRol: 'administrador',
+    anotacionesIngreso: 'Acceso permanente autorizado por Administración. Se presenta diariamente en horario laboral.',
     invitados: [],
     qrUrl: 'wwww.veciyolink/2342342.com',
     reserva: 'N°: 656589',
@@ -211,6 +229,7 @@ export const visitasItems = [
     fechaDesde: '10/06/2025',
     fechaHasta: '10/06/2025',
     esEvento: false,
+    registradoPor: 'Roberto Hornado (Residente 105)',
     invitados: [],
     qrUrl: 'wwww.veciyolink/2342343.com',
     reserva: 'N°: 656590',

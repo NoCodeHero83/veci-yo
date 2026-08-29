@@ -59,6 +59,129 @@ const TIPO_LABELS = {
   'huesped-temporal': 'Huésped Temporal',
 };
 
+// Imagen de marcador de posición para fotos de ingreso/salida (demo offline)
+const FOTO_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  "<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='120' height='120' fill='#E5E7EB'/><g fill='none' stroke='#9CA3AF' stroke-width='4' stroke-linejoin='round'><rect x='28' y='38' width='64' height='48' rx='6'/><circle cx='60' cy='62' r='12'/><path d='M44 38l6-8h20l6 8'/></g><text x='50%' y='100' text-anchor='middle' font-size='10' fill='#6B7280' font-family='sans-serif'>Foto</text></svg>"
+);
+
+// ¿La fecha (fin o inicio) ya pasó respecto a hoy?
+const esPasada = (fechaStr) => {
+  if (!fechaStr) return false;
+  const partes = fechaStr.split('/');
+  if (partes.length !== 3) return false;
+  const [d, m, y] = partes;
+  const f = new Date(+y, +m - 1, +d);
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  return f < hoy;
+};
+
+// Texto "quién registró / quién autorizó el ingreso"
+const textoAutorizo = (item) => {
+  if (item.autorizadoPor) {
+    const rol = item.autorizadoPorRol;
+    if (rol === 'guardia') return `Autorizado por guardia de seguridad ${item.autorizadoPor}`;
+    if (rol === 'administrador') return `Autorizado por administrador ${item.autorizadoPor}`;
+    return `Autorizado por ${item.autorizadoPor}`;
+  }
+  if (item.registradoPor) return `Registrado por ${item.registradoPor}`;
+  return null;
+};
+
+// Personas con horas de ingreso/salida (nivel visita o invitados)
+const personasConHoras = (item) => {
+  if (item.invitados && item.invitados.length > 0) {
+    return item.invitados.filter(inv => inv.horaIngreso || inv.horaSalida);
+  }
+  if (item.horaIngreso || item.horaSalida) {
+    return [{ nombre: item.nombre, horaIngreso: item.horaIngreso, horaSalida: item.horaSalida }];
+  }
+  return [];
+};
+
+// Texto del "chip" de fecha: para visitas ya ocurridas muestra el ingreso real
+// en lugar de un rango de fechas.
+const textoFechaChip = (item) => {
+  const pasada = esPasada(item.fechaHasta || item.fechaDesde);
+  const personas = personasConHoras(item);
+  if (pasada) {
+    const conHora = personas.find(p => p.horaIngreso);
+    if (conHora) return `Ingresó el ${item.fechaDesde} a las ${conHora.horaIngreso}`;
+    return `Visitó el ${item.fechaDesde}`;
+  }
+  return `${item.fechaDesde}${item.fechaHasta ? ` a ${item.fechaHasta}` : ''}`;
+};
+
+const lineaInfoStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '6px',
+  fontSize: '12px',
+  color: '#4B5563',
+};
+
+// Bloque de información de ingreso para visitas normales (no huésped temporal).
+// compact=true → versión resumida para la tarjeta (sin fotos).
+// compact=false → versión completa para el modal de detalles (incluye fotos).
+const BloqueInfoVisitaNormal = ({ item, compact }) => {
+  const autorizo = textoAutorizo(item);
+  const personas = personasConHoras(item);
+  const pasada = esPasada(item.fechaHasta || item.fechaDesde);
+  const anotaciones = item.anotacionesIngreso || item.anotacionesSalida;
+  const fotos = [...(item.fotosIngreso || []), ...(item.fotosSalida || [])];
+
+  if (!autorizo && personas.length === 0 && !anotaciones && (!compact || fotos.length === 0)) return null;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
+      {autorizo && (
+        <div style={lineaInfoStyle}>
+          <span style={{ fontSize: '13px' }}>🛡️</span>
+          <span style={{ fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>{autorizo}</span>
+        </div>
+      )}
+      {personas.map((inv, i) => (
+        <div key={i} style={lineaInfoStyle}>
+          <span style={{ fontSize: '13px' }}>🕐</span>
+          <span>
+            {inv.horaIngreso && (
+              <span>
+                {pasada ? 'Ingresó' : 'Ingreso'}{' '}
+                {inv.nombre && item.invitados?.length > 1 ? `${inv.nombre}: ` : ''}
+                el {item.fechaDesde} a las {inv.horaIngreso}
+              </span>
+            )}
+            {inv.horaSalida && (
+              <span style={{ marginLeft: inv.horaIngreso ? '8px' : 0, color: '#92400E', fontWeight: theme.fonts.weights.semibold }}>
+                · Salida el {item.fechaHasta || item.fechaDesde} a las {inv.horaSalida}
+              </span>
+            )}
+          </span>
+        </div>
+      ))}
+      {anotaciones && (
+        <div style={{ ...lineaInfoStyle, alignItems: 'flex-start' }}>
+          <span style={{ fontSize: '13px', flexShrink: 0 }}>📝</span>
+          <span style={{ color: theme.colors.textSecondary }}>
+            <span style={{ fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>Anotaciones: </span>
+            {[item.anotacionesIngreso, item.anotacionesSalida].filter(Boolean).join(' · ')}
+          </span>
+        </div>
+      )}
+      {!compact && fotos.length > 0 && (
+        <div style={{ marginTop: '2px' }}>
+          <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.semibold, marginBottom: '4px' }}>📷 Fotos de ingreso / salida</div>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {fotos.map((f, i) => (
+              <img key={i} src={f} alt={`foto ${i}`} style={{ width: '72px', height: '72px', borderRadius: theme.radius.md, objectFit: 'cover', border: `1px solid ${theme.colors.border}` }} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function VisitasHistorialPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -376,11 +499,6 @@ export default function VisitasHistorialPage() {
                 Profesión: {item.profesion}{item.profesionOtro ? ` (${item.profesionOtro})` : ''}
               </div>
             )}
-            {item.registradoPor && (
-              <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, marginTop: '2px' }}>
-                Registró: {item.registradoPor}
-              </div>
-            )}
           </div>
         </div>
         {(esAdminRol || esGuardiaRol) && (
@@ -413,7 +531,7 @@ export default function VisitasHistorialPage() {
           </span>
         )}
         <span style={{ padding: '2px 8px', borderRadius: theme.radius.full, background: theme.colors.bgMuted, fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textSecondary }}>
-          📅 {item.fechaDesde}{item.fechaHasta ? ` a ${item.fechaHasta}` : ''}
+          📅 {textoFechaChip(item)}
         </span>
         {spotDeVisita(item.id) && (
           <span style={{ padding: '2px 8px', borderRadius: theme.radius.full, background: '#F0FDF4', fontSize: theme.fonts.sizes['2xs'], color: '#166534', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
@@ -422,64 +540,8 @@ export default function VisitasHistorialPage() {
         )}
       </div>
 
-      {/* Ingreso / Salida (cuando ocurran) */}
-      {(item.invitados?.some(inv => inv.horaIngreso) || item.horaIngreso) && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '8px', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
-          {item.invitados?.length > 0 ? (
-            item.invitados.map((inv, i) => inv.horaIngreso && (
-              <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                {inv.nombre}: Ingreso {inv.horaIngreso}
-                {inv.horaSalida && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#92400E', background: '#FEF3C7', padding: '1px 5px', borderRadius: theme.radius.full }}>
-                    ⚠ Salida {inv.horaSalida}
-                  </span>
-                )}
-              </span>
-            ))
-          ) : (
-            item.horaIngreso && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                Ingreso {item.horaIngreso}
-                {item.horaSalida && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#92400E', background: '#FEF3C7', padding: '1px 5px', borderRadius: theme.radius.full }}>
-                    ⚠ Salida {item.horaSalida}
-                  </span>
-                )}
-              </span>
-            )
-          )}
-        </div>
-      )}
-
-      {/* Anotaciones y fotos de ingreso / salida — profesionales */}
-      {(item.tipo === 'temporal' || item.tipo === 'permanente') && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
-          {item.anotacionesIngreso ? (
-            <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
-              <span style={{ fontWeight: theme.fonts.weights.semibold }}>Anotaciones ingreso:</span> {item.anotacionesIngreso}
-            </div>
-          ) : null}
-          {item.fotosIngreso?.length > 0 && (
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {item.fotosIngreso.map((f, i) => (
-                <img key={i} src={f} alt={`ingreso ${i}`} style={{ width: '48px', height: '48px', borderRadius: theme.radius.md, objectFit: 'cover', border: `1px solid ${theme.colors.border}` }} />
-              ))}
-            </div>
-          )}
-          {item.anotacionesSalida ? (
-            <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
-              <span style={{ fontWeight: theme.fonts.weights.semibold }}>Anotaciones salida:</span> {item.anotacionesSalida}
-            </div>
-          ) : null}
-          {item.fotosSalida?.length > 0 && (
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {item.fotosSalida.map((f, i) => (
-                <img key={i} src={f} alt={`salida ${i}`} style={{ width: '48px', height: '48px', borderRadius: theme.radius.md, objectFit: 'cover', border: `1px solid ${theme.colors.border}` }} />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {/* Información de ingreso: quién autorizó, ingreso/salida, anotaciones */}
+      <BloqueInfoVisitaNormal item={item} compact />
     </div>
   );
 
@@ -1346,11 +1408,6 @@ export default function VisitasHistorialPage() {
                         Profesión: {item.profesion}{item.profesionOtro ? ` (${item.profesionOtro})` : ''}
                       </div>
                     )}
-                    {item.registradoPor && (
-                      <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, marginTop: '2px' }}>
-                        Registró: {item.registradoPor}
-                      </div>
-                    )}
                   </div>
                 </div>
                 {(esAdminRol || esGuardiaRol) && (
@@ -1391,7 +1448,7 @@ export default function VisitasHistorialPage() {
                   </span>
                 )}
                 <span style={{ padding: '2px 8px', borderRadius: theme.radius.full, background: theme.colors.bgMuted, fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textSecondary }}>
-                  📅 {item.fechaDesde}{item.fechaHasta ? ` a ${item.fechaHasta}` : ''}
+                  📅 {textoFechaChip(item)}
                 </span>
                 {spotDeVisita(item.id) && (
                   <span style={{ padding: '2px 8px', borderRadius: theme.radius.full, background: '#F0FDF4', fontSize: theme.fonts.sizes['2xs'], color: '#166534', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
@@ -1400,64 +1457,8 @@ export default function VisitasHistorialPage() {
                 )}
               </div>
 
-              {/* Ingreso / Salida (cuando ocurran) */}
-              {(item.invitados?.some(inv => inv.horaIngreso) || item.horaIngreso) && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '8px', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
-                  {item.invitados?.length > 0 ? (
-                    item.invitados.map((inv, i) => inv.horaIngreso && (
-                      <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        {inv.nombre}: Ingreso {inv.horaIngreso}
-                        {inv.horaSalida && (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#92400E', background: '#FEF3C7', padding: '1px 5px', borderRadius: theme.radius.full }}>
-                            ⚠ Salida {inv.horaSalida}
-                          </span>
-                        )}
-                      </span>
-                    ))
-                  ) : (
-                    item.horaIngreso && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        Ingreso {item.horaIngreso}
-                        {item.horaSalida && (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#92400E', background: '#FEF3C7', padding: '1px 5px', borderRadius: theme.radius.full }}>
-                            ⚠ Salida {item.horaSalida}
-                          </span>
-                        )}
-                      </span>
-                    )
-                  )}
-                </div>
-              )}
-
-              {/* Anotaciones y fotos de ingreso / salida */}
-              {(item.tipo === 'temporal' || item.tipo === 'permanente') && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
-                  {item.anotacionesIngreso ? (
-                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
-                      <span style={{ fontWeight: theme.fonts.weights.semibold }}>Anotaciones ingreso:</span> {item.anotacionesIngreso}
-                    </div>
-                  ) : null}
-                  {item.fotosIngreso?.length > 0 && (
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                      {item.fotosIngreso.map((f, i) => (
-                        <img key={i} src={f} alt={`ingreso ${i}`} style={{ width: '48px', height: '48px', borderRadius: theme.radius.md, objectFit: 'cover', border: `1px solid ${theme.colors.border}` }} />
-                      ))}
-                    </div>
-                  )}
-                  {item.anotacionesSalida ? (
-                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
-                      <span style={{ fontWeight: theme.fonts.weights.semibold }}>Anotaciones salida:</span> {item.anotacionesSalida}
-                    </div>
-                  ) : null}
-                  {item.fotosSalida?.length > 0 && (
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                      {item.fotosSalida.map((f, i) => (
-                        <img key={i} src={f} alt={`salida ${i}`} style={{ width: '48px', height: '48px', borderRadius: theme.radius.md, objectFit: 'cover', border: `1px solid ${theme.colors.border}` }} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* Información de ingreso: quién autorizó, ingreso/salida, anotaciones */}
+              <BloqueInfoVisitaNormal item={item} compact />
               </div>
             )];
         }))}
@@ -1592,10 +1593,12 @@ export default function VisitasHistorialPage() {
                 </div>
               </div>
 
-              {/* Info profesional — temporal/permanente */}
-              {(detalleActual.tipo === 'temporal' || detalleActual.tipo === 'permanente') && (
+              {/* Datos de la visita — todas las visitas normales (no huésped temporal) */}
+              {detalleActual.tipo !== 'huesped-temporal' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '10px 14px' }}>
-                  <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>Datos del profesional</div>
+                  <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>
+                    Datos de la visita
+                  </div>
                   {detalleActual.profesion && (
                     <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
                       Profesión: {detalleActual.profesion}{detalleActual.profesionOtro ? ` (${detalleActual.profesionOtro})` : ''}
@@ -1606,21 +1609,17 @@ export default function VisitasHistorialPage() {
                       Identificación: {detalleActual.ci}
                     </div>
                   )}
-                  {detalleActual.registradoPor && (
-                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>
-                      Registró: {detalleActual.registradoPor}
+                  {/* Quién autorizó / registró el ingreso */}
+                  {textoAutorizo(detalleActual) && (
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.text, background: '#EFF6FF', borderRadius: theme.radius.md, padding: '6px 8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '13px' }}>🛡️</span>
+                      <span style={{ fontWeight: theme.fonts.weights.semibold }}>{textoAutorizo(detalleActual)}</span>
                     </div>
                   )}
+                  {/* Anotaciones */}
                   {detalleActual.anotacionesIngreso && (
                     <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
                       <span style={{ fontWeight: theme.fonts.weights.semibold }}>Anotaciones ingreso:</span> {detalleActual.anotacionesIngreso}
-                    </div>
-                  )}
-                  {detalleActual.fotosIngreso?.length > 0 && (
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                      {detalleActual.fotosIngreso.map((f, i) => (
-                        <img key={i} src={f} alt={`ingreso ${i}`} style={{ width: '56px', height: '56px', borderRadius: theme.radius.md, objectFit: 'cover', border: `1px solid ${theme.colors.border}` }} />
-                      ))}
                     </div>
                   )}
                   {detalleActual.anotacionesSalida && (
@@ -1628,11 +1627,15 @@ export default function VisitasHistorialPage() {
                       <span style={{ fontWeight: theme.fonts.weights.semibold }}>Anotaciones salida:</span> {detalleActual.anotacionesSalida}
                     </div>
                   )}
-                  {detalleActual.fotosSalida?.length > 0 && (
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                      {detalleActual.fotosSalida.map((f, i) => (
-                        <img key={i} src={f} alt={`salida ${i}`} style={{ width: '56px', height: '56px', borderRadius: theme.radius.md, objectFit: 'cover', border: `1px solid ${theme.colors.border}` }} />
-                      ))}
+                  {/* Fotos de ingreso / salida */}
+                  {(detalleActual.fotosIngreso?.length > 0 || detalleActual.fotosSalida?.length > 0) && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.semibold }}>📷 Fotos de ingreso / salida</div>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        {[...(detalleActual.fotosIngreso || []), ...(detalleActual.fotosSalida || [])].map((f, i) => (
+                          <img key={i} src={f} alt={`foto ${i}`} style={{ width: '56px', height: '56px', borderRadius: theme.radius.md, objectFit: 'cover', border: `1px solid ${theme.colors.border}` }} />
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1895,11 +1898,11 @@ export default function VisitasHistorialPage() {
                       {tipo !== 'permanente' && inv.horaIngreso && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '8px', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                            Ingreso: {inv.horaIngreso}
+                            🕐 {esPasada(detalleActual.fechaHasta || detalleActual.fechaDesde) ? 'Ingresó' : 'Ingreso'} el {detalleActual.fechaDesde} a las {inv.horaIngreso}
                           </span>
                           {inv.horaSalida && (
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', color: '#92400E', background: '#FEF3C7', padding: '1px 6px', borderRadius: theme.radius.full }}>
-                              ⚠ Salida: {inv.horaSalida} (inexacta)
+                              ⚠ Salida el {detalleActual.fechaHasta || detalleActual.fechaDesde} a las {inv.horaSalida}
                             </span>
                           )}
                         </div>
