@@ -27,7 +27,6 @@ const HUESPEDES_TABS = ['Todas', 'Pendiente', 'Aceptado', 'Ingresado'];
 const TIPO_TABS_BASE = [
   { value: 'visitas', label: 'Visitas' },
   { value: 'huespedes', label: 'Huéspedes' },
-  { value: 'calendario', label: 'Calendario' },
 ];
 const TIPOS = ['Todos', 'Amigos Familiares', 'Profesional Temporal', 'Profesional Permanente'];
 
@@ -76,6 +75,7 @@ export default function VisitasHistorialPage() {
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('Todas');
   const [tipoTab, setTipoTab] = useState('visitas');
+  const [vistaSub, setVistaSub] = useState('lista');
   const [filterOpen, setFilterOpen] = useState(false);
   const [tipoFilter, setTipoFilter] = useState('Todos');
   const [fechaDesdeFilter, setFechaDesdeFilter] = useState('');
@@ -122,7 +122,6 @@ export default function VisitasHistorialPage() {
     return [
       { value: 'visitas', label: 'Visitas' },
       { value: 'huespedes', label: 'Huéspedes' },
-      { value: 'calendario', label: 'Calendario' },
     ];
   }, [rolActivo, sinCalendario]);
 
@@ -317,6 +316,7 @@ export default function VisitasHistorialPage() {
   const handleTipoTabChange = (value) => {
     setTipoTab(value);
     setActiveTab('Todas');
+    setVistaSub('lista');
   };
 
   const handleEstado = (estado) => {
@@ -374,11 +374,37 @@ export default function VisitasHistorialPage() {
           ))}
         </div>
 
-        {/* Type tabs: Visitas / Huéspedes / Calendario */}
+        {/* Type tabs: Visitas / Huéspedes */}
         <Tabs tabs={TIPO_TABS} active={tipoTab} onChange={handleTipoTabChange} centered />
 
-        {/* Filter card — oculto en tab calendario */}
-        {tipoTab !== 'calendario' && (
+        {/* Sub-vista dentro de cada tab: Lista (cards) o Calendario */}
+        {!sinCalendario && (
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {[{ value: 'lista', label: 'Lista' }, { value: 'calendario', label: 'Calendario' }].map(op => (
+              <button
+                key={op.value}
+                onClick={() => setVistaSub(op.value)}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  borderRadius: theme.radius.lg,
+                  border: `1.5px solid ${vistaSub === op.value ? theme.colors.primary : theme.colors.border}`,
+                  background: vistaSub === op.value ? theme.colors.primary : theme.colors.bgCard,
+                  color: vistaSub === op.value ? '#fff' : theme.colors.textSecondary,
+                  fontSize: theme.fonts.sizes.sm,
+                  fontWeight: theme.fonts.weights.medium,
+                  cursor: 'pointer',
+                  fontFamily: theme.fonts.family,
+                }}
+              >
+                {op.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Filter card — visible solo en vista Lista */}
+        {vistaSub === 'lista' && (
         <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '12px', boxShadow: theme.shadows.card }}>
           <SearchBar value={search} onChange={setSearch} />
           {tipoTab === 'huespedes' && (
@@ -514,8 +540,8 @@ export default function VisitasHistorialPage() {
            </div>
         )}
 
-        {/* Calendar tab — todas las visitas con color según estado */}
-        {tipoTab === 'calendario' && (() => {
+        {/* Calendar — reservas del tab activo (Visitas o Huéspedes) con color según estado */}
+        {vistaSub === 'calendario' && (() => {
           const hoy = new Date(calendarioMonth);
           const año = hoy.getFullYear();
           const mes = hoy.getMonth();
@@ -530,11 +556,13 @@ export default function VisitasHistorialPage() {
           };
           const visitasEnMes = visitas.filter(v => {
             if (!v.fechaDesde) return false;
+            if (tipoTab === 'huespedes' ? v.tipo !== 'huesped-temporal' : v.tipo === 'huesped-temporal') return false;
             const [d, m, y] = v.fechaDesde.split('/');
             const fecha = new Date(+y, +m - 1, +d);
             return fecha.getMonth() === mes && fecha.getFullYear() === año;
           });
           const handleClickCalVisita = (v) => {
+            setVistaSub('lista');
             if (v.tipo === 'huesped-temporal') {
               setTipoTab('huespedes');
               setReservaDetail(v);
@@ -618,7 +646,7 @@ export default function VisitasHistorialPage() {
         })()}
 
         {/* List — guardia: primero ve las reservas; al tocar una entra a la lista de huéspedes (15b) */}
-        {tipoTab !== 'calendario' && esGuardiaRol && reservaGuardia && (
+        {vistaSub === 'lista' && esGuardiaRol && reservaGuardia && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '12px' }}>
             <button
               onClick={() => setReservaGuardia(null)}
@@ -638,7 +666,7 @@ export default function VisitasHistorialPage() {
             </div>
           </div>
         )}
-        {tipoTab !== 'calendario' && esGuardiaRol && reservaGuardia && personasDeReserva(reservaGuardia).map((p, pi) => (
+        {vistaSub === 'lista' && esGuardiaRol && reservaGuardia && personasDeReserva(reservaGuardia).map((p, pi) => (
             <div
               key={`${p.base.id}-${pi}`}
               style={{
@@ -830,7 +858,7 @@ export default function VisitasHistorialPage() {
           ))}
 
         {/* Vista de reservas para Guardia (15b) — con mini línea de tiempo y Torre/Depto (16/19) */}
-        {tipoTab !== 'calendario' && esGuardiaRol && !reservaGuardia && filtered.map(item => {
+        {vistaSub === 'lista' && esGuardiaRol && !reservaGuardia && filtered.map(item => {
           const invitadosTimeline = huespedesTimeline(item);
           return (
             <div
@@ -894,7 +922,7 @@ export default function VisitasHistorialPage() {
         )}
 
         {/* List — normal roles: card per reservation for huesped-temporal */}
-        {tipoTab !== 'calendario' && rolActivo !== 'guardia' && (reservaDetail ? (
+        {vistaSub === 'lista' && rolActivo !== 'guardia' && (reservaDetail ? (
           /* Vista detalle de reserva HT — reemplaza la lista */
           <div key="reserva-detail" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <button
@@ -1227,7 +1255,7 @@ export default function VisitasHistorialPage() {
         )}
 
         {/* Row counter */}
-        {tipoTab !== 'calendario' && (
+        {vistaSub === 'lista' && (
           <div style={{ textAlign: 'center', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, padding: '8px 0' }}>
             Mostrando {filtered.length} de {visitas.length} visitas
           </div>
