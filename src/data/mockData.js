@@ -1019,6 +1019,43 @@ export const departamentosFiltroCuadroHonor = ['100-200', '201-300', '301-400', 
 export const administradoresCuadroHonor = ['Carola', 'Soller'];
 export const administradorCuadroHonor = { nombre: 'Soller' };
 
+const NOMBRES_MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+const CUOTA_MENSUAL_HISTORIAL = 150;
+
+const HISTORIAL_CUOTAS_RAW = [
+  { alDia: 2, atrasados: 2 },
+  { alDia: 3, atrasados: 1 },
+  { alDia: 4, atrasados: 0 },
+  { alDia: 2, atrasados: 2 },
+  { alDia: 3, atrasados: 1 },
+  { alDia: 1, atrasados: 3 },
+  { alDia: 4, atrasados: 0 },
+  { alDia: 3, atrasados: 1 },
+  { alDia: 2, atrasados: 2 },
+  { alDia: 4, atrasados: 0 },
+  { alDia: 3, atrasados: 1 },
+  { alDia: 2, atrasados: 2 },
+  { alDia: 3, atrasados: 1 },
+];
+
+export const cuotaAdministracionHistorial = (() => {
+  const hoy = new Date();
+  return HISTORIAL_CUOTAS_RAW.map((m, i) => {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() - (HISTORIAL_CUOTAS_RAW.length - 1 - i), 1);
+    const total = m.alDia + m.atrasados;
+    const esperado = total * CUOTA_MENSUAL_HISTORIAL;
+    const recibido = m.alDia * CUOTA_MENSUAL_HISTORIAL;
+    return {
+      mes: `${NOMBRES_MESES[d.getMonth()]} ${d.getFullYear()}`,
+      esperado,
+      recibido,
+      alDia: m.alDia,
+      atrasados: m.atrasados,
+      porcentaje: esperado > 0 ? Math.round((recibido / esperado) * 100) : 0,
+    };
+  });
+})();
+
 export const trofeosReconocimiento = [
   { id: 1, nombre: 'Niki56' },
   { id: 2, nombre: 'AlexSmith' },

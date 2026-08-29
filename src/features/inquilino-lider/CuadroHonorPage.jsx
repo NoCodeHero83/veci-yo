@@ -9,8 +9,10 @@ import { useApp } from '../../context/AppContext';
 import {
   cuadroHonorDepartamentos,
   reputacionInsigniasVecino,
+  cuotaAdministracionHistorial,
 } from '../../data/mockData';
 import ReconocimientoPopup from './components/ReconocimientoPopup';
+import CarruselCuotas from './components/CarruselCuotas';
 import iconDepartamento from '../../assets/icons/inquilino-lider/reconocimiento-hero.png';
 
 const cardStyle = {
@@ -110,6 +112,9 @@ export default function CuadroHonorPage() {
             </div>
           </div>
         </div>
+
+        {/* Histórico de cuota de administración por mes (carrusel) */}
+        <CarruselCuotas historial={cuotaAdministracionHistorial} />
 
         {/* Dar reconocimiento button */}
         {puedeParticipar && (
