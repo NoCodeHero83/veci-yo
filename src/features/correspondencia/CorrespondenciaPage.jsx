@@ -75,6 +75,7 @@ export default function CorrespondenciaPage() {
   const [detailItem, setDetailItem] = useState(null);
 
   const puedeModificarEstado = rolActivo === 'administrador' || rolActivo === 'guardia';
+  const puedeCrear = rolActivo === 'administrador' || rolActivo === 'guardia';
 
   const toggleEstado = (value) => {
     setEstadoSeleccionados(prev =>
@@ -151,7 +152,7 @@ export default function CorrespondenciaPage() {
         action={
           <ModuloHeaderInfo
             helpKey="correspondencia"
-            action={
+            action={puedeCrear ? (
               <button
                 onClick={() => navigate('/correspondencia/agregar')}
                 style={{
@@ -171,7 +172,7 @@ export default function CorrespondenciaPage() {
               >
                 +
               </button>
-            }
+            ) : null}
           />
         }
       />
@@ -351,7 +352,9 @@ export default function CorrespondenciaPage() {
         {puedeModificarEstado && (
           <BottomSheetOption label="Eliminar" variant="danger" onPress={() => { setDeleteItem(menuItem); setMenuItem(null); }} />
         )}
-        <BottomSheetOption label="Informar" onPress={() => { setMenuItem(null); navigate('/correspondencia/agregar', { state: { informar: menuItem } }); }} />
+        {puedeCrear && (
+          <BottomSheetOption label="Informar" onPress={() => { setMenuItem(null); navigate('/correspondencia/agregar', { state: { informar: menuItem } }); }} />
+        )}
       </BottomSheet>
 
       <Modal isOpen={!!deleteItem} onClose={() => setDeleteItem(null)} title="Eliminar Correspondencia">

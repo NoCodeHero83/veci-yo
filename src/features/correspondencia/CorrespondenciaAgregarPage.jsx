@@ -24,6 +24,7 @@ export default function CorrespondenciaAgregarPage() {
   const { agregarCorrespondencia, rolActivo, esResidente } = useApp();
   const accesoBloqueado = rolActivo === 'propietario' && !esResidente;
   const puedeCorrespondenciaMasiva = rolActivo === 'guardia' || rolActivo === 'administrador';
+  const puedeCrear = rolActivo === 'guardia' || rolActivo === 'administrador';
 
   const [categoria, setCategoria] = useState('');
   const [logistica, setLogistica] = useState('');
@@ -131,6 +132,12 @@ export default function CorrespondenciaAgregarPage() {
       ) : (<>
       <PageHeader title="Agregar Correspondencia" />
 
+      {!puedeCrear ? (
+        <div style={{ padding: '16px', textAlign: 'center', color: theme.colors.textSecondary, fontSize: theme.fonts.sizes.base, marginTop: '40px' }}>
+          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚫</div>
+          <p>Esta función solo está disponible para el Guardia de Seguridad y el Administrador.</p>
+        </div>
+      ) : (
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {!informarItem && (
           <>
@@ -394,6 +401,7 @@ export default function CorrespondenciaAgregarPage() {
         <Button variant="primary" fullWidth onClick={handleAgregar}>Agregar</Button>
         <div style={{ height: '16px' }} />
       </div>
+      )}
 
       {/* Success modal */}
       <Modal isOpen={showSuccess} onClose={() => { setShowSuccess(false); navigate('/correspondencia'); }} title="Correspondencia">
