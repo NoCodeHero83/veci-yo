@@ -1041,7 +1041,7 @@ const HISTORIAL_CUOTAS_RAW = [
 export const cuotaAdministracionHistorial = (() => {
   const hoy = new Date();
   return HISTORIAL_CUOTAS_RAW.map((m, i) => {
-    const d = new Date(hoy.getFullYear(), hoy.getMonth() - (HISTORIAL_CUOTAS_RAW.length - 1 - i), 1);
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
     const total = m.alDia + m.atrasados;
     const esperado = total * CUOTA_MENSUAL_HISTORIAL;
     const recibido = m.alDia * CUOTA_MENSUAL_HISTORIAL;
