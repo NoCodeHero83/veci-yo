@@ -75,6 +75,31 @@ export function AppProvider({ children }) {
   const [unidades, setUnidades] = useState(unidadesData);
   const [propietariosInvited, setPropietariosInvited] = useState(initialPropietariosInvited);
 
+  // ─── Residentes · Vehículos privados (placa + tipo) ──────────────────────
+  // unidadId -> [{ id, placa, tipo }]
+  const [vehiculosPrivados, setVehiculosPrivados] = useState({});
+
+  const agregarVehiculo = useCallback((unidadId, vehiculo) => {
+    setVehiculosPrivados(prev => ({
+      ...prev,
+      [unidadId]: [...(prev[unidadId] || []), { id: Date.now(), ...vehiculo }],
+    }));
+  }, []);
+
+  const eliminarVehiculo = useCallback((unidadId, vehiculoId) => {
+    setVehiculosPrivados(prev => ({
+      ...prev,
+      [unidadId]: (prev[unidadId] || []).filter(v => v.id !== vehiculoId),
+    }));
+  }, []);
+
+  const actualizarVehiculo = useCallback((unidadId, vehiculo) => {
+    setVehiculosPrivados(prev => ({
+      ...prev,
+      [unidadId]: (prev[unidadId] || []).map(v => v.id === vehiculo.id ? { ...v, ...vehiculo } : v),
+    }));
+  }, []);
+
   // ─── Onboarding / Autenticación ──────────────────────────────────────────
   // `modo` distingue cómo se entró a la app: 'cuenta' (login/registro real),
   // 'incognito' (invitado, sin cuenta) o 'demo' (acceso directo a un rol).
@@ -861,6 +886,7 @@ export function AppProvider({ children }) {
       unidades, agregarUnidad, actualizarUnidad, eliminarUnidad, actualizarEstadoUnidad,
       asignarPropietarioUnidad, propietariosInvited, aceptarInvitacion,
       marcarUnidadConfigurada,
+      vehiculosPrivados, agregarVehiculo, eliminarVehiculo, actualizarVehiculo,
       permisos, actualizarPermisos,
       guardias, agregarGuardia, actualizarGuardia, eliminarGuardia,
       residentesPropietario, agregarResidente, actualizarResidente, eliminarResidente,

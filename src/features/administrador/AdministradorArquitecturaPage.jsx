@@ -471,14 +471,22 @@ function TorresTab({ onSelectTorre }) {
 
 // ─── TOWER DETAIL VIEW ────────────────────────────────────────────────────
 
+const TORRE_TABS = [
+  { value: 'departamentos', label: 'Departamentos' },
+  { value: 'estacionamientos', label: 'Estacionamientos' },
+];
+
 function TorreDetailView({ torre, onBack }) {
   const {
     unidades, tipologias, agregarUnidad, actualizarUnidad, eliminarUnidad,
     asignarPropietarioUnidad, propietariosInvited, configHuespedesTemporales,
+    vehiculosPrivados,
   } = useApp();
 
   const unidadesTorre = unidades.filter(u => u.torreNumero === torre.numero);
+  const totalEstacionamientos = parseInt(torre.cocherasPrivadas) || 0;
 
+  const [activeTab, setActiveTab] = useState('departamentos');
   const [showCrear, setShowCrear] = useState(false);
   const [editUnidad, setEditUnidad] = useState(null);
   const [deleteUnidad, setDeleteUnidad] = useState(null);
@@ -525,19 +533,47 @@ function TorreDetailView({ torre, onBack }) {
     setEditUnidad(null);
   };
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
-        <button onClick={onBack} style={{
-          background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px',
-          color: theme.colors.text, padding: '4px',
-        }}>{'\u2190'}</button>
-        <span style={{ fontSize: theme.fonts.sizes.base, fontWeight: theme.fonts.weights.bold, color: theme.colors.text }}>
-          Torre N{torre.numero} — {unidadesTorre.length} departamento(s)
-        </span>
-      </div>
+  // Build parking spot list for this tower
+  const parkingSpots = [];
+  for (let i = 1; i <= totalEstacionamientos; i++) {
+    const spotId = `T${torre.numero}-P${String(i).padStart(3, '0')}`;
+    let asignadoA = null;
+    let unidadAsignada = null;
+    for (const u of unidadesTorre) {
+      const vehiculos = vehiculosPrivados[u.id] || [];
+      if (vehiculos.some(v => v.spotAsignado === spotId)) {
+        asignadoA = u.codigo;
+        unidadAsignada = u;
+        break;
+      }
+    }
+    // Also check: if a unit's assigned spots extend beyond its own count
+    // For now, auto-assign spots sequentially to units based on their estacionamientos count
+    if (!asignadoA) {
+      let accumulated = 0;
+      for (const u of unidadesTorre) {
+        const count = u.estacionamientos || 0;
+        if (count > 0) {
+          const spotStart = accumulated + 1;
+          const spotEnd = accumulated + count;
+          if (i >= spotStart && i <= spotEnd) {
+            asignadoA = u.codigo;
+            unidadAsignada = u;
+            break;
+          }
+          accumulated = spotEnd;
+        }
+      }
+    }
+    parkingSpots.push({ id: spotId, numero: i, asignadoA, unidadAsignada });
+  }
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+  const spotsOcupados = parkingSpots.filter(s => s.asignadoA).length;
+  const spotsLibres = totalEstacionamientos - spotsOcupados;
+
+  const renderDepartamentos = () => (
+    <>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '4px' }}>
         <Button variant="primary" onClick={abrirCrear}>+ Agregar departamento</Button>
       </div>
 
@@ -579,6 +615,74 @@ function TorreDetailView({ torre, onBack }) {
           No hay departamentos en esta torre. Agrega el primero.
         </div>
       )}
+    </>
+  );
+
+  const renderEstacionamientos = () => (
+    <>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
+          Total: {totalEstacionamientos} &middot; Ocupados: {spotsOcupados} &middot; Libres: {spotsLibres}
+        </span>
+      </div>
+
+      {parkingSpots.map(spot => (
+        <div key={spot.id} style={{
+          ...sectionCard, padding: '14px 16px',
+          border: `1.5px solid ${spot.asignadoA ? theme.colors.success : theme.colors.border}`,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.md, color: theme.colors.text }}>
+                {spot.id}
+              </div>
+              <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginTop: '2px' }}>
+                {spot.asignadoA ? (
+                  <>Asignado a: <strong>{spot.asignadoA}</strong></>
+                ) : (
+                  <span style={{ color: theme.colors.textMuted }}>Sin asignar</span>
+                )}
+              </div>
+            </div>
+            <span style={{
+              fontSize: theme.fonts.sizes.xs, padding: '2px 8px', borderRadius: theme.radius.full,
+              background: spot.asignadoA ? (theme.colors.success + '20') : (theme.colors.statusGray + '20'),
+              color: spot.asignadoA ? theme.colors.success : theme.colors.textSecondary,
+              fontWeight: theme.fonts.weights.medium,
+            }}>
+              {spot.asignadoA ? 'Ocupado' : 'Libre'}
+            </span>
+          </div>
+        </div>
+      ))}
+
+      {totalEstacionamientos === 0 && (
+        <div style={{ textAlign: 'center', padding: '32px 16px', color: theme.colors.textSecondary, fontSize: theme.fonts.sizes.sm }}>
+          No hay estacionamientos configurados para esta torre.
+        </div>
+      )}
+
+      <div style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '12px 14px', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, lineHeight: 1.5, marginTop: '4px' }}>
+        Los estacionamientos se asignan automáticamente según la cantidad configurada en cada departamento. Para modificar, edita la cantidad de estacionamientos del departamento.
+      </div>
+    </>
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+        <button onClick={onBack} style={{
+          background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px',
+          color: theme.colors.text, padding: '4px',
+        }}>{'\u2190'}</button>
+        <span style={{ fontSize: theme.fonts.sizes.base, fontWeight: theme.fonts.weights.bold, color: theme.colors.text }}>
+          {torre.nombre || `Torre N${torre.numero}`} — {unidadesTorre.length} depto(s)
+        </span>
+      </div>
+
+      <Tabs tabs={TORRE_TABS} active={activeTab} onChange={setActiveTab} variant="chip" />
+
+      {activeTab === 'departamentos' ? renderDepartamentos() : renderEstacionamientos()}
 
       <BottomSheet isOpen={!!menuUnidad} onClose={() => setMenuUnidad(null)}>
         <BottomSheetOption label="Editar" onPress={() => abrirEditar(menuUnidad)} />
@@ -646,7 +750,7 @@ function TorreDetailView({ torre, onBack }) {
       <Modal isOpen={!!deleteUnidad} onClose={() => setDeleteUnidad(null)} title="Eliminar departamento">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'center' }}>
           <p style={{ fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>
-            ?Eliminar el departamento <strong>"{deleteUnidad?.codigo}"</strong>?
+            ¿Eliminar el departamento <strong>"{deleteUnidad?.codigo}"</strong>?
           </p>
           <Button variant="danger" fullWidth onClick={() => { eliminarUnidad(deleteUnidad.id); setDeleteUnidad(null); }}>Eliminar</Button>
         </div>
