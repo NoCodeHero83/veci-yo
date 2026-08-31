@@ -85,7 +85,7 @@ export default function ViviendaResumen() {
           <img src={ubicacionActiva?.imagen || iconVivienda} alt="Vivienda" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
         <h2 style={{ fontSize: theme.fonts.sizes.xl, fontWeight: theme.fonts.weights.bold, color: theme.colors.text }}>
-          Vivienda
+          {ubicacionActiva?.alias || 'Vivienda'}
         </h2>
         {rolActivo !== 'huesped-temporal' && !esGuardia && (
           <button

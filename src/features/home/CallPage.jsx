@@ -21,7 +21,7 @@ export default function CallPage() {
   const isStaff = torre === 'Seguridad' || torre === 'Administrador';
 
   // G30: Propietario/Residente solo puede llamar a Seguridad o Administración
-  const esPropietarioOResidente = rolActivo === 'propietario' || rolActivo === 'inquilino-lider';
+  const esPropietarioOResidente = rolActivo === 'propietario' || rolActivo === 'inquilino-lider' || rolActivo === 'huesped-temporal';
   const opcionesTorre = esPropietarioOResidente ? TORRES_LIMITADAS : TORRES_OPCIONES;
 
   const handleTorreChange = (val) => {

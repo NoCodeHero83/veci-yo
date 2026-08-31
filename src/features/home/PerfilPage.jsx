@@ -213,6 +213,14 @@ export default function PerfilPage() {
           <TarjetaAccion icon={iconSOS} label="S.O.S" onPress={() => navigate('/perfil/sos')} />
         </div>
 
+        {/* Info SOS */}
+        <div style={{ ...cardStyle, padding: '14px 16px', display: 'flex', alignItems: 'flex-start', gap: '10px', background: '#FEF3C7' }}>
+          <span style={{ fontSize: '18px', flexShrink: 0, marginTop: '1px' }}>ℹ️</span>
+          <span style={{ fontSize: theme.fonts.sizes.xs, color: '#92400E', lineHeight: 1.5 }}>
+            El botón de S.O.S activa una alarma sonora en la aplicación que es recibida por todos los guardias de seguridad de turno en ese momento. Se brindan los datos de la persona que activó la alarma: departamento, nombre y demás datos relevantes.
+          </span>
+        </div>
+
         {/* Turno actual — solo para guardia */}
         {esGuardia && guardiaActual && (
           <div style={{ ...cardStyle, padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>

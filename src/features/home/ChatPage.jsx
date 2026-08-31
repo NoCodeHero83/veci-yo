@@ -66,6 +66,7 @@ export default function ChatPage() {
   const esAdmin = rolActivo === 'administrador';
   const esPropietario = rolActivo === 'propietario';
   const esHuespedTemporal = rolActivo === 'huesped-temporal';
+  const soloSeguridadAdmin = esHuespedTemporal;
   const nombreUsuario = usuario?.nombre || 'Yo';
 
   const gruposVisibles = useMemo(() => {
@@ -149,6 +150,7 @@ export default function ChatPage() {
 
   const convFiltradas = conversations.filter(c => {
     if (soloNoLeidos && c.noLeidos === 0) return false;
+    if (soloSeguridadAdmin && c.nombre !== 'Seguridad' && c.nombre !== 'Administrador') return false;
     if (filtroChat === 'individuales' && c.tipo !== 'individual') return false;
     if (filtroChat === 'grupos' && c.tipo !== 'grupo') return false;
     if (esGuardia) {
@@ -224,10 +226,10 @@ export default function ChatPage() {
   };
 
   const handleNewChat = () => {
-    setTorre('Torre 1');
+    setTorre(soloSeguridadAdmin ? 'Seguridad' : 'Torre 1');
     setDepto('Departamento 105');
     setPiso('');
-    setPersona('Mario');
+    setPersona(soloSeguridadAdmin ? 'Seguridad' : 'Mario');
     setBusquedaPersona('');
     setVista('nuevo');
   };
@@ -255,7 +257,7 @@ export default function ChatPage() {
         <>
           <PageHeader title="Chat" onBack={() => navigate(-1)} />
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            {!esGuardia && (
+            {!esGuardia && !soloSeguridadAdmin && (
               <div style={{ padding: '12px 16px', borderBottom: `1px solid ${theme.colors.border}` }}>
                 <Button variant="primary" fullWidth onClick={handleNewChat}>
                   + Nuevo chat
@@ -574,7 +576,7 @@ export default function ChatPage() {
         <>
           <PageHeader title="Nuevo chat" onBack={() => setVista('lista')} />
           <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <SelectField label="Torre" value={torre} options={TORRES_OPCIONES} onChange={handleTorreChange} />
+            <SelectField label="Torre" value={torre} options={soloSeguridadAdmin ? ['Seguridad', 'Administrador'] : TORRES_OPCIONES} onChange={handleTorreChange} />
             {!isStaff && (
               <>
                 <SelectField label="Piso" value={piso} options={PISOS_OPCIONES} onChange={setPiso} placeholder="Seleccionar piso" />
