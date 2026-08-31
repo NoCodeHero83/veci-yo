@@ -189,54 +189,58 @@ export default function CorrespondenciaAgregarPage() {
               />
             </div>
 
-            <div style={{
-              background: theme.colors.bgCard,
-              borderRadius: theme.radius['2xl'],
-              padding: '13px 16px',
-              border: `1px solid ${theme.colors.border}`,
-              position: 'relative',
-            }}>
-              <input
-                value={identificacion}
-                onChange={e => setIdentificacion(e.target.value)}
-                placeholder="Identificación (opcional)"
-                style={{
-                  width: '100%',
-                  background: 'none',
-                  border: 'none',
-                  outline: 'none',
-                  fontSize: theme.fonts.sizes.base,
-                  fontFamily: theme.fonts.family,
-                  color: theme.colors.text,
-                }}
-              />
-            </div>
+            {rolActivo !== 'guardia' && (
+              <>
+                <div style={{
+                  background: theme.colors.bgCard,
+                  borderRadius: theme.radius['2xl'],
+                  padding: '13px 16px',
+                  border: `1px solid ${theme.colors.border}`,
+                  position: 'relative',
+                }}>
+                  <input
+                    value={identificacion}
+                    onChange={e => setIdentificacion(e.target.value)}
+                    placeholder="Identificación (opcional)"
+                    style={{
+                      width: '100%',
+                      background: 'none',
+                      border: 'none',
+                      outline: 'none',
+                      fontSize: theme.fonts.sizes.base,
+                      fontFamily: theme.fonts.family,
+                      color: theme.colors.text,
+                    }}
+                  />
+                </div>
 
-            <div style={{
-              background: theme.colors.bgCard,
-              borderRadius: theme.radius['2xl'],
-              padding: '13px 16px',
-              border: `1px solid ${theme.colors.border}`,
-              position: 'relative',
-            }}>
-              <textarea
-                value={instrucciones}
-                onChange={e => setInstrucciones(e.target.value)}
-                placeholder="Instrucciones adicionales"
-                rows={3}
-                style={{
-                  width: '100%',
-                  background: 'none',
-                  border: 'none',
-                  outline: 'none',
-                  fontSize: theme.fonts.sizes.base,
-                  fontFamily: theme.fonts.family,
-                  color: theme.colors.text,
-                  resize: 'none',
-                }}
-              />
-              <span style={{ position: 'absolute', right: '14px', top: '14px', color: theme.colors.textMuted }}>✏️</span>
-            </div>
+                <div style={{
+                  background: theme.colors.bgCard,
+                  borderRadius: theme.radius['2xl'],
+                  padding: '13px 16px',
+                  border: `1px solid ${theme.colors.border}`,
+                  position: 'relative',
+                }}>
+                  <textarea
+                    value={instrucciones}
+                    onChange={e => setInstrucciones(e.target.value)}
+                    placeholder="Instrucciones adicionales"
+                    rows={3}
+                    style={{
+                      width: '100%',
+                      background: 'none',
+                      border: 'none',
+                      outline: 'none',
+                      fontSize: theme.fonts.sizes.base,
+                      fontFamily: theme.fonts.family,
+                      color: theme.colors.text,
+                      resize: 'none',
+                    }}
+                  />
+                  <span style={{ position: 'absolute', right: '14px', top: '14px', color: theme.colors.textMuted }}>✏️</span>
+                </div>
+              </>
+            )}
 
             <Toggle value={entregaEnPuerta} onChange={setEntregaEnPuerta} labelRight="Entrega en puerta" />
           </>

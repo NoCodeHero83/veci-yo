@@ -176,8 +176,8 @@ export function AppProvider({ children }) {
     setCorrespondencia(prev => [newItem, ...prev]);
   }, []);
 
-  const actualizarEstadoCorrespondencia = useCallback((id, estado) => {
-    setCorrespondencia(prev => prev.map(c => c.id === id ? { ...c, estado } : c));
+  const actualizarEstadoCorrespondencia = useCallback((id, estado, datosExtra = {}) => {
+    setCorrespondencia(prev => prev.map(c => c.id === id ? { ...c, estado, ...datosExtra } : c));
   }, []);
 
   const eliminarCorrespondencia = useCallback((id) => {

@@ -73,6 +73,9 @@ export default function CorrespondenciaPage() {
   const [deleteItem, setDeleteItem] = useState(null);
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [detailItem, setDetailItem] = useState(null);
+  const [entregaPuertaItem, setEntregaPuertaItem] = useState(null);
+  const [entregaPuertaNombre, setEntregaPuertaNombre] = useState('');
+  const [entregaPuertaHora, setEntregaPuertaHora] = useState(() => new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }));
 
   const puedeModificarEstado = rolActivo === 'administrador' || rolActivo === 'guardia';
   const puedeCrear = rolActivo === 'administrador' || rolActivo === 'guardia';
@@ -96,8 +99,27 @@ export default function CorrespondenciaPage() {
   });
 
   const handleEstado = (estado) => {
+    if (estado === 'Entregado' && menuItem?.entregaEnPuerta) {
+      setEntregaPuertaItem(menuItem);
+      setEntregaPuertaNombre('');
+      setEntregaPuertaHora(new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }));
+      setMenuItem(null);
+      return;
+    }
     actualizarEstadoCorrespondencia(menuItem.id, estado);
     setMenuItem(null);
+  };
+
+  const confirmarEntregaPuerta = () => {
+    if (!entregaPuertaItem) return;
+    const now = new Date();
+    const fecha = now.toLocaleDateString('es-AR');
+    actualizarEstadoCorrespondencia(entregaPuertaItem.id, 'Entregado', {
+      fechaEntregado: fecha,
+      horaEntregado: entregaPuertaHora,
+      entregadoA: entregaPuertaNombre,
+    });
+    setEntregaPuertaItem(null);
   };
 
   const handleEliminar = () => {
@@ -331,7 +353,14 @@ export default function CorrespondenciaPage() {
               )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
-              <Badge status={item.estado} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Badge status={item.estado} />
+                {item.entregaEnPuerta && (
+                  <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.secondary, background: theme.colors.secondaryLight, padding: '2px 8px', borderRadius: theme.radius.full, fontWeight: theme.fonts.weights.medium }}>
+                    🚪 Puerta
+                  </span>
+                )}
+              </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{item.fecha}</span>
                 <span style={{ fontSize: '14px', color: theme.colors.textMuted, opacity: 0.5 }}>›</span>
@@ -378,6 +407,58 @@ export default function CorrespondenciaPage() {
             </div>
           )}
           <Button variant="primary" fullWidth onClick={handleEliminar}>Eliminar</Button>
+        </div>
+      </Modal>
+
+      {/* Entrega en puerta modal */}
+      <Modal isOpen={!!entregaPuertaItem} onClose={() => setEntregaPuertaItem(null)} title="Entrega en Puerta">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <p style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, textAlign: 'center' }}>
+            Indique quién recibió la encomienda y a qué hora se entregó.
+          </p>
+          <div style={{
+            background: theme.colors.bgCard,
+            borderRadius: theme.radius['2xl'],
+            padding: '13px 16px',
+            border: `1px solid ${theme.colors.border}`,
+          }}>
+            <input
+              value={entregaPuertaNombre}
+              onChange={e => setEntregaPuertaNombre(e.target.value)}
+              placeholder="Nombre de quien recibe"
+              style={{
+                width: '100%',
+                background: 'none',
+                border: 'none',
+                outline: 'none',
+                fontSize: theme.fonts.sizes.base,
+                fontFamily: theme.fonts.family,
+                color: theme.colors.text,
+              }}
+            />
+          </div>
+          <div style={{
+            background: theme.colors.bgCard,
+            borderRadius: theme.radius['2xl'],
+            padding: '13px 16px',
+            border: `1px solid ${theme.colors.border}`,
+          }}>
+            <input
+              type="time"
+              value={entregaPuertaHora}
+              onChange={e => setEntregaPuertaHora(e.target.value)}
+              style={{
+                width: '100%',
+                background: 'none',
+                border: 'none',
+                outline: 'none',
+                fontSize: theme.fonts.sizes.base,
+                fontFamily: theme.fonts.family,
+                color: theme.colors.text,
+              }}
+            />
+          </div>
+          <Button variant="primary" fullWidth onClick={confirmarEntregaPuerta}>Confirmar Entrega</Button>
         </div>
       </Modal>
 
