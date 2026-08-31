@@ -437,16 +437,18 @@ export default function CorrespondenciaPage() {
               }}
             />
           </div>
-          <div style={{
-            background: theme.colors.bgCard,
-            borderRadius: theme.radius['2xl'],
-            padding: '13px 16px',
-            border: `1px solid ${theme.colors.border}`,
-          }}>
-            <input
-              type="time"
-              value={entregaPuertaHora}
-              onChange={e => setEntregaPuertaHora(e.target.value)}
+          <div>
+            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Hora de entrega</div>
+            <div style={{
+              background: theme.colors.bgCard,
+              borderRadius: theme.radius['2xl'],
+              padding: '13px 16px',
+              border: `1px solid ${theme.colors.border}`,
+            }}>
+              <input
+                type="time"
+                value={entregaPuertaHora}
+                onChange={e => setEntregaPuertaHora(e.target.value)}
               style={{
                 width: '100%',
                 background: 'none',
@@ -457,6 +459,7 @@ export default function CorrespondenciaPage() {
                 color: theme.colors.text,
               }}
             />
+          </div>
           </div>
           <Button variant="primary" fullWidth onClick={confirmarEntregaPuerta}>Confirmar Entrega</Button>
         </div>
