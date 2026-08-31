@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell';
 import PageHeader from '../../components/layout/PageHeader';
@@ -17,6 +17,13 @@ export default function ZonasComunesPage() {
   const accesoBloqueado = rolActivo === 'propietario' && !esResidente;
   const esHuesped = rolActivo === 'huesped-temporal';
   const [zonaRestringidaInfo, setZonaRestringidaInfo] = useState(null);
+  const [showAvisoHuesped, setShowAvisoHuesped] = useState(false);
+
+  useEffect(() => {
+    if (esHuesped) {
+      setShowAvisoHuesped(true);
+    }
+  }, [esHuesped]);
 
   return (
     <AppShell>
@@ -76,6 +83,17 @@ export default function ZonasComunesPage() {
       </div>
       </ModuloGate>
       </>)}
+
+      {/* Aviso para huéspedes temporales al entrar */}
+      <Modal isOpen={showAvisoHuesped} onClose={() => setShowAvisoHuesped(false)} title="Aviso importante">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', textAlign: 'center' }}>
+          <div style={{ fontSize: '40px' }}>ℹ️</div>
+          <p style={{ margin: 0, fontSize: theme.fonts.sizes.sm, color: theme.colors.text, lineHeight: 1.6 }}>
+            Algunas zonas comunes pueden estar restringidas para huéspedes de renta corta por la administración.
+          </p>
+          <Button variant="primary" fullWidth onClick={() => setShowAvisoHuesped(false)}>Aceptar</Button>
+        </div>
+      </Modal>
 
       {/* Explicación de zona restringida (Huésped Temporal) */}
       <Modal isOpen={!!zonaRestringidaInfo} onClose={() => setZonaRestringidaInfo(null)} title="Zona restringida">

@@ -132,6 +132,18 @@ export default function VisitasNuevoPage() {
     setProfesionOtro('');
   }, [tipoSeleccionado]);
 
+  const esGuardiaOAdmin = rolActivo === 'guardia' || rolActivo === 'administrador';
+
+  useEffect(() => {
+    if (!esGuardiaOAdmin && ubicacionActiva) {
+      const u = unidades.find(un => un.id === ubicacionActiva.id);
+      const torreLabel = `Torre ${u?.torreNumero || ubicacionActiva.torreNumero || ''}`;
+      const deptoCodigo = u?.codigo || ubicacionActiva.codigo || `${ubicacionActiva.deptoNumero || ''}`;
+      setTorre(torreLabel);
+      setDepto(deptoCodigo);
+    }
+  }, [esGuardiaOAdmin, ubicacionActiva, unidades]);
+
   useEffect(() => {
     setEstacionamientosSeleccionados(0);
     setVehiculos([]);
@@ -355,6 +367,7 @@ export default function VisitasNuevoPage() {
               <div style={{ fontWeight: theme.fonts.weights.semibold, textAlign: 'center', fontSize: theme.fonts.sizes.base }}>
                 Cantidad de invitados
               </div>
+              {esGuardiaOAdmin ? (
               <div style={{ display: 'flex', gap: '12px' }}>
                 <div style={{ flex: 1 }}>
                   <SelectField label="Torre:" value={torre} options={torres} onChange={setTorre} />
@@ -363,6 +376,18 @@ export default function VisitasNuevoPage() {
                   <SelectField label="Depto:" value={depto} options={departamentos} onChange={setDepto} />
                 </div>
               </div>
+              ) : (
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Torre:</div>
+                  <div style={{ padding: '10px 14px', background: theme.colors.bgMuted, borderRadius: theme.radius.lg, border: `1px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>{torre || '—'}</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Depto:</div>
+                  <div style={{ padding: '10px 14px', background: theme.colors.bgMuted, borderRadius: theme.radius.lg, border: `1px solid ${theme.colors.border}`, fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>{depto || '—'}</div>
+                </div>
+              </div>
+              )}
               {rolActivo === 'administrador' && (
                 <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontFamily: theme.fonts.family, userSelect: 'none' }}>
                   <input
