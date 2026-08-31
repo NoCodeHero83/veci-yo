@@ -10,6 +10,7 @@ import theme from '../../config/theme';
 
 const TORRES_OPCIONES = ['Torre 1', 'Torre 2', 'Torre 3', 'Seguridad', 'Administrador'];
 const PISOS_OPCIONES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+const DEPTOS_OPCIONES = ['101', '102', '103', '104', '105', '106', '201', '202', '301', '302', '303', '304', '305', '306', '401', '402', '403', '404', '405', '406'];
 const personas = ['Mario', 'Ana', 'Carlos'];
 const adminList = ['Soller', 'Carola', 'Marcela'];
 const allPersonas = [...personas, ...adminList, ...guardiasSeguridad.map(g => g.nombre)];
@@ -32,6 +33,7 @@ const AVATAR_MAP = {
   'Roberto Hornado': '👮',
   'Juan Franco': '👮',
   'Seguridad': '👮',
+  'Administrador': '🛡️',
 };
 
 const DEFAULT_AVATAR = '💬';
@@ -54,10 +56,13 @@ export default function ChatPage() {
   const [texto, setTexto] = useState('');
   const [soloNoLeidos, setSoloNoLeidos] = useState(false);
   const [filtroChat, setFiltroChat] = useState('todos');
+  const [filtroTorre, setFiltroTorre] = useState('');
+  const [filtroDepto, setFiltroDepto] = useState('');
   const bottomRef = useRef(null);
   const isStaff = torre === 'Seguridad' || torre === 'Administrador';
 
   const esGuardia = rolActivo === 'guardia';
+  const esAdmin = rolActivo === 'administrador';
   const esPropietario = rolActivo === 'propietario';
   const esHuespedTemporal = rolActivo === 'huesped-temporal';
   const nombreUsuario = usuario?.nombre || 'Yo';
@@ -105,6 +110,23 @@ export default function ChatPage() {
       });
     }
 
+    // Add generic Administrador conversation for admins
+    if (esAdmin && !result.find(c => c.nombre === 'Administrador')) {
+      const adminMsgs = mensajes.filter(m => m.persona === 'Administrador');
+      const adminNoLeidos = adminMsgs.filter(m => !m.leido).length;
+      const ultimoAdmin = adminMsgs[adminMsgs.length - 1] || {};
+      result.push({
+        id: 'Administrador',
+        tipo: 'individual',
+        nombre: 'Administrador',
+        ultimoMensaje: ultimoAdmin.texto || '',
+        ultimaHora: ultimoAdmin.hora || '',
+        ultimaFecha: ultimoAdmin.fecha || '',
+        avatarEmoji: '🛡️',
+        noLeidos: adminNoLeidos,
+      });
+    }
+
     gruposVisibles.forEach(grupo => {
       const noLeidos = grupo.mensajes.filter(m => !m.leido).length;
       const ultimo = grupo.mensajes[grupo.mensajes.length - 1] || {};
@@ -128,6 +150,12 @@ export default function ChatPage() {
     if (soloNoLeidos && c.noLeidos === 0) return false;
     if (filtroChat === 'individuales' && c.tipo !== 'individual') return false;
     if (filtroChat === 'grupos' && c.tipo !== 'grupo') return false;
+    if (esGuardia && filtroTorre && c.nombre !== 'Seguridad' && c.nombre !== 'Administrador') {
+      if (c.nombre !== filtroTorre) return false;
+    }
+    if (esGuardia && filtroDepto && c.nombre !== 'Seguridad' && c.nombre !== 'Administrador') {
+      if (!c.nombre.includes(filtroDepto)) return false;
+    }
     return true;
   });
 
@@ -223,11 +251,13 @@ export default function ChatPage() {
         <>
           <PageHeader title="Chat" onBack={() => navigate(-1)} />
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <div style={{ padding: '12px 16px', borderBottom: `1px solid ${theme.colors.border}` }}>
-              <Button variant="primary" fullWidth onClick={handleNewChat}>
-                + Nuevo chat
-              </Button>
-            </div>
+            {!esGuardia && (
+              <div style={{ padding: '12px 16px', borderBottom: `1px solid ${theme.colors.border}` }}>
+                <Button variant="primary" fullWidth onClick={handleNewChat}>
+                  + Nuevo chat
+                </Button>
+              </div>
+            )}
             <div style={{
               padding: '6px 16px 4px', flexShrink: 0,
               background: theme.colors.bgCard,
@@ -262,7 +292,50 @@ export default function ChatPage() {
                   </button>
                 )}
               </div>
-              {!esGuardia && (
+              {esGuardia ? (
+                <div style={{ display: 'flex', gap: '6px', marginTop: '6px', paddingBottom: '4px' }}>
+                  <select
+                    value={filtroTorre}
+                    onChange={e => { setFiltroTorre(e.target.value); setFiltroDepto(''); }}
+                    style={{
+                      padding: '4px 8px', borderRadius: theme.radius.full,
+                      border: `1.5px solid ${filtroTorre ? theme.colors.primary : theme.colors.border}`,
+                      background: filtroTorre ? theme.colors.primaryLight : theme.colors.bgMuted,
+                      fontSize: theme.fonts.sizes.xs,
+                      fontFamily: theme.fonts.family,
+                      fontWeight: theme.fonts.weights.semibold,
+                      color: filtroTorre ? theme.colors.primary : theme.colors.textSecondary,
+                      cursor: 'pointer', outline: 'none',
+                    }}
+                  >
+                    <option value="">Todas las torres</option>
+                    {['Torre 1', 'Torre 2', 'Torre 3'].map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                  {filtroTorre && filtroTorre !== 'Seguridad' && filtroTorre !== 'Administrador' && (
+                    <select
+                      value={filtroDepto}
+                      onChange={e => setFiltroDepto(e.target.value)}
+                      style={{
+                        padding: '4px 8px', borderRadius: theme.radius.full,
+                        border: `1.5px solid ${filtroDepto ? theme.colors.primary : theme.colors.border}`,
+                        background: filtroDepto ? theme.colors.primaryLight : theme.colors.bgMuted,
+                        fontSize: theme.fonts.sizes.xs,
+                        fontFamily: theme.fonts.family,
+                        fontWeight: theme.fonts.weights.semibold,
+                        color: filtroDepto ? theme.colors.primary : theme.colors.textSecondary,
+                        cursor: 'pointer', outline: 'none',
+                      }}
+                    >
+                      <option value="">Todos los deptos</option>
+                      {DEPTOS_OPCIONES.map(d => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              ) : (
                 <div style={{ display: 'flex', gap: '6px', marginTop: '6px', paddingBottom: '4px' }}>
                   {[
                     { key: 'todos', label: 'Todos' },
@@ -378,6 +451,17 @@ export default function ChatPage() {
                 <span>👮</span>
                 <span>
                   Personal de seguridad de turno: <strong>{guardiasSeguridad.map(g => g.nombre).join(', ')}</strong>
+                </span>
+              </div>
+            )}
+            {selectedConv.nombre === 'Administrador' && (
+              <div style={{
+                padding: '8px 16px', background: '#F0FDF4', borderBottom: `1px solid ${theme.colors.border}`,
+                fontSize: theme.fonts.sizes.xs, color: '#166534', display: 'flex', alignItems: 'center', gap: '6px',
+              }}>
+                <span>🛡️</span>
+                <span>
+                  Chat con <strong>Administración</strong> — el mensaje será visible para todo el equipo administrativo.
                 </span>
               </div>
             )}
