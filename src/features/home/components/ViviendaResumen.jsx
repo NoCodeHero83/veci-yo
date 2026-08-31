@@ -43,6 +43,7 @@ export default function ViviendaResumen() {
   const { rolActivo, esIncognito, sinPropiedades, esResidente, ubicacionActiva } = useApp();
   const esAdministrador = rolActivo === 'administrador';
   const esHuespedTemporal = rolActivo === 'huesped-temporal';
+  const esGuardia = rolActivo === 'guardia';
   const noResidente = rolActivo === 'propietario' && !esResidente;
 
   const handleConfiguracion = () => {
@@ -85,7 +86,7 @@ export default function ViviendaResumen() {
         <h2 style={{ fontSize: theme.fonts.sizes.xl, fontWeight: theme.fonts.weights.bold, color: theme.colors.text }}>
           Vivienda
         </h2>
-        {rolActivo !== 'huesped-temporal' && (
+        {rolActivo !== 'huesped-temporal' && !esGuardia && (
           <button
             onClick={handleConfiguracion}
             style={{
