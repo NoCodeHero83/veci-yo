@@ -86,6 +86,7 @@ export function AppProvider({ children }) {
   // pantallas compartidas (como el Home) ramifiquen su comportamiento según
   // el rol sin duplicar pantallas para cada uno.
   const [rolActivo, setRolActivo] = useState(null);
+  const [turnoTerminado, setTurnoTerminado] = useState(false);
 
   const addToast = useCallback((message, type = 'success') => {
     const id = Date.now();
@@ -162,12 +163,18 @@ export function AppProvider({ children }) {
     setModo(null);
     setRolActivo(null);
     setAutenticado(false);
+    setTurnoTerminado(false);
     setGratitudUsada({});
     setResidentesDeclarados(residentesDeclaradosInit);
   }, []);
 
   const completarVerificacion = useCallback(() => {
     setUsuario(prev => prev ? { ...prev, verificado: true } : prev);
+  }, []);
+
+  // Terminar turno de guardia
+  const terminarTurno = useCallback(() => {
+    setTurnoTerminado(true);
   }, []);
 
   // Correspondencia
@@ -830,7 +837,7 @@ export function AppProvider({ children }) {
   return (
     <AppContext.Provider value={{
       edificioActivo, setEdificioActivo,
-      autenticado, modo, usuario, rolActivo, setRolActivo,
+      autenticado, modo, usuario, rolActivo, setRolActivo, turnoTerminado, terminarTurno,
       esIncognito, tienePropiedades, sinPropiedades,
       iniciarSesion, registrarUsuario, ingresarIncognito, ingresarComoDemo, completarVerificacion, cerrarSesion,
       mostrarBienvenida, cerrarBienvenida,

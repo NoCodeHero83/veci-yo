@@ -239,6 +239,28 @@ export default function InquilinoLiderHome() {
         </button>
       )}
 
+      {/* Configuración — guardia */}
+      {esGuardia && (
+        <button
+          type="button"
+          onClick={() => navigate('/configuracion')}
+          style={{
+            width: '100%',
+            padding: '12px',
+            borderRadius: theme.radius.full,
+            background: theme.colors.primary,
+            color: theme.colors.text,
+            fontWeight: theme.fonts.weights.semibold,
+            fontSize: theme.fonts.sizes.sm,
+            border: 'none',
+            cursor: 'pointer',
+            fontFamily: theme.fonts.family,
+          }}
+        >
+          Configuración
+        </button>
+      )}
+
       {/* Feed de notificaciones — para propietario no-residente */}
       {rolActivo === 'propietario' && !esResidente && !esAdmin && (
         <div style={{ ...cardStyle, padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
