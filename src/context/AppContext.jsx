@@ -64,6 +64,19 @@ export function AppProvider({ children }) {
 
   // Coadministradores y sus roles asignados por propiedad
   const [coadministradores, setCoadministradores] = useState([]);
+
+  const agregarCoadministrador = useCallback((datos) => {
+    setCoadministradores(prev => [...prev, { id: Date.now(), ...datos }]);
+  }, []);
+
+  const actualizarCoadministrador = useCallback((item) => {
+    setCoadministradores(prev => prev.map(c => c.id === item.id ? { ...c, ...item } : c));
+  }, []);
+
+  const eliminarCoadministrador = useCallback((id) => {
+    setCoadministradores(prev => prev.filter(c => c.id !== id));
+  }, []);
+
   // Gratitud: regalo del mes usado por usuario (email -> { usado: bool, proximaFecha: string })
   const [gratitudUsada, setGratitudUsada] = useState({});
 
@@ -897,7 +910,7 @@ export function AppProvider({ children }) {
       toasts, addToast,
       esResidente, puedeVerResidentes, residentesDeclarados, togglePropietarioResidente,
       alias, usaAliasCuadroHonor, usaAliasZonas, actualizarAlias, sugerirAlias,
-      coadministradores, setCoadministradores,
+      coadministradores, agregarCoadministrador, actualizarCoadministrador, eliminarCoadministrador,
       gratitudUsada, setGratitudUsada,
       tiposDocumentoPorPais,
     }}>

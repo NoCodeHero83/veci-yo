@@ -51,6 +51,7 @@ import AdministradorZonasPage from './features/administrador/AdministradorZonasP
 import AdministradorGestionZonasPage from './features/administrador/AdministradorGestionZonasPage';
 import AdministradorGestionZonaFormPage from './features/administrador/AdministradorGestionZonaFormPage';
 import AdministradorGestionZonaReservasPage from './features/administrador/AdministradorGestionZonaReservasPage';
+import CoadministradoresPage from './features/administrador/CoadministradoresPage';
 
 // Propietario
 import PropietarioConfiguracionPage from './features/propietario/PropietarioConfiguracionPage';
@@ -144,6 +145,7 @@ export default function App() {
         <Route path="/admin/permisos" element={<AdministradorPermisosPage />} />
         <Route path="/admin/seguridad" element={<AdministradorSeguridadPage />} />
         <Route path="/admin/reportes" element={<AdministradorReportesPage />} />
+        <Route path="/admin/coadministradores" element={<CoadministradoresPage />} />
         <Route path="/admin/zonas" element={<AdministradorZonasPage />} />
         <Route path="/admin/gestion-zonas" element={<AdministradorGestionZonasPage />} />
         <Route path="/admin/gestion-zonas/:id" element={<AdministradorGestionZonaFormPage />} />

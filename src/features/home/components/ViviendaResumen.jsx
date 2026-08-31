@@ -20,6 +20,7 @@ const CONFIG_ADMIN_OPCIONES = [
   { key: 'arquitectura', label: 'ARQUITECTURA', path: '/admin/arquitectura' },
   { key: 'permisos', label: 'PERMISOS', path: '/admin/permisos' },
   { key: 'seguridad', label: 'SEGURIDAD', path: '/admin/seguridad' },
+  { key: 'coadministradores', label: 'COADMINISTRADORES', path: '/admin/coadministradores' },
   { key: 'reportes', label: 'REPORTES', path: '/admin/reportes' },
   { key: 'reclamos', label: 'CENTRO DE ATENCIÓN', path: '/perfil/soporte/reclamos' },
 ];
