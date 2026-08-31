@@ -492,14 +492,14 @@ function TorreDetailView({ torre, onBack }) {
   const [deleteUnidad, setDeleteUnidad] = useState(null);
   const [menuUnidad, setMenuUnidad] = useState(null);
   const [showUnidadDetalle, setShowUnidadDetalle] = useState(null);
-  const [form, setForm] = useState({ codigo: '', piso: '1', tipologiaId: '', estacionamientos: '0', ubicacionParking: '', asignarNombre: '', asignarEmail: '' });
+  const [form, setForm] = useState({ codigo: '', piso: '1', tipologiaId: '', estacionamientos: '0', ubicacionParking: '', asignarNombre: '', asignarEmail: '', spotAsignado: '' });
 
-  const resetForm = () => setForm({ codigo: '', piso: '1', tipologiaId: '', estacionamientos: '0', ubicacionParking: '', asignarNombre: '', asignarEmail: '' });
+  const resetForm = () => setForm({ codigo: '', piso: '1', tipologiaId: '', estacionamientos: '0', ubicacionParking: '', asignarNombre: '', asignarEmail: '', spotAsignado: '' });
 
   const abrirCrear = () => { resetForm(); setShowCrear(true); };
   const abrirEditar = (u) => {
     setMenuUnidad(null);
-    setForm({ codigo: u.codigo, piso: String(u.piso), tipologiaId: String(u.tipologiaId), estacionamientos: String(u.estacionamientos ?? 0), ubicacionParking: u.ubicacionParking || '', asignarNombre: '', asignarEmail: '' });
+    setForm({ codigo: u.codigo, piso: String(u.piso), tipologiaId: String(u.tipologiaId), estacionamientos: String(u.estacionamientos ?? 0), ubicacionParking: u.ubicacionParking || '', asignarNombre: '', asignarEmail: '', spotAsignado: u.spotAsignado || '' });
     setEditUnidad(u);
   };
 
@@ -510,7 +510,7 @@ function TorreDetailView({ torre, onBack }) {
     agregarUnidad({
       codigo: form.codigo, torreNumero: torre.numero, piso: parseInt(form.piso) || 1,
       bloqueId: null, tipologiaId: parseInt(form.tipologiaId), estacionamientos: parseInt(form.estacionamientos) || 0,
-      ubicacionParking: form.ubicacionParking,
+      ubicacionParking: form.ubicacionParking, spotAsignado: form.spotAsignado || null,
       propietarioAsignado: null, propietarioEmail: null, estado: 'disponible', configuracionId: null,
     });
     if (form.asignarNombre && form.asignarEmail) {
@@ -525,7 +525,7 @@ function TorreDetailView({ torre, onBack }) {
     actualizarUnidad({
       ...editUnidad, codigo: form.codigo, piso: parseInt(form.piso) || 1,
       tipologiaId: parseInt(form.tipologiaId), estacionamientos: parseInt(form.estacionamientos) || 0,
-      ubicacionParking: form.ubicacionParking,
+      ubicacionParking: form.ubicacionParking, spotAsignado: form.spotAsignado || null,
     });
     if (form.asignarNombre && form.asignarEmail && !editUnidad.propietarioAsignado) {
       asignarPropietarioUnidad(editUnidad.id, { nombre: form.asignarNombre, email: form.asignarEmail });
@@ -540,15 +540,12 @@ function TorreDetailView({ torre, onBack }) {
     let asignadoA = null;
     let unidadAsignada = null;
     for (const u of unidadesTorre) {
-      const vehiculos = vehiculosPrivados[u.id] || [];
-      if (vehiculos.some(v => v.spotAsignado === spotId)) {
+      if (u.spotAsignado === spotId) {
         asignadoA = u.codigo;
         unidadAsignada = u;
         break;
       }
     }
-    // Also check: if a unit's assigned spots extend beyond its own count
-    // For now, auto-assign spots sequentially to units based on their estacionamientos count
     if (!asignadoA) {
       let accumulated = 0;
       for (const u of unidadesTorre) {
@@ -567,6 +564,15 @@ function TorreDetailView({ torre, onBack }) {
     }
     parkingSpots.push({ id: spotId, numero: i, asignadoA, unidadAsignada });
   }
+
+  // Available spots for the current form (exclude spots assigned to other units)
+  const spotsDisponiblesParaForm = parkingSpots.filter(s => {
+    if (!s.asignadoA) return true;
+    // If editing, include the current unit's spot
+    if (editUnidad && s.asignadoA === editUnidad.codigo) return true;
+    return false;
+  });
+  const spotOptions = spotsDisponiblesParaForm.map(s => ({ value: s.id, label: `${s.id}${s.asignadoA ? ` (${s.asignadoA})` : ' (Libre)'}` }));
 
   const spotsOcupados = parkingSpots.filter(s => s.asignadoA).length;
   const spotsLibres = totalEstacionamientos - spotsOcupados;
@@ -708,6 +714,12 @@ function TorreDetailView({ torre, onBack }) {
           </div>
           <InputField label="Cantidad de estacionamientos" value={form.estacionamientos} onChange={v => setForm(p => ({ ...p, estacionamientos: v }))} placeholder="0" type="number" />
           <InputField label="Ubicación estacionamientos (piso/sótano)" value={form.ubicacionParking} onChange={v => setForm(p => ({ ...p, ubicacionParking: v }))} placeholder="Ej: Sótano -2" />
+          {parseInt(form.estacionamientos) > 0 && spotOptions.length > 0 && (
+            <div>
+              <span style={labelStyle}>Estacionamiento(s) a asignar</span>
+              <SelectField value={form.spotAsignado} options={spotOptions} onChange={v => setForm(p => ({ ...p, spotAsignado: v }))} placeholder="Seleccionar estacionamiento" />
+            </div>
+          )}
           <div style={{ borderTop: `1px solid ${theme.colors.borderLight}`, paddingTop: '12px', marginTop: '4px' }}>
             <p style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, marginBottom: '8px' }}>
               Asignar propietario (opcional)
@@ -733,6 +745,12 @@ function TorreDetailView({ torre, onBack }) {
           </div>
           <InputField label="Cantidad de estacionamientos" value={form.estacionamientos} onChange={v => setForm(p => ({ ...p, estacionamientos: v }))} placeholder="0" type="number" />
           <InputField label="Ubicación estacionamientos (piso/sótano)" value={form.ubicacionParking} onChange={v => setForm(p => ({ ...p, ubicacionParking: v }))} placeholder="Ej: Sótano -2" />
+          {parseInt(form.estacionamientos) > 0 && spotOptions.length > 0 && (
+            <div>
+              <span style={labelStyle}>Estacionamiento(s) a asignar</span>
+              <SelectField value={form.spotAsignado} options={spotOptions} onChange={v => setForm(p => ({ ...p, spotAsignado: v }))} placeholder="Seleccionar estacionamiento" />
+            </div>
+          )}
           {!editUnidad?.propietarioAsignado && (
             <div style={{ borderTop: `1px solid ${theme.colors.borderLight}`, paddingTop: '12px', marginTop: '4px' }}>
               <p style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, marginBottom: '8px' }}>

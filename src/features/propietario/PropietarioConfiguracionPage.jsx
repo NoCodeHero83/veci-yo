@@ -65,7 +65,7 @@ function mensajeResidencia(esResidente) {
 
 export default function PropietarioConfiguracionPage({ basePath = '/propietario/configuracion' } = {}) {
   const navigate = useNavigate();
-  const { residentesPropietario, eliminarResidente, agregarResidente, addToast, rolActivo, unidades, propietariosInvited, aceptarInvitacion, agregarUbicacion, usuario, tipologias, esResidente, togglePropietarioResidente } = useApp();
+  const { residentesPropietario, eliminarResidente, agregarResidente, addToast, rolActivo, unidades, propietariosInvited, aceptarInvitacion, agregarUbicacion, usuario, tipologias, esResidente, togglePropietarioResidente, ubicacionActiva, vehiculosPrivados, agregarVehiculo, eliminarVehiculo } = useApp();
 
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [menuResidente, setMenuResidente] = useState(null);
@@ -80,6 +80,29 @@ export default function PropietarioConfiguracionPage({ basePath = '/propietario/
   const [showVotacion, setShowVotacion] = useState(false);
   const [votacion, setVotacion] = useState({ titulo: '', descripcion: '', categoria: '', destinatario: '', urlVideo: '', esVotacion: false, umbral: '', tiempoMaximo: '' });
   const setVotacionField = (key) => (v) => setVotacion(p => ({ ...p, [key]: v }));
+
+  const [showAgregarVehiculo, setShowAgregarVehiculo] = useState(false);
+  const [formVehiculo, setFormVehiculo] = useState({ placa: '', tipo: 'Automóvil' });
+
+  const unidadActual = ubicacionActiva ? unidades.find(u => u.id === ubicacionActiva.id) : null;
+  const maxVehiculos = unidadActual?.estacionamientos ?? 0;
+  const vehiculosUsuario = ubicacionActiva ? (vehiculosPrivados[ubicacionActiva.id] || []) : [];
+  const puedeAgregarVehiculos = maxVehiculos > 0;
+
+  const handleAgregarVehiculo = () => {
+    if (!formVehiculo.placa.trim()) {
+      addToast('Ingresa la placa del vehículo', 'error');
+      return;
+    }
+    if (vehiculosUsuario.length >= maxVehiculos) {
+      addToast(`Máximo ${maxVehiculos} vehículo(s) para este departamento`, 'error');
+      return;
+    }
+    agregarVehiculo(ubicacionActiva.id, { placa: formVehiculo.placa.toUpperCase().trim(), tipo: formVehiculo.tipo });
+    setFormVehiculo({ placa: '', tipo: 'Automóvil' });
+    setShowAgregarVehiculo(false);
+    addToast('Vehículo registrado correctamente', 'success');
+  };
 
   const handleEliminar = () => {
     addToast(`${deleteResidente?.nombre} ha sido retirad${deleteResidente?.rol === 'Corresidente' ? 'a' : 'o'} como residente de esta propiedad y dejó de tener acceso a esta información.`, 'success');
@@ -275,6 +298,38 @@ const handleAgregarFamiliar = () => {
           );
         })}
 
+        {/* Mis Vehículos */}
+        {puedeAgregarVehiculos && (
+          <>
+            <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.bold, color: theme.colors.text, marginTop: '8px' }}>
+              Mis Vehículos
+            </div>
+            <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '16px', boxShadow: theme.shadows.card }}>
+              <p style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, textAlign: 'center', marginBottom: '12px' }}>
+                {vehiculosUsuario.length} de {maxVehiculos} estacionamiento(s) asignado(s)
+              </p>
+
+              {vehiculosUsuario.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+                  {vehiculosUsuario.map(v => (
+                    <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: theme.colors.bgMuted, borderRadius: theme.radius.md }}>
+                      <div>
+                        <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>{v.placa}</div>
+                        <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>{v.tipo}</div>
+                      </div>
+                      <button onClick={() => { eliminarVehiculo(ubicacionActiva.id, v.id); addToast('Vehículo eliminado', 'success'); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.colors.danger, fontSize: theme.fonts.sizes.xs, fontFamily: theme.fonts.family }}>Eliminar</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {vehiculosUsuario.length < maxVehiculos && (
+                <Button variant="primary" fullWidth onClick={() => setShowAgregarVehiculo(true)}>+ Agregar vehículo</Button>
+              )}
+            </div>
+          </>
+        )}
+
         <div style={{ height: '16px' }} />
       </div>
 
@@ -414,6 +469,22 @@ const handleAgregarFamiliar = () => {
             </div>
           )}
           <Button variant="primary" fullWidth onClick={handlePublicar}>Publicar</Button>
+        </div>
+      </Modal>
+
+      {/* Agregar vehículo */}
+      <Modal isOpen={showAgregarVehiculo} onClose={() => setShowAgregarVehiculo(false)} title="Agregar vehículo">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <InputField label="Placa del vehículo" value={formVehiculo.placa} onChange={v => setFormVehiculo(p => ({ ...p, placa: v }))} placeholder="Ej: ABC-1234" />
+          <div>
+            <span style={{ display: 'block', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Tipo de vehículo</span>
+            <SelectField value={formVehiculo.tipo} options={['Automóvil', 'Camioneta', 'Motocicleta', 'Bicicleta', 'Otro']} onChange={v => setFormVehiculo(p => ({ ...p, tipo: v }))} />
+          </div>
+          <div style={{ background: theme.colors.secondaryLight, borderRadius: theme.radius.lg, padding: '10px 14px', fontSize: theme.fonts.sizes.xs, color: theme.colors.secondary, lineHeight: 1.5 }}>
+            Puedes registrar hasta {maxVehiculos} vehículo(s). Ya tienes {vehiculosUsuario.length} registrado(s).
+          </div>
+          <Button variant="primary" fullWidth onClick={handleAgregarVehiculo}>Registrar vehículo</Button>
+          <Button variant="ghost" fullWidth onClick={() => setShowAgregarVehiculo(false)}>Cancelar</Button>
         </div>
       </Modal>
     </AppShell>

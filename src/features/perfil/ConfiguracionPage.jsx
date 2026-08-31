@@ -5,7 +5,6 @@ import InputField from '../../components/ui/InputField';
 import Toggle from '../../components/ui/Toggle';
 import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
-import SelectField from '../../components/ui/SelectField';
 import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
 import { guardiasSeguridad as guardiasData } from '../../data/mockData';
@@ -52,7 +51,7 @@ function CampoBloqueado({ label, value, isLast }) {
 }
 
 export default function ConfiguracionPage() {
-  const { usuario, configuracionApp, actualizarConfiguracionApp, pausarCuenta, addToast, rolActivo, turnoTerminado, terminarTurno, ubicacionActiva, unidades, vehiculosPrivados, agregarVehiculo, eliminarVehiculo } = useApp();
+  const { usuario, configuracionApp, actualizarConfiguracionApp, pausarCuenta, addToast, rolActivo, turnoTerminado, terminarTurno } = useApp();
 
   const nombre = usuario?.nombre || 'Guillermo';
   const apellido = usuario?.apellido || 'Coradir';
@@ -60,18 +59,11 @@ export default function ConfiguracionPage() {
   const esGuardia = rolActivo === 'guardia';
   const guardiaActual = esGuardia ? guardiasData.find(g => g.nombre === (usuario?.nombre || 'Roberto Hornado')) : null;
 
-  const unidadActual = ubicacionActiva ? unidades.find(u => u.id === ubicacionActiva.id) : null;
-  const maxVehiculos = unidadActual?.estacionamientos ?? 0;
-  const vehiculosUsuario = vehiculosPrivados[ubicacionActiva?.id] || [];
-  const puedeAgregarVehiculos = !esGuardia && maxVehiculos > 0;
-
   const [showPausar, setShowPausar] = useState(false);
   const [showEliminar, setShowEliminar] = useState(false);
-  const [showAgregarVehiculo, setShowAgregarVehiculo] = useState(false);
   const [pausaActiva, setPausaActiva] = useState(false);
   const [razonEliminar, setRazonEliminar] = useState(RAZONES_ELIMINAR[0]);
   const [otraRazon, setOtraRazon] = useState('');
-  const [formVehiculo, setFormVehiculo] = useState({ placa: '', tipo: 'Automóvil' });
 
   const usarAltNotif = configuracionApp.usarAltNotif;
 
@@ -91,21 +83,6 @@ export default function ConfiguracionPage() {
   const handleTerminarTurno = () => {
     terminarTurno();
     addToast('Turno finalizado. Tus privilegios de seguridad se han deshabilitado.', 'success');
-  };
-
-  const handleAgregarVehiculo = () => {
-    if (!formVehiculo.placa.trim()) {
-      addToast('Ingresa la placa del vehículo', 'error');
-      return;
-    }
-    if (vehiculosUsuario.length >= maxVehiculos) {
-      addToast(`Máximo ${maxVehiculos} vehículo(s) para este departamento`, 'error');
-      return;
-    }
-    agregarVehiculo(ubicacionActiva.id, { placa: formVehiculo.placa.toUpperCase().trim(), tipo: formVehiculo.tipo });
-    setFormVehiculo({ placa: '', tipo: 'Automóvil' });
-    setShowAgregarVehiculo(false);
-    addToast('Vehículo registrado correctamente', 'success');
   };
 
   function obtenerTurnoActual(guardia) {
@@ -295,36 +272,6 @@ export default function ConfiguracionPage() {
           </div>
         )}
 
-        {/* Mis Vehículos — solo para residentes con estacionamientos */}
-        {puedeAgregarVehiculos && (
-          <div style={cardStyle}>
-            <h3 style={{ fontSize: theme.fonts.sizes.md, fontWeight: theme.fonts.weights.bold, color: theme.colors.text, textAlign: 'center', marginBottom: '4px' }}>
-              Mis Vehículos
-            </h3>
-            <p style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, textAlign: 'center', marginBottom: '14px' }}>
-              {vehiculosUsuario.length} de {maxVehiculos} estacionamiento(s) asignado(s)
-            </p>
-
-            {vehiculosUsuario.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
-                {vehiculosUsuario.map(v => (
-                  <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: theme.colors.bgMuted, borderRadius: theme.radius.md }}>
-                    <div>
-                      <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>{v.placa}</div>
-                      <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>{v.tipo}</div>
-                    </div>
-                    <button onClick={() => { eliminarVehiculo(ubicacionActiva.id, v.id); addToast('Vehículo eliminado', 'success'); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.colors.danger, fontSize: theme.fonts.sizes.xs, fontFamily: theme.fonts.family }}>Eliminar</button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {vehiculosUsuario.length < maxVehiculos && (
-              <Button variant="primary" fullWidth onClick={() => setShowAgregarVehiculo(true)}>+ Agregar vehículo</Button>
-            )}
-          </div>
-        )}
-
         {/* Cuenta */}
         <div style={cardStyle}>
           <h3 style={{ fontSize: theme.fonts.sizes.md, fontWeight: theme.fonts.weights.bold, color: theme.colors.text, textAlign: 'center', marginBottom: '14px' }}>
@@ -425,21 +372,6 @@ export default function ConfiguracionPage() {
         </div>
       </Modal>
 
-      {/* Agregar vehículo */}
-      <Modal isOpen={showAgregarVehiculo} onClose={() => setShowAgregarVehiculo(false)} title="Agregar vehículo">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <InputField label="Placa del vehículo" value={formVehiculo.placa} onChange={v => setFormVehiculo(p => ({ ...p, placa: v }))} placeholder="Ej: ABC-1234" />
-          <div>
-            <span style={{ display: 'block', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px', fontWeight: theme.fonts.weights.medium }}>Tipo de vehículo</span>
-            <SelectField value={formVehiculo.tipo} options={['Automóvil', 'Camioneta', 'Motocicleta', 'Bicicleta', 'Otro']} onChange={v => setFormVehiculo(p => ({ ...p, tipo: v }))} />
-          </div>
-          <div style={{ background: theme.colors.secondaryLight, borderRadius: theme.radius.lg, padding: '10px 14px', fontSize: theme.fonts.sizes.xs, color: theme.colors.secondary, lineHeight: 1.5 }}>
-            Puedes registrar hasta {maxVehiculos} vehículo(s). Ya tienes {vehiculosUsuario.length} registrado(s).
-          </div>
-          <Button variant="primary" fullWidth onClick={handleAgregarVehiculo}>Registrar vehículo</Button>
-          <Button variant="ghost" fullWidth onClick={() => setShowAgregarVehiculo(false)}>Cancelar</Button>
-        </div>
-      </Modal>
     </AppShell>
   );
 }
