@@ -272,6 +272,66 @@ export default function ConfiguracionPage() {
           </div>
         )}
 
+        {/* Contacto Alternativo — solo para administrador */}
+        {rolActivo === 'administrador' && (
+          <div style={cardStyle}>
+            <h3 style={{ fontSize: theme.fonts.sizes.md, fontWeight: theme.fonts.weights.bold, color: theme.colors.text, textAlign: 'center', marginBottom: '14px' }}>
+              Contacto Alternativo
+            </h3>
+            <p style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, textAlign: 'center', marginBottom: '12px', lineHeight: 1.4 }}>
+              Datos de contacto alternativos para recibir notificaciones.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <InputField
+                label="Correo alternativo"
+                value={configuracionApp.correoAlt || ''}
+                onChange={v => actualizarConfiguracionApp({ correoAlt: v })}
+                placeholder="correo@ejemplo.com"
+                type="email"
+              />
+              <InputField
+                label="Teléfono alternativo"
+                value={configuracionApp.telefonoAlt || ''}
+                onChange={v => actualizarConfiguracionApp({ telefonoAlt: v })}
+                placeholder="+593 999999999"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Contacto de Emergencia — solo para administrador */}
+        {rolActivo === 'administrador' && (
+          <div style={cardStyle}>
+            <h3 style={{ fontSize: theme.fonts.sizes.md, fontWeight: theme.fonts.weights.bold, color: theme.colors.text, textAlign: 'center', marginBottom: '14px' }}>
+              Contacto de Emergencia
+            </h3>
+            <p style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, textAlign: 'center', marginBottom: '12px', lineHeight: 1.4 }}>
+              Persona de contacto en caso de emergencia.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <InputField
+                label="Nombre del contacto"
+                value={configuracionApp.emergenciaNombre || ''}
+                onChange={v => actualizarConfiguracionApp({ emergenciaNombre: v })}
+                placeholder="Nombre completo"
+              />
+              <InputField
+                label="Correo de emergencia"
+                value={configuracionApp.emergenciaCorreo || ''}
+                onChange={v => actualizarConfiguracionApp({ emergenciaCorreo: v })}
+                placeholder="correo@ejemplo.com"
+                type="email"
+              />
+              <InputField
+                label="Teléfono de emergencia"
+                value={configuracionApp.emergenciaTelefono || ''}
+                onChange={v => actualizarConfiguracionApp({ emergenciaTelefono: v })}
+                placeholder="+593 999999999"
+              />
+            </div>
+          </div>
+        )}
+
         {/* Cuenta */}
         <div style={cardStyle}>
           <h3 style={{ fontSize: theme.fonts.sizes.md, fontWeight: theme.fonts.weights.bold, color: theme.colors.text, textAlign: 'center', marginBottom: '14px' }}>
