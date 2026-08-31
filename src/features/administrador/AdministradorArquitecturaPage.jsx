@@ -714,7 +714,7 @@ function TorreDetailView({ torre, onBack }) {
           </div>
           <InputField label="Cantidad de estacionamientos" value={form.estacionamientos} onChange={v => setForm(p => ({ ...p, estacionamientos: v }))} placeholder="0" type="number" />
           <InputField label="Ubicación estacionamientos (piso/sótano)" value={form.ubicacionParking} onChange={v => setForm(p => ({ ...p, ubicacionParking: v }))} placeholder="Ej: Sótano -2" />
-          {parseInt(form.estacionamientos) > 0 && spotOptions.length > 0 && (
+          {spotOptions.length > 0 && (
             <div>
               <span style={labelStyle}>Estacionamiento(s) a asignar</span>
               <SelectField value={form.spotAsignado} options={spotOptions} onChange={v => setForm(p => ({ ...p, spotAsignado: v }))} placeholder="Seleccionar estacionamiento" />
@@ -745,7 +745,7 @@ function TorreDetailView({ torre, onBack }) {
           </div>
           <InputField label="Cantidad de estacionamientos" value={form.estacionamientos} onChange={v => setForm(p => ({ ...p, estacionamientos: v }))} placeholder="0" type="number" />
           <InputField label="Ubicación estacionamientos (piso/sótano)" value={form.ubicacionParking} onChange={v => setForm(p => ({ ...p, ubicacionParking: v }))} placeholder="Ej: Sótano -2" />
-          {parseInt(form.estacionamientos) > 0 && spotOptions.length > 0 && (
+          {spotOptions.length > 0 && (
             <div>
               <span style={labelStyle}>Estacionamiento(s) a asignar</span>
               <SelectField value={form.spotAsignado} options={spotOptions} onChange={v => setForm(p => ({ ...p, spotAsignado: v }))} placeholder="Seleccionar estacionamiento" />

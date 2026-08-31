@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AppShell from '../../components/layout/AppShell';
 import PageHeader from '../../components/layout/PageHeader';
 import Modal from '../../components/ui/Modal';
@@ -9,6 +10,9 @@ import InfoButton from '../../components/ui/InfoButton';
 import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
 import { opcionesSiNo, estanciasMinimas, horariosCheckin } from '../../data/mockData';
+import iconResidentePermanente1 from '../../assets/icons/reglas/residente-permanente-1.png';
+import iconResidenteTemporal1 from '../../assets/icons/reglas/residente-temporal-1.png';
+import iconGuardiaSeguridad1 from '../../assets/icons/reglas/guardia-seguridad-1.png';
 
 const labelStyle = {
   display: 'block',
@@ -30,7 +34,7 @@ const sectionTitleStyle = {
   color: theme.colors.text,
 };
 
-const ESTANCIA_BOOLEANOS = ['permiteVisitas', 'permiteCorrespondencia', 'permiteHuespedNinos', 'permiteMascotas', 'permiteCocherasVisit'];
+const ESTANCIA_BOOLEANOS = ['permiteVisitas', 'permiteHuespedNinos', 'permiteMascotas', 'permiteCocherasVisit'];
 
 function EstanciaCampos({ valores, onChange, incluirMaxima, estanciaMaxima }) {
   const setField = (key) => (val) => onChange(key, val);
@@ -40,7 +44,6 @@ function EstanciaCampos({ valores, onChange, incluirMaxima, estanciaMaxima }) {
         <div key={key}>
           <span style={labelStyle}>{{
             permiteVisitas: 'Permite visitas',
-            permiteCorrespondencia: 'Permite correspondencia',
             permiteHuespedNinos: 'Permite huésped niños',
             permiteMascotas: 'Permite mascotas',
             permiteCocherasVisit: 'Permite cocheras de visit.',
@@ -69,6 +72,7 @@ function EstanciaCampos({ valores, onChange, incluirMaxima, estanciaMaxima }) {
 }
 
 export default function AdministradorPermisosPage() {
+  const navigate = useNavigate();
   const { permisos, actualizarPermisos } = useApp();
   const [form, setForm] = useState({
     ...permisos,
@@ -145,7 +149,7 @@ export default function AdministradorPermisosPage() {
             <Toggle value={diferenciaEstancia} onChange={v => setForm(prev => ({ ...prev, diferenciaEstancia: v }))} />
           </div>
           <p style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, margin: 0, lineHeight: 1.4 }}>
-            Si está desactivado, se usará una única configuración de estancia sin diferenciar corta/larga.
+            Este edificio adapta privilegios para las estadías de corta y larga estancia.
           </p>
         </div>
 
@@ -169,7 +173,6 @@ export default function AdministradorPermisosPage() {
                   <div key={key}>
                     <span style={labelStyle}>{{
                       permiteVisitas: 'Permite visitas',
-                      permiteCorrespondencia: 'Permite correspondencia',
                       permiteHuespedNinos: 'Permite huésped niños',
                       permiteMascotas: 'Permite mascotas',
                       permiteCocherasVisit: 'Permite cocheras de visit.',
@@ -193,6 +196,61 @@ export default function AdministradorPermisosPage() {
             </div>
           </>
         )}
+
+        {/* Reglamentos */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <h3 style={sectionTitleStyle}>Reglamentos</h3>
+          <p style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, margin: 0, lineHeight: 1.4 }}>
+            Administra los reglamentos para cada tipo de residente.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+            <button
+              type="button"
+              onClick={() => navigate('/reglas/residente-permanente')}
+              style={{
+                ...cardStyle, border: 'none', cursor: 'pointer', fontFamily: theme.fonts.family,
+                padding: '20px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
+              }}
+            >
+              <span style={{ width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: theme.colors.bgMuted }}>
+                <img src={iconResidentePermanente1} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </span>
+              <span style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, textAlign: 'center' }}>
+                Residente Permanente
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/reglas/huesped-temporal')}
+              style={{
+                ...cardStyle, border: 'none', cursor: 'pointer', fontFamily: theme.fonts.family,
+                padding: '20px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
+              }}
+            >
+              <span style={{ width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: theme.colors.bgMuted }}>
+                <img src={iconResidenteTemporal1} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </span>
+              <span style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, textAlign: 'center' }}>
+                Huésped Temporal
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/reglas/guardia-seguridad')}
+              style={{
+                ...cardStyle, border: 'none', cursor: 'pointer', fontFamily: theme.fonts.family,
+                padding: '20px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
+              }}
+            >
+              <span style={{ width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: theme.colors.bgMuted }}>
+                <img src={iconGuardiaSeguridad1} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </span>
+              <span style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, textAlign: 'center' }}>
+                Guardia de Seguridad
+              </span>
+            </button>
+          </div>
+        </div>
 
         <Button variant="primary" fullWidth onClick={handleGuardar} style={{ marginTop: '4px' }}>
           Guardar
