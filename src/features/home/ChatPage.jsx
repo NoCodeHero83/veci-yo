@@ -58,6 +58,7 @@ export default function ChatPage() {
   const [filtroChat, setFiltroChat] = useState('todos');
   const [filtroTorre, setFiltroTorre] = useState('');
   const [filtroDepto, setFiltroDepto] = useState('');
+  const [tabActiva, setTabActiva] = useState('torres');
   const bottomRef = useRef(null);
   const isStaff = torre === 'Seguridad' || torre === 'Administrador';
 
@@ -150,11 +151,14 @@ export default function ChatPage() {
     if (soloNoLeidos && c.noLeidos === 0) return false;
     if (filtroChat === 'individuales' && c.tipo !== 'individual') return false;
     if (filtroChat === 'grupos' && c.tipo !== 'grupo') return false;
-    if (esGuardia && filtroTorre && c.nombre !== 'Seguridad' && c.nombre !== 'Administrador') {
-      if (c.nombre !== filtroTorre) return false;
-    }
-    if (esGuardia && filtroDepto && c.nombre !== 'Seguridad' && c.nombre !== 'Administrador') {
-      if (!c.nombre.includes(filtroDepto)) return false;
+    if (esGuardia) {
+      if (tabActiva === 'seguridad') return c.nombre === 'Seguridad';
+      if (tabActiva === 'admin') return c.nombre === 'Administrador';
+      if (tabActiva === 'torres') {
+        if (c.nombre === 'Seguridad' || c.nombre === 'Administrador') return false;
+        if (filtroTorre && c.nombre !== filtroTorre) return false;
+        if (filtroDepto && !c.nombre.includes(filtroDepto)) return false;
+      }
     }
     return true;
   });
@@ -293,48 +297,78 @@ export default function ChatPage() {
                 )}
               </div>
               {esGuardia ? (
-                <div style={{ display: 'flex', gap: '6px', marginTop: '6px', paddingBottom: '4px' }}>
-                  <select
-                    value={filtroTorre}
-                    onChange={e => { setFiltroTorre(e.target.value); setFiltroDepto(''); }}
-                    style={{
-                      padding: '4px 8px', borderRadius: theme.radius.full,
-                      border: `1.5px solid ${filtroTorre ? theme.colors.primary : theme.colors.border}`,
-                      background: filtroTorre ? theme.colors.primaryLight : theme.colors.bgMuted,
-                      fontSize: theme.fonts.sizes.xs,
-                      fontFamily: theme.fonts.family,
-                      fontWeight: theme.fonts.weights.semibold,
-                      color: filtroTorre ? theme.colors.primary : theme.colors.textSecondary,
-                      cursor: 'pointer', outline: 'none',
-                    }}
-                  >
-                    <option value="">Todas las torres</option>
-                    {['Torre 1', 'Torre 2', 'Torre 3'].map(t => (
-                      <option key={t} value={t}>{t}</option>
+                <>
+                  <div style={{ display: 'flex', gap: '4px', marginTop: '6px', paddingBottom: '4px' }}>
+                    {[
+                      { key: 'torres', label: ' Torres' },
+                      { key: 'seguridad', label: ' Seguridad' },
+                      { key: 'admin', label: ' Admin' },
+                    ].map(tab => (
+                      <button
+                        key={tab.key}
+                        onClick={() => { setTabActiva(tab.key); setFiltroTorre(''); setFiltroDepto(''); }}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: theme.radius.full,
+                          background: tabActiva === tab.key ? theme.colors.primary : theme.colors.bgMuted,
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: theme.fonts.sizes.xs,
+                          fontFamily: theme.fonts.family,
+                          fontWeight: theme.fonts.weights.semibold,
+                          color: tabActiva === tab.key ? '#fff' : theme.colors.textSecondary,
+                          transition: 'all 150ms',
+                        }}
+                      >
+                        {tab.label}
+                      </button>
                     ))}
-                  </select>
-                  {filtroTorre && filtroTorre !== 'Seguridad' && filtroTorre !== 'Administrador' && (
-                    <select
-                      value={filtroDepto}
-                      onChange={e => setFiltroDepto(e.target.value)}
-                      style={{
-                        padding: '4px 8px', borderRadius: theme.radius.full,
-                        border: `1.5px solid ${filtroDepto ? theme.colors.primary : theme.colors.border}`,
-                        background: filtroDepto ? theme.colors.primaryLight : theme.colors.bgMuted,
-                        fontSize: theme.fonts.sizes.xs,
-                        fontFamily: theme.fonts.family,
-                        fontWeight: theme.fonts.weights.semibold,
-                        color: filtroDepto ? theme.colors.primary : theme.colors.textSecondary,
-                        cursor: 'pointer', outline: 'none',
-                      }}
-                    >
-                      <option value="">Todos los deptos</option>
-                      {DEPTOS_OPCIONES.map(d => (
-                        <option key={d} value={d}>{d}</option>
-                      ))}
-                    </select>
+                  </div>
+                  {tabActiva === 'torres' && (
+                    <div style={{ display: 'flex', gap: '6px', marginTop: '6px', paddingBottom: '4px' }}>
+                      <select
+                        value={filtroTorre}
+                        onChange={e => { setFiltroTorre(e.target.value); setFiltroDepto(''); }}
+                        style={{
+                          padding: '4px 8px', borderRadius: theme.radius.full,
+                          border: `1.5px solid ${filtroTorre ? theme.colors.primary : theme.colors.border}`,
+                          background: filtroTorre ? theme.colors.primaryLight : theme.colors.bgMuted,
+                          fontSize: theme.fonts.sizes.xs,
+                          fontFamily: theme.fonts.family,
+                          fontWeight: theme.fonts.weights.semibold,
+                          color: filtroTorre ? theme.colors.primary : theme.colors.textSecondary,
+                          cursor: 'pointer', outline: 'none',
+                        }}
+                      >
+                        <option value="">Todas las torres</option>
+                        {['Torre 1', 'Torre 2', 'Torre 3'].map(t => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                      {filtroTorre && (
+                        <select
+                          value={filtroDepto}
+                          onChange={e => setFiltroDepto(e.target.value)}
+                          style={{
+                            padding: '4px 8px', borderRadius: theme.radius.full,
+                            border: `1.5px solid ${filtroDepto ? theme.colors.primary : theme.colors.border}`,
+                            background: filtroDepto ? theme.colors.primaryLight : theme.colors.bgMuted,
+                            fontSize: theme.fonts.sizes.xs,
+                            fontFamily: theme.fonts.family,
+                            fontWeight: theme.fonts.weights.semibold,
+                            color: filtroDepto ? theme.colors.primary : theme.colors.textSecondary,
+                            cursor: 'pointer', outline: 'none',
+                          }}
+                        >
+                          <option value="">Todos los deptos</option>
+                          {DEPTOS_OPCIONES.map(d => (
+                            <option key={d} value={d}>{d}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
                   )}
-                </div>
+                </>
               ) : (
                 <div style={{ display: 'flex', gap: '6px', marginTop: '6px', paddingBottom: '4px' }}>
                   {[
