@@ -54,11 +54,14 @@ const inputStyle = {
 };
 
 const CAMPOS_VACIOS = {
+  nombre: '',
   depto: '', penthouse: '', tipo: '', cocherasVisitas: '',
-  mascotas: '', ninos: '', cocherasPrivadas: '', almacenPrivados: '',
+  cocherasPrivadas: '', almacenPrivados: '',
   entradasPeatonales: '', entradasVehiculares: '',
   pisos: '', sotanos: '',
   ubicacionParkingVisitas: '',
+  nomenclaturaDesde: '',
+  nomenclaturaHasta: '',
 };
 
 const CAMPOS_INFO = [
@@ -68,8 +71,6 @@ const CAMPOS_INFO = [
   ['pisos', 'Número de pisos', deptosPorTorre],
   ['sotanos', 'Número de sótanos', ['0', '1', '2', '3', '4']],
   ['cocherasVisitas', 'Cocheras de visitas', cocherasVisitasOpciones],
-  ['mascotas', 'Acepta mascotas', opcionesSiNo],
-  ['ninos', 'Acepta ninos', opcionesSiNo],
   ['cocherasPrivadas', 'Cocheras privadas', cocherasPrivadasOpciones],
   ['almacenPrivados', 'Almacen privados', almacenesPrivadosOpciones],
   ['entradasPeatonales', 'Entradas peatonales', entradasOpciones],
@@ -134,23 +135,6 @@ function CampoRow({ label, value }) {
   );
 }
 
-function CheckRow({ label, value }) {
-  const isSi = value === 'Si' || value === 'Si' || value === 'si';
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, lineHeight: 1.5 }}>
-      <span style={{
-        width: '16px', height: '16px', borderRadius: '50%',
-        background: isSi ? theme.colors.success : theme.colors.danger,
-        color: '#fff', fontSize: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0, fontWeight: theme.fonts.weights.bold,
-      }}>
-        {isSi ? '\u2713' : '\u2717'}
-      </span>
-      {label}
-    </div>
-  );
-}
-
 function EstadoBadge({ estado }) {
   const label = ESTADO_LABELS[estado] || estado;
   const color = ESTADO_COLORS[estado] || theme.colors.textSecondary;
@@ -162,6 +146,166 @@ function EstadoBadge({ estado }) {
     }}>
       {label}
     </span>
+  );
+}
+
+// ─── CONDOMINIO TAB ─────────────────────────────────────────────────────
+
+function CondominioTab() {
+  const { edificioActivo } = useApp();
+
+  const [form, setForm] = useState({
+    nombre: edificioActivo || '',
+    direccion: '',
+    ruc: '',
+    foto: null,
+    numTorres: '3',
+    sotanosCompartidos: 'Si',
+    porteriaCompartida: 'Si',
+    ingresosVehiculares: '',
+    ingresosPeatonales: '',
+  });
+
+  const [adminTeam, setAdminTeam] = useState([
+    { id: 1, nombre: '', cargo: 'Administrador', telefono: '', correo: '' },
+  ]);
+
+  const [seguridadEmpresa, setSeguridadEmpresa] = useState({ nombre: '', telefono: '', correo: '' });
+  const [limpiezaEmpresa, setLimpiezaEmpresa] = useState({ nombre: '', telefono: '', correo: '' });
+
+  const setField = (key) => (value) => setForm(prev => ({ ...prev, [key]: value }));
+
+  const addAdminMember = () => {
+    setAdminTeam(prev => [...prev, { id: Date.now(), nombre: '', cargo: '', telefono: '', correo: '' }]);
+  };
+
+  const updateAdminMember = (id, field, value) => {
+    setAdminTeam(prev => prev.map(m => m.id === id ? { ...m, [field]: value } : m));
+  };
+
+  const removeAdminMember = (id) => {
+    setAdminTeam(prev => prev.filter(m => m.id !== id));
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Información del Condominio */}
+      <div style={sectionCard}>
+        <h3 style={sectionTitle}>Información del Condominio</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <CampoTexto label="Nombre del condominio" value={form.nombre} onChange={setField('nombre')} placeholder="Ej: Las Barranqueras" />
+          <CampoTexto label="Dirección" value={form.direccion} onChange={setField('direccion')} placeholder="Ej: Av. Principal 123" />
+          <CampoTexto label="RUC" value={form.ruc} onChange={setField('ruc')} placeholder="Ej: 1234567890001" />
+          <div>
+            <span style={labelStyle}>Foto del condominio</span>
+            <div style={{
+              width: '100%', height: '120px', borderRadius: theme.radius.lg,
+              border: `2px dashed ${theme.colors.border}`, display: 'flex',
+              alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+              background: theme.colors.bgMuted,
+            }}>
+              <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
+                {form.foto ? '📷 Foto seleccionada' : '📷 Tocar para agregar foto'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Estructura General */}
+      <div style={sectionCard}>
+        <h3 style={sectionTitle}>Estructura General</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <CampoTexto label="Número de torres" value={form.numTorres} onChange={setField('numTorres')} placeholder="3" />
+          <div style={grid2}>
+            <div>
+              <span style={labelStyle}>Sótanos compartidos</span>
+              <SelectField value={form.sotanosCompartidos} options={['Si', 'No']} onChange={setField('sotanosCompartidos')} />
+            </div>
+            <div>
+              <span style={labelStyle}>Portería compartida</span>
+              <SelectField value={form.porteriaCompartida} options={['Si', 'No', 'Ambas']} onChange={setField('porteriaCompartida')} />
+            </div>
+          </div>
+          <CampoTexto label="Ingresos vehiculares (ubicación)" value={form.ingresosVehiculares} onChange={setField('ingresosVehiculares')} placeholder="Ej: Norte, Sur" />
+          <CampoTexto label="Ingresos peatonales (ubicación)" value={form.ingresosPeatonales} onChange={setField('ingresosPeatonales')} placeholder="Ej: Principal, Lateral" />
+        </div>
+      </div>
+
+      {/* Equipo Administrativo */}
+      <div style={sectionCard}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <h3 style={{ ...sectionTitle, marginBottom: 0 }}>Equipo Administrativo</h3>
+          <button onClick={addAdminMember} style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: theme.colors.primary, fontSize: theme.fonts.sizes.sm,
+            fontFamily: theme.fonts.family, fontWeight: theme.fonts.weights.semibold,
+          }}>+ Agregar</button>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {adminTeam.map((member, idx) => (
+            <div key={member.id} style={{
+              padding: '12px', borderRadius: theme.radius.lg,
+              border: `1px solid ${theme.colors.border}`, background: theme.colors.bgMuted,
+              display: 'flex', flexDirection: 'column', gap: '10px',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>
+                  Miembro {idx + 1}
+                </span>
+                {adminTeam.length > 1 && (
+                  <button onClick={() => removeAdminMember(member.id)} style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: theme.colors.danger, fontSize: theme.fonts.sizes.xs,
+                  }}>Eliminar</button>
+                )}
+              </div>
+              <input value={member.nombre} onChange={e => updateAdminMember(member.id, 'nombre', e.target.value)} placeholder="Nombre completo" style={inputStyle} />
+              <select value={member.cargo} onChange={e => updateAdminMember(member.id, 'cargo', e.target.value)} style={inputStyle}>
+                <option value="">Seleccionar cargo</option>
+                <option value="Administrador">Administrador</option>
+                <option value="Co-Administrador">Co-Administrador</option>
+                <option value="Secretaria">Secretaria</option>
+                <option value="Presidente Junta">Presidente Junta de Propietarios</option>
+                <option value="Miembro Consejo">Miembro del Consejo</option>
+                <option value="Otro">Otro</option>
+              </select>
+              <div style={grid2}>
+                <input value={member.telefono} onChange={e => updateAdminMember(member.id, 'telefono', e.target.value)} placeholder="Teléfono" style={inputStyle} />
+                <input value={member.correo} onChange={e => updateAdminMember(member.id, 'correo', e.target.value)} placeholder="Correo" style={inputStyle} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Empresa de Seguridad */}
+      <div style={sectionCard}>
+        <h3 style={sectionTitle}>Empresa de Seguridad</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <CampoTexto label="Nombre de la empresa" value={seguridadEmpresa.nombre} onChange={v => setSeguridadEmpresa(p => ({ ...p, nombre: v }))} placeholder="Ej: Seguridad Total S.A." />
+          <div style={grid2}>
+            <CampoTexto label="Teléfono" value={seguridadEmpresa.telefono} onChange={v => setSeguridadEmpresa(p => ({ ...p, telefono: v }))} placeholder="+593 999999999" />
+            <CampoTexto label="Correo" value={seguridadEmpresa.correo} onChange={v => setSeguridadEmpresa(p => ({ ...p, correo: v }))} placeholder="correo@empresa.com" />
+          </div>
+        </div>
+      </div>
+
+      {/* Empresa de Limpieza */}
+      <div style={sectionCard}>
+        <h3 style={sectionTitle}>Empresa de Limpieza</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <CampoTexto label="Nombre de la empresa" value={limpiezaEmpresa.nombre} onChange={v => setLimpiezaEmpresa(p => ({ ...p, nombre: v }))} placeholder="Ej: LimpiezaPro" />
+          <div style={grid2}>
+            <CampoTexto label="Teléfono" value={limpiezaEmpresa.telefono} onChange={v => setLimpiezaEmpresa(p => ({ ...p, telefono: v }))} placeholder="+593 999999999" />
+            <CampoTexto label="Correo" value={limpiezaEmpresa.correo} onChange={v => setLimpiezaEmpresa(p => ({ ...p, correo: v }))} placeholder="correo@empresa.com" />
+          </div>
+        </div>
+      </div>
+
+      <Button variant="primary" fullWidth onClick={() => {}}>Guardar información</Button>
+      <div style={{ height: '16px' }} />
+    </div>
   );
 }
 
@@ -188,9 +332,44 @@ function TorresTab({ onSelectTorre }) {
   };
   const cerrarEditar = () => setEditTorre(null);
 
-  const confirmarNueva = () => { agregarTorre(form); cerrarNueva(); };
+  const generarUnidades = (torreForm) => {
+    const desde = parseInt(torreForm.nomenclaturaDesde) || 101;
+    const hasta = parseInt(torreForm.nomenclaturaHasta) || 105;
+    const unidades = [];
+    for (let i = desde; i <= hasta; i++) {
+      unidades.push({
+        id: Date.now() + i,
+        codigo: String(i),
+        torreNumero: torreForm.numero || torres.length + 1,
+        piso: Math.floor(i / 100),
+        tipologiaId: 1,
+        estacionamientos: 0,
+        ubicacionParking: '',
+        estado: 'disponible',
+        propietarioAsignado: null,
+        propietarioEmail: null,
+        configuracionId: null,
+      });
+    }
+    return unidades;
+  };
+
+  const confirmarNueva = () => {
+    const nuevaTorre = { ...form, numero: torres.length ? Math.max(...torres.map(t => t.numero)) + 1 : 1 };
+    agregarTorre(nuevaTorre);
+    cerrarNueva();
+  };
+
   const confirmarEditar = () => { actualizarTorre({ ...editTorre, ...form }); cerrarEditar(); };
   const confirmarEliminar = () => { eliminarTorre(deleteTorre); setDeleteTorre(null); };
+
+  const nomenclaturaPreview = () => {
+    const desde = parseInt(form.nomenclaturaDesde);
+    const hasta = parseInt(form.nomenclaturaHasta);
+    if (!desde || !hasta || hasta < desde) return null;
+    const count = hasta - desde + 1;
+    return `Se generaran ${count} unidades: ${desde} a ${hasta}`;
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -206,20 +385,18 @@ function TorresTab({ onSelectTorre }) {
         }} onClick={() => onSelectTorre(torre)}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto' }}>
             <div style={{ padding: '12px 14px', borderRight: `1px solid ${theme.colors.borderLight}`, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <CampoRow label="Nombre" value={torre.nombre || `Torre N${torre.numero}`} />
               <CampoRow label="Depto" value={torre.depto} />
               <CampoRow label="Penthouse" value={torre.penthouse} />
               <CampoRow label="Pisos" value={torre.pisos} />
               <CampoRow label="Sótanos" value={torre.sotanos} />
+            </div>
+            <div style={{ padding: '12px 14px', borderRight: `1px solid ${theme.colors.borderLight}`, display: 'flex', flexDirection: 'column', gap: '6px', justifyContent: 'center' }}>
               <CampoRow label="Cocheras V." value={torre.cocherasVisitas} />
               <CampoRow label="Coch. priv." value={torre.cocherasPrivadas} />
               <CampoRow label="Almacen" value={torre.almacenPrivados} />
               <CampoRow label="Ent. veh." value={torre.entradasVehiculares} />
-            </div>
-            <div style={{ padding: '12px 14px', borderRight: `1px solid ${theme.colors.borderLight}`, display: 'flex', flexDirection: 'column', gap: '6px', justifyContent: 'center' }}>
               <CampoRow label="Ent. peat." value={torre.entradasPeatonales} />
-              <CampoRow label="Estac. visita piso" value={torre.ubicacionParkingVisitas} />
-              <CheckRow label="Ninos" value={torre.ninos} />
-              <CheckRow label="Mascotas" value={torre.mascotas} />
             </div>
             <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', minWidth: '72px' }}>
               <span style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.bold, color: theme.colors.text, textAlign: 'center', whiteSpace: 'nowrap' }}>
@@ -238,35 +415,47 @@ function TorresTab({ onSelectTorre }) {
         <BottomSheetOption label="Eliminar" variant="danger" onPress={() => { setDeleteTorre(menuTorre); setMenuTorre(null); }} />
       </BottomSheet>
 
-      <Modal isOpen={showNueva} onClose={cerrarNueva} title="Nueva Arquitectura">
+      <Modal isOpen={showNueva} onClose={cerrarNueva} title="Nueva Torre">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '70vh', overflowY: 'auto' }}>
           <p style={{ textAlign: 'center', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.medium }}>
-            Numero de Torre N: {torres.length ? Math.max(...torres.map(t => t.numero)) + 1 : 1}
+            Torre N: {torres.length ? Math.max(...torres.map(t => t.numero)) + 1 : 1}
           </p>
+          <CampoTexto label="Nombre de la torre" value={form.nombre} onChange={setField('nombre')} placeholder="Ej: Torre A" />
+          <CampoTexto label="Tipo de nomenclatura" value={form.tipo} onChange={setField('tipo')} placeholder="Ej: 101, 102, 103..." />
+          <div style={grid2}>
+            <CampoTexto label="Desde (número)" value={form.nomenclaturaDesde} onChange={setField('nomenclaturaDesde')} placeholder="101" />
+            <CampoTexto label="Hasta (número)" value={form.nomenclaturaHasta} onChange={setField('nomenclaturaHasta')} placeholder="105" />
+          </div>
+          {nomenclaturaPreview() && (
+            <div style={{ background: theme.colors.secondaryLight, borderRadius: theme.radius.lg, padding: '10px 14px', fontSize: theme.fonts.sizes.xs, color: theme.colors.secondary, lineHeight: 1.5 }}>
+              {nomenclaturaPreview()}
+            </div>
+          )}
           <CamposArquitectura form={form} setField={setField} />
-          <Button variant="primary" fullWidth onClick={confirmarNueva}>Aceptar</Button>
+          <Button variant="primary" fullWidth onClick={confirmarNueva}>Crear torre</Button>
         </div>
       </Modal>
 
-      <Modal isOpen={!!editTorre} onClose={cerrarEditar} title="Editar Arquitectura">
+      <Modal isOpen={!!editTorre} onClose={cerrarEditar} title="Editar Torre">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '70vh', overflowY: 'auto' }}>
           <p style={{ textAlign: 'center', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.medium }}>
             Torre N: {editTorre?.numero}
           </p>
+          <CampoTexto label="Nombre de la torre" value={form.nombre} onChange={setField('nombre')} placeholder="Ej: Torre A" />
           <CamposArquitectura form={form} setField={setField} />
-          <Button variant="primary" fullWidth onClick={confirmarEditar}>Aceptar</Button>
+          <Button variant="primary" fullWidth onClick={confirmarEditar}>Guardar cambios</Button>
         </div>
       </Modal>
 
-      <Modal isOpen={!!deleteTorre} onClose={() => setDeleteTorre(null)} title="Eliminar arquitectura">
+      <Modal isOpen={!!deleteTorre} onClose={() => setDeleteTorre(null)} title="Eliminar torre">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <p style={{ fontSize: theme.fonts.sizes.base, textAlign: 'center', color: theme.colors.text }}>
-            ?Seguro que deseas eliminar esta arquitectura?
+            ¿Seguro que deseas eliminar esta torre?
           </p>
           {deleteTorre && (
             <div style={{ border: `1.5px solid ${theme.colors.primary}`, borderRadius: theme.radius.xl, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.md }}>
-                Torre N {deleteTorre.numero}
+                {deleteTorre.nombre || `Torre N${deleteTorre.numero}`}
               </div>
               <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
                 Depto. por torre: {deleteTorre.depto} &middot; Penthouse: {deleteTorre.penthouse}
@@ -867,6 +1056,7 @@ function PorteriasTab() {
 
 
 const TABS = [
+  { value: 'condominio', label: 'Condominio' },
   { value: 'torres', label: 'Torres' },
   { value: 'tipologias', label: 'Tipologias' },
   { value: 'porterias', label: 'Porterias' },
@@ -874,7 +1064,7 @@ const TABS = [
 ];
 
 export default function AdministradorArquitecturaPage() {
-  const [activeTab, setActiveTab] = useState('torres');
+  const [activeTab, setActiveTab] = useState('condominio');
   const [torreDetail, setTorreDetail] = useState(null);
 
   const renderContent = () => {
@@ -887,6 +1077,7 @@ export default function AdministradorArquitecturaPage() {
       );
     }
     switch (activeTab) {
+      case 'condominio': return <CondominioTab />;
       case 'torres': return <TorresTab onSelectTorre={setTorreDetail} />;
       case 'tipologias': return <TipologiasTab />;
       case 'porterias': return <PorteriasTab />;
