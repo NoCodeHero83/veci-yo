@@ -151,7 +151,7 @@ export default function ReglasPage() {
 
         {rolActivo !== 'huesped-temporal' && (
         <div style={{ ...cardStyle, padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <SearchBar value={search} onChange={setSearch} />
+          <SearchBar value={search} onChange={setSearch} placeholder="Búsqueda de propiedad renta corta" />
 
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <button
@@ -198,9 +198,14 @@ export default function ReglasPage() {
         )}
 
         {rolActivo === 'propietario' || rolActivo === 'inquilino-lider' ? (
-          <button type="button" onClick={() => navigate('/perfil/soporte/reclamos/nuevo', { state: { tipo: 'Reglas' } })} style={{ ...pillButtonStyle, background: theme.colors.secondary, color: '#fff' }}>
-            Crear PQRS
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <button type="button" onClick={() => navigate('/perfil/soporte/reclamos/nuevo', { state: { tipo: 'Reglas' } })} style={{ ...pillButtonStyle, background: theme.colors.secondary, color: '#fff' }}>
+              Crear PQRS
+            </button>
+            <p style={{ margin: 0, fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, textAlign: 'center', lineHeight: '1.4' }}>
+              Este botón permite crear un reporte o solicitud de Pregunta, Queja, Reclamo o Solicitud (PQRS).
+            </p>
+          </div>
         ) : null}
 
         {rolActivo !== 'huesped-temporal' && filtered.map(dept => (
