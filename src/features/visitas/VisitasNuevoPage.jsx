@@ -230,8 +230,17 @@ export default function VisitasNuevoPage() {
 
   const [tipoNotificacion, setTipoNotificacion] = useState('notificar-y-anunciar');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [identificacionError, setIdentificacionError] = useState('');
 
   const selectedTipo = TIPOS.find(t => t.id === tipoSeleccionado);
+
+  useEffect(() => {
+    if (identificacion.trim()) setIdentificacionError('');
+  }, [identificacion]);
+
+  useEffect(() => {
+    if (!esProfesional(tipoSeleccionado)) setIdentificacionError('');
+  }, [tipoSeleccionado]);
 
   const generarCodigoAcceso = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -251,10 +260,12 @@ export default function VisitasNuevoPage() {
   };
 
   const handleAceptarContinuar = () => {
-    if (!identificacion.trim()) {
+    if (esProfesional(tipoSeleccionado) && !identificacion.trim()) {
+      setIdentificacionError('La identificación es obligatoria');
       addToast('La identificación es obligatoria', 'error');
       return;
     }
+    setIdentificacionError('');
     const invitados = acompanantes
       .filter(a => a.nombre.trim())
       .map(a => ({ nombre: a.nombre, ci: a.ci || '', esMenor: !!a.esMenor, llego: false }));
@@ -451,14 +462,27 @@ export default function VisitasNuevoPage() {
                   </select>
                 </div>
                 <div>
-                  <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Identificación <span style={{ color: theme.colors.danger }}>*</span></div>
+                  <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>
+                    Identificación {esProfesional(tipoSeleccionado) && <span style={{ color: theme.colors.danger }}>*</span>}
+                    {!esProfesional(tipoSeleccionado) && <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>(opcional)</span>}
+                  </div>
                   <input
                     type="text"
                     value={identificacion}
                     onChange={e => setIdentificacion(e.target.value)}
-                    required
-                    style={inputStyle}
+                    required={esProfesional(tipoSeleccionado)}
+                    aria-required={esProfesional(tipoSeleccionado)}
+                    aria-invalid={!!identificacionError}
+                    placeholder={esProfesional(tipoSeleccionado) ? 'Obligatorio para profesional' : 'Opcional'}
+                    style={{
+                      ...inputStyle,
+                      borderColor: identificacionError ? theme.colors.danger : theme.colors.border,
+                      background: identificacionError ? theme.colors.dangerLight : theme.colors.bgMuted,
+                    }}
                   />
+                  {identificacionError && (
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.danger, marginTop: '4px' }}>{identificacionError}</div>
+                  )}
                 </div>
               </div>
 

@@ -270,6 +270,17 @@ export default function VisitasHistorialPage() {
     return '#F59E0B';
   };
 
+  const textoDiasParaCheckin = (fechaStr) => {
+    if (!fechaStr) return null;
+    const dias = diasRestantes(fechaStr);
+    if (!Number.isFinite(dias)) return null;
+    if (dias > 1) return `${dias} días para el check-in`;
+    if (dias === 1) return `1 día para el check-in`;
+    if (dias === 0) return `Hoy es el check-in`;
+    if (dias === -1) return `Hace 1 día del check-in`;
+    return `Hace ${Math.abs(dias)} días del check-in`;
+  };
+
   const btnStyle = (bg, color = '#fff') => ({
     padding: '4px 10px', borderRadius: theme.radius.full,
     background: bg, color, border: 'none',
@@ -885,15 +896,22 @@ export default function VisitasHistorialPage() {
             >
               ← Volver a reservas
             </button>
-            <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card, display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <img src={tipoVisitaIcons[reservaGuardia.tipo]} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>
-                  {reservaGuardia.tipo === 'huesped-temporal' ? `Reserva de ${reservaGuardia.nombre}` : (reservaGuardia.esEvento ? reservaGuardia.nombreEvento : reservaGuardia.nombre)}
+            <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <img src={tipoVisitaIcons[reservaGuardia.tipo]} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>
+                    {reservaGuardia.tipo === 'huesped-temporal' ? `Reserva de ${reservaGuardia.nombre}` : (reservaGuardia.esEvento ? reservaGuardia.nombreEvento : reservaGuardia.nombre)}
+                  </div>
+                  <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{reservaGuardia.torre} - {reservaGuardia.depto} · {TIPO_LABELS[reservaGuardia.tipo] || reservaGuardia.tipo}</div>
+                  <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>📅 {reservaGuardia.fechaDesde}{reservaGuardia.fechaHasta ? ` a ${reservaGuardia.fechaHasta}` : ''} · 👤 {personasDeReserva(reservaGuardia).length}</div>
                 </div>
-                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{reservaGuardia.torre} - {reservaGuardia.depto} · {TIPO_LABELS[reservaGuardia.tipo] || reservaGuardia.tipo}</div>
-                <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>📅 {reservaGuardia.fechaDesde}{reservaGuardia.fechaHasta ? ` a ${reservaGuardia.fechaHasta}` : ''} · 👤 {personasDeReserva(reservaGuardia).length}</div>
               </div>
+              {textoDiasParaCheckin(reservaGuardia.fechaDesde) && (
+                <div style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: diasRestantes(reservaGuardia.fechaDesde) < 0 ? theme.colors.textSecondary : (diasRestantes(reservaGuardia.fechaDesde) <= 3 ? theme.colors.danger : theme.colors.secondary), background: diasRestantes(reservaGuardia.fechaDesde) < 0 ? theme.colors.bgMuted : (diasRestantes(reservaGuardia.fechaDesde) <= 3 ? theme.colors.dangerLight : theme.colors.secondaryLight), padding: '6px 10px', borderRadius: theme.radius.full, textAlign: 'center' }}>
+                  {textoDiasParaCheckin(reservaGuardia.fechaDesde)}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1170,7 +1188,7 @@ export default function VisitasHistorialPage() {
             >
               ← Volver a visitas
             </button>
-            <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card }}>
+            <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card, display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <img src={tipoVisitaIcons[reservaDetail.tipo]} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
                 <div style={{ flex: 1 }}>
@@ -1187,6 +1205,11 @@ export default function VisitasHistorialPage() {
                   </div>
                 </div>
               </div>
+              {textoDiasParaCheckin(reservaDetail.fechaDesde) && (
+                <div style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: diasRestantes(reservaDetail.fechaDesde) < 0 ? theme.colors.textSecondary : (diasRestantes(reservaDetail.fechaDesde) <= 3 ? theme.colors.danger : theme.colors.secondary), background: diasRestantes(reservaDetail.fechaDesde) < 0 ? theme.colors.bgMuted : (diasRestantes(reservaDetail.fechaDesde) <= 3 ? theme.colors.dangerLight : theme.colors.secondaryLight), padding: '6px 10px', borderRadius: theme.radius.full, textAlign: 'center' }}>
+                  {textoDiasParaCheckin(reservaDetail.fechaDesde)}
+                </div>
+              )}
             </div>
             {reservaDetail.invitados?.map((inv, idx) => {
               const t = inv.timeline || {};
