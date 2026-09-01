@@ -2487,7 +2487,7 @@ export default function VisitasHistorialPage() {
                       Verificar
                     </button>
                   )}
-                  {p.base.tipo !== 'huesped-temporal' && (
+                  {(
                   <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, whiteSpace: 'nowrap' }}>Ingreso</span>
@@ -2549,7 +2549,7 @@ export default function VisitasHistorialPage() {
                     </div>
                   </div>
                   )}
-                  {esGuardiaRol && (p.base.tipo === 'temporal' || p.base.tipo === 'permanente') && (
+                  {esGuardiaRol && (
                     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
                       <div>
                         <div style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.textSecondary, marginBottom: '3px' }}>
@@ -2608,7 +2608,7 @@ export default function VisitasHistorialPage() {
                 </div>
               </div>
 
-              {/* Acciones Guardia — visitas normales (no-huésped-temporal) */}
+              {/* Acciones Guardia — registro de ingreso/salida y estacionamiento */}
               <div style={{
                 display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '12px 0 0',
                 borderTop: `1px solid ${theme.colors.borderLight}`,

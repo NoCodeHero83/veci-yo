@@ -290,7 +290,7 @@ export default function VisitasNuevoPage() {
       vehiculos: vehiculosValidos,
       profesion: esProfesional(tipoSeleccionado) ? profesion : undefined,
       profesionOtro: esProfesional(tipoSeleccionado) && profesionOtra(tipoSeleccionado, profesion) ? profesionOtro : undefined,
-      registradoPor: usuario?.nombre || usuario?.correo || 'Usuario',
+      registradoPor: (rolActivo === 'administrador' || rolActivo === 'guardia') ? (usuario?.nombre || usuario?.correo || 'Usuario') : undefined,
       anotacionesIngreso: '',
       fotosIngreso: [],
       anotacionesSalida: '',
