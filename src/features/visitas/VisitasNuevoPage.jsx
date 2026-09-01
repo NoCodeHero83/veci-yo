@@ -231,6 +231,7 @@ export default function VisitasNuevoPage() {
   const [tipoNotificacion, setTipoNotificacion] = useState('notificar-y-anunciar');
   const [showSuccess, setShowSuccess] = useState(false);
   const [identificacionError, setIdentificacionError] = useState('');
+  const [acompanantesCiErrors, setAcompanantesCiErrors] = useState({});
 
   const selectedTipo = TIPOS.find(t => t.id === tipoSeleccionado);
 
@@ -240,7 +241,24 @@ export default function VisitasNuevoPage() {
 
   useEffect(() => {
     if (!esProfesional(tipoSeleccionado)) setIdentificacionError('');
+    if (tipoSeleccionado !== 'temporal') setAcompanantesCiErrors({});
   }, [tipoSeleccionado]);
+
+  useEffect(() => {
+    if (tipoSeleccionado === 'temporal') {
+      const cleared = {};
+      let hasChange = false;
+      Object.keys(acompanantesCiErrors).forEach(k => {
+        const idx = Number(k);
+        if (acompanantes[idx]?.ci?.trim()) { cleared[k] = false; hasChange = true; }
+      });
+      if (hasChange) setAcompanantesCiErrors(prev => {
+        const next = { ...prev };
+        Object.keys(cleared).forEach(k => delete next[k]);
+        return next;
+      });
+    }
+  }, [acompanantes]);
 
   const generarCodigoAcceso = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -265,7 +283,20 @@ export default function VisitasNuevoPage() {
       addToast('La identificación es obligatoria', 'error');
       return;
     }
+    // Para profesional temporal, identificación obligatoria para todos los acompañantes que tengan nombre
+    if (tipoSeleccionado === 'temporal' && acompanantes.length > 0) {
+      const errores = {};
+      acompanantes.forEach((a, idx) => {
+        if (a.nombre.trim() && !a.ci.trim()) errores[idx] = true;
+      });
+      if (Object.keys(errores).length > 0) {
+        setAcompanantesCiErrors(errores);
+        addToast('La identificación es obligatoria para todos los acompañantes', 'error');
+        return;
+      }
+    }
     setIdentificacionError('');
+    setAcompanantesCiErrors({});
     const invitados = acompanantes
       .filter(a => a.nombre.trim())
       .map(a => ({ nombre: a.nombre, ci: a.ci || '', esMenor: !!a.esMenor, llego: false }));
@@ -548,17 +579,34 @@ export default function VisitasNuevoPage() {
                   placeholder="Nombre y Apellido"
                   style={inputStyle}
                 />
-                <input
-                  type="text"
-                  value={acc.ci}
-                  onChange={e => {
-                    const updated = [...acompanantes];
-                    updated[idx] = { ...updated[idx], ci: e.target.value };
-                    setAcompanantes(updated);
-                  }}
-                  placeholder="Identificación (opcional)"
-                  style={inputStyle}
-                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {tipoSeleccionado === 'temporal' && acc.nombre.trim() && (
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>Identificación <span style={{ color: theme.colors.danger }}>*</span></div>
+                  )}
+                  <input
+                    type="text"
+                    value={acc.ci}
+                    onChange={e => {
+                      const updated = [...acompanantes];
+                      updated[idx] = { ...updated[idx], ci: e.target.value };
+                      setAcompanantes(updated);
+                      if (acompanantesCiErrors[idx] && e.target.value.trim()) {
+                        setAcompanantesCiErrors(prev => { const n = { ...prev }; delete n[idx]; return n; });
+                      }
+                    }}
+                    placeholder={tipoSeleccionado === 'temporal' && acc.nombre.trim() ? 'Obligatorio para profesional temporal' : 'Identificación (opcional)'}
+                    required={tipoSeleccionado === 'temporal' && !!acc.nombre.trim()}
+                    aria-invalid={!!acompanantesCiErrors[idx]}
+                    style={{
+                      ...inputStyle,
+                      borderColor: acompanantesCiErrors[idx] ? theme.colors.danger : theme.colors.border,
+                      background: acompanantesCiErrors[idx] ? theme.colors.dangerLight : theme.colors.bgMuted,
+                    }}
+                  />
+                  {acompanantesCiErrors[idx] && (
+                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.danger }}>La identificación es obligatoria</div>
+                  )}
+                </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
                   <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>Menor de edad</span>
                   <Toggle
