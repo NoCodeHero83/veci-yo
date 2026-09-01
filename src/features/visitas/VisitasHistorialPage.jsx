@@ -1152,6 +1152,11 @@ export default function VisitasHistorialPage() {
                   </div>
                 </div>
               </div>
+              {textoDiasParaCheckin(item.fechaDesde) && (
+                <div style={{ marginTop: '8px', fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: diasRestantes(item.fechaDesde) < 0 ? theme.colors.textSecondary : (diasRestantes(item.fechaDesde) <= 3 ? theme.colors.danger : theme.colors.secondary), background: diasRestantes(item.fechaDesde) < 0 ? theme.colors.bgMuted : (diasRestantes(item.fechaDesde) <= 3 ? theme.colors.dangerLight : theme.colors.secondaryLight), padding: '6px 10px', borderRadius: theme.radius.full, textAlign: 'center' }}>
+                  {textoDiasParaCheckin(item.fechaDesde)}
+                </div>
+              )}
               <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
                 <TimelineReservaHuespedes invitados={invitadosTimeline} />
               </div>
@@ -1304,6 +1309,11 @@ export default function VisitasHistorialPage() {
                     ⋮
                   </button>
                 </div>
+                {textoDiasParaCheckin(item.fechaDesde) && (
+                  <div style={{ marginTop: '8px', fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: diasRestantes(item.fechaDesde) < 0 ? theme.colors.textSecondary : (diasRestantes(item.fechaDesde) <= 3 ? theme.colors.danger : theme.colors.secondary), background: diasRestantes(item.fechaDesde) < 0 ? theme.colors.bgMuted : (diasRestantes(item.fechaDesde) <= 3 ? theme.colors.dangerLight : theme.colors.secondaryLight), padding: '6px 10px', borderRadius: theme.radius.full, textAlign: 'center' }}>
+                    {textoDiasParaCheckin(item.fechaDesde)}
+                  </div>
+                )}
                 {/* Resumen por huésped — siempre visible para mantener la línea de tiempo consistente (16) */}
                 {mostrarDisenoReserva ? (
                     <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}` }}>

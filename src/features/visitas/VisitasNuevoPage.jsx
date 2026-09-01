@@ -283,11 +283,11 @@ export default function VisitasNuevoPage() {
       addToast('La identificación es obligatoria', 'error');
       return;
     }
-    // Para profesional temporal, identificación obligatoria para todos los acompañantes que tengan nombre
+    // Para profesional temporal, identificación obligatoria para todos los acompañantes de la lista
     if (tipoSeleccionado === 'temporal' && acompanantes.length > 0) {
       const errores = {};
       acompanantes.forEach((a, idx) => {
-        if (a.nombre.trim() && !a.ci.trim()) errores[idx] = true;
+        if (!a.ci.trim()) errores[idx] = true;
       });
       if (Object.keys(errores).length > 0) {
         setAcompanantesCiErrors(errores);
@@ -580,9 +580,9 @@ export default function VisitasNuevoPage() {
                   style={inputStyle}
                 />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  {tipoSeleccionado === 'temporal' && acc.nombre.trim() && (
-                    <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>Identificación <span style={{ color: theme.colors.danger }}>*</span></div>
-                  )}
+                  <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>
+                    Identificación {tipoSeleccionado === 'temporal' ? <span style={{ color: theme.colors.danger }}>*</span> : <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>(opcional)</span>}
+                  </div>
                   <input
                     type="text"
                     value={acc.ci}
@@ -594,8 +594,9 @@ export default function VisitasNuevoPage() {
                         setAcompanantesCiErrors(prev => { const n = { ...prev }; delete n[idx]; return n; });
                       }
                     }}
-                    placeholder={tipoSeleccionado === 'temporal' && acc.nombre.trim() ? 'Obligatorio para profesional temporal' : 'Identificación (opcional)'}
-                    required={tipoSeleccionado === 'temporal' && !!acc.nombre.trim()}
+                    placeholder={tipoSeleccionado === 'temporal' ? 'Obligatorio para profesional temporal' : 'Identificación (opcional)'}
+                    required={tipoSeleccionado === 'temporal'}
+                    aria-required={tipoSeleccionado === 'temporal'}
                     aria-invalid={!!acompanantesCiErrors[idx]}
                     style={{
                       ...inputStyle,
