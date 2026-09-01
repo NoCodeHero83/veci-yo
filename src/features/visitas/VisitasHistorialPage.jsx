@@ -270,15 +270,24 @@ export default function VisitasHistorialPage() {
     return '#F59E0B';
   };
 
-  const textoDiasParaCheckin = (fechaStr) => {
-    if (!fechaStr) return null;
-    const dias = diasRestantes(fechaStr);
-    if (!Number.isFinite(dias)) return null;
-    if (dias > 1) return `${dias} días para el check-in`;
-    if (dias === 1) return `1 día para el check-in`;
-    if (dias === 0) return `Hoy es el check-in`;
-    if (dias === -1) return `Hace 1 día del check-in`;
-    return `Hace ${Math.abs(dias)} días del check-in`;
+  const textoDiasParaCheckin = (fechaDesde, fechaHasta) => {
+    if (!fechaDesde) return null;
+    const diasHastaCheckin = diasRestantes(fechaDesde);
+    const diasHastaCheckout = fechaHasta ? diasRestantes(fechaHasta) : Infinity;
+    if (!Number.isFinite(diasHastaCheckin)) return null;
+    // Reserva aún no comienza
+    if (diasHastaCheckin > 1) return `${diasHastaCheckin} días para el check-in`;
+    if (diasHastaCheckin === 1) return `1 día para el check-in`;
+    if (diasHastaCheckin === 0) return `Hoy es el check-in`;
+    // Ya comenzó: distinguir en curso vs pasada (checkout)
+    if (Number.isFinite(diasHastaCheckout) && diasHastaCheckout < 0) {
+      const dias = Math.abs(diasHastaCheckout);
+      if (dias === 1) return `El check-out se realizó hace 1 día`;
+      return `El check-out se realizó hace ${dias} días`;
+    }
+    const dias = Math.abs(diasHastaCheckin);
+    if (dias === 1) return `El check-in se realizó hace 1 día`;
+    return `El check-in se realizó hace ${dias} días`;
   };
 
   const btnStyle = (bg, color = '#fff') => ({
@@ -896,23 +905,6 @@ export default function VisitasHistorialPage() {
             >
               ← Volver a reservas
             </button>
-            <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <img src={tipoVisitaIcons[reservaGuardia.tipo]} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>
-                    {reservaGuardia.tipo === 'huesped-temporal' ? `Reserva de ${reservaGuardia.nombre}` : (reservaGuardia.esEvento ? reservaGuardia.nombreEvento : reservaGuardia.nombre)}
-                  </div>
-                  <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{reservaGuardia.torre} - {reservaGuardia.depto} · {TIPO_LABELS[reservaGuardia.tipo] || reservaGuardia.tipo}</div>
-                  <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>📅 {reservaGuardia.fechaDesde}{reservaGuardia.fechaHasta ? ` a ${reservaGuardia.fechaHasta}` : ''} · 👤 {personasDeReserva(reservaGuardia).length}</div>
-                </div>
-              </div>
-              {textoDiasParaCheckin(reservaGuardia.fechaDesde) && (
-                <div style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: diasRestantes(reservaGuardia.fechaDesde) < 0 ? theme.colors.textSecondary : (diasRestantes(reservaGuardia.fechaDesde) <= 3 ? theme.colors.danger : theme.colors.secondary), background: diasRestantes(reservaGuardia.fechaDesde) < 0 ? theme.colors.bgMuted : (diasRestantes(reservaGuardia.fechaDesde) <= 3 ? theme.colors.dangerLight : theme.colors.secondaryLight), padding: '6px 10px', borderRadius: theme.radius.full, textAlign: 'center' }}>
-                  {textoDiasParaCheckin(reservaGuardia.fechaDesde)}
-                </div>
-              )}
-            </div>
           </div>
         )}
         {vistaSub === 'lista' && esGuardiaRol && reservaGuardia && personasDeReserva(reservaGuardia).map((p, pi) => (
@@ -1152,9 +1144,9 @@ export default function VisitasHistorialPage() {
                   </div>
                 </div>
               </div>
-              {textoDiasParaCheckin(item.fechaDesde) && (
-                <div style={{ marginTop: '8px', fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: diasRestantes(item.fechaDesde) < 0 ? theme.colors.textSecondary : (diasRestantes(item.fechaDesde) <= 3 ? theme.colors.danger : theme.colors.secondary), background: diasRestantes(item.fechaDesde) < 0 ? theme.colors.bgMuted : (diasRestantes(item.fechaDesde) <= 3 ? theme.colors.dangerLight : theme.colors.secondaryLight), padding: '6px 10px', borderRadius: theme.radius.full, textAlign: 'center' }}>
-                  {textoDiasParaCheckin(item.fechaDesde)}
+              {textoDiasParaCheckin(item.fechaDesde, item.fechaHasta) && (
+                <div style={{ marginTop: '8px', fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: (() => { const d = diasRestantes(item.fechaDesde); const dOut = item.fechaHasta ? diasRestantes(item.fechaHasta) : Infinity; if (d > 0) return d <= 3 ? theme.colors.danger : theme.colors.secondary; if (dOut < 0) return theme.colors.textSecondary; return theme.colors.secondary; })(), background: (() => { const d = diasRestantes(item.fechaDesde); const dOut = item.fechaHasta ? diasRestantes(item.fechaHasta) : Infinity; if (d > 0) return d <= 3 ? theme.colors.dangerLight : theme.colors.secondaryLight; if (dOut < 0) return theme.colors.bgMuted; return theme.colors.secondaryLight; })(), padding: '6px 10px', borderRadius: theme.radius.full, textAlign: 'center' }}>
+                  {textoDiasParaCheckin(item.fechaDesde, item.fechaHasta)}
                 </div>
               )}
               <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${theme.colors.borderLight}` }}>
@@ -1193,29 +1185,6 @@ export default function VisitasHistorialPage() {
             >
               ← Volver a visitas
             </button>
-            <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <img src={tipoVisitaIcons[reservaDetail.tipo]} alt="" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>Reserva de {reservaDetail.nombre}</div>
-                  {(reservaDetail.torre || reservaDetail.depto) && (
-                    <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{reservaDetail.torre} - {reservaDetail.depto}</div>
-                  )}
-                  <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    <span>{reservaDetail.fechaDesde} a {reservaDetail.fechaHasta}</span>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>👤 {reservaDetail.invitados?.length || 0}</span>
-                    {(reservaDetail.vehiculos?.length || 0) > 0 && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>🚗 {reservaDetail.vehiculos.length}</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-              {textoDiasParaCheckin(reservaDetail.fechaDesde) && (
-                <div style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: diasRestantes(reservaDetail.fechaDesde) < 0 ? theme.colors.textSecondary : (diasRestantes(reservaDetail.fechaDesde) <= 3 ? theme.colors.danger : theme.colors.secondary), background: diasRestantes(reservaDetail.fechaDesde) < 0 ? theme.colors.bgMuted : (diasRestantes(reservaDetail.fechaDesde) <= 3 ? theme.colors.dangerLight : theme.colors.secondaryLight), padding: '6px 10px', borderRadius: theme.radius.full, textAlign: 'center' }}>
-                  {textoDiasParaCheckin(reservaDetail.fechaDesde)}
-                </div>
-              )}
-            </div>
             {reservaDetail.invitados?.map((inv, idx) => {
               const t = inv.timeline || {};
               const completados = progresoInvitado(inv);
@@ -1309,9 +1278,9 @@ export default function VisitasHistorialPage() {
                     ⋮
                   </button>
                 </div>
-                {textoDiasParaCheckin(item.fechaDesde) && (
-                  <div style={{ marginTop: '8px', fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: diasRestantes(item.fechaDesde) < 0 ? theme.colors.textSecondary : (diasRestantes(item.fechaDesde) <= 3 ? theme.colors.danger : theme.colors.secondary), background: diasRestantes(item.fechaDesde) < 0 ? theme.colors.bgMuted : (diasRestantes(item.fechaDesde) <= 3 ? theme.colors.dangerLight : theme.colors.secondaryLight), padding: '6px 10px', borderRadius: theme.radius.full, textAlign: 'center' }}>
-                    {textoDiasParaCheckin(item.fechaDesde)}
+                {textoDiasParaCheckin(item.fechaDesde, item.fechaHasta) && (
+                  <div style={{ marginTop: '8px', fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: (() => { const d = diasRestantes(item.fechaDesde); const dOut = item.fechaHasta ? diasRestantes(item.fechaHasta) : Infinity; if (d > 0) return d <= 3 ? theme.colors.danger : theme.colors.secondary; if (dOut < 0) return theme.colors.textSecondary; return theme.colors.secondary; })(), background: (() => { const d = diasRestantes(item.fechaDesde); const dOut = item.fechaHasta ? diasRestantes(item.fechaHasta) : Infinity; if (d > 0) return d <= 3 ? theme.colors.dangerLight : theme.colors.secondaryLight; if (dOut < 0) return theme.colors.bgMuted; return theme.colors.secondaryLight; })(), padding: '6px 10px', borderRadius: theme.radius.full, textAlign: 'center' }}>
+                    {textoDiasParaCheckin(item.fechaDesde, item.fechaHasta)}
                   </div>
                 )}
                 {/* Resumen por huésped — siempre visible para mantener la línea de tiempo consistente (16) */}
