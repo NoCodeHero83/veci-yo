@@ -474,13 +474,15 @@ function TorresTab({ onSelectTorre }) {
 const TORRE_TABS = [
   { value: 'departamentos', label: 'Departamentos' },
   { value: 'estacionamientos', label: 'Estacionamientos' },
+  { value: 'depositos', label: 'Depósitos' },
 ];
 
 function TorreDetailView({ torre, onBack }) {
   const {
     unidades, tipologias, agregarUnidad, actualizarUnidad, eliminarUnidad,
     asignarPropietarioUnidad, propietariosInvited, configHuespedesTemporales,
-    vehiculosPrivados,
+    vehiculosPrivados, residentesPropietario, propietarioAnfitrionPrimario,
+    depositos, agregarDeposito, actualizarDeposito, eliminarDeposito,
   } = useApp();
 
   const unidadesTorre = unidades.filter(u => u.torreNumero === torre.numero);
@@ -577,6 +579,20 @@ function TorreDetailView({ torre, onBack }) {
   const spotsOcupados = parkingSpots.filter(s => s.asignadoA).length;
   const spotsLibres = totalEstacionamientos - spotsOcupados;
 
+  const getDepositoInfo = (unidad) => {
+    const anfitrion = residentesPropietario.find(r => r.esAnfitrionPrimario);
+    const anfitrionNombre = propietarioAnfitrionPrimario ? 'Propietario (anfitrión primario)' : (anfitrion?.nombre || '—');
+    return { propietario: unidad.propietarioAsignado || 'Sin propietario', anfitrion: anfitrionNombre };
+  };
+
+  const depositosTorre = depositos.filter(d => d.torreNumero === torre.numero);
+  const getDepositoDepto = (dep) => {
+    const u = unidades.find(x => x.id === dep.unidadId || x.codigo === dep.departamentoCodigo);
+    if (!u) return { depto: dep.departamentoCodigo || '—', propietario: '—', anfitrion: getDepositoInfo({ propietarioAsignado: null }).anfitrion };
+    const info = getDepositoInfo(u);
+    return { depto: u.codigo, propietario: info.propietario, anfitrion: info.anfitrion, unidad: u };
+  };
+
   const renderDepartamentos = () => (
     <>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '4px' }}>
@@ -632,19 +648,21 @@ function TorreDetailView({ torre, onBack }) {
         </span>
       </div>
 
-      {parkingSpots.map(spot => (
+      {parkingSpots.map(spot => {
+        const info = spot.unidadAsignada ? getDepositoInfo(spot.unidadAsignada) : null;
+        return (
         <div key={spot.id} style={{
           ...sectionCard, padding: '14px 16px',
           border: `1.5px solid ${spot.asignadoA ? theme.colors.success : theme.colors.border}`,
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+            <div style={{ flex: 1 }}>
               <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.md, color: theme.colors.text }}>
                 {spot.id}
               </div>
-              <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginTop: '2px' }}>
+              <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginTop: '2px', lineHeight: 1.6 }}>
                 {spot.asignadoA ? (
-                  <>Asignado a: <strong>{spot.asignadoA}</strong></>
+                  <>Estacionamiento → Depto <strong>{spot.asignadoA}</strong> → Propietario: <strong>{info?.propietario || '—'}</strong> · Anfitrión: <strong>{info?.anfitrion || '—'}</strong></>
                 ) : (
                   <span style={{ color: theme.colors.textMuted }}>Sin asignar</span>
                 )}
@@ -654,13 +672,13 @@ function TorreDetailView({ torre, onBack }) {
               fontSize: theme.fonts.sizes.xs, padding: '2px 8px', borderRadius: theme.radius.full,
               background: spot.asignadoA ? (theme.colors.success + '20') : (theme.colors.statusGray + '20'),
               color: spot.asignadoA ? theme.colors.success : theme.colors.textSecondary,
-              fontWeight: theme.fonts.weights.medium,
+              fontWeight: theme.fonts.weights.medium, whiteSpace: 'nowrap',
             }}>
               {spot.asignadoA ? 'Ocupado' : 'Libre'}
             </span>
           </div>
         </div>
-      ))}
+      );})}
 
       {totalEstacionamientos === 0 && (
         <div style={{ textAlign: 'center', padding: '32px 16px', color: theme.colors.textSecondary, fontSize: theme.fonts.sizes.sm }}>
@@ -671,6 +689,57 @@ function TorreDetailView({ torre, onBack }) {
       <div style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '12px 14px', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, lineHeight: 1.5, marginTop: '4px' }}>
         Los estacionamientos se asignan automáticamente según la cantidad configurada en cada departamento. Para modificar, edita la cantidad de estacionamientos del departamento.
       </div>
+    </>
+  );
+
+  const [showDepositoForm, setShowDepositoForm] = useState(false);
+  const [editDeposito, setEditDeposito] = useState(null);
+  const [formDeposito, setFormDeposito] = useState({ codigo: '', ubicacion: 'Sótano -2', unidadId: '' });
+
+  const renderDepositos = () => (
+    <>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '4px' }}>
+        <Button variant="primary" onClick={() => { setFormDeposito({ codigo: '', ubicacion: 'Sótano -2', unidadId: '' }); setShowDepositoForm(true); }}>+ Agregar depósito</Button>
+      </div>
+      {depositosTorre.map(dep => {
+        const { depto, propietario, anfitrion } = getDepositoDepto(dep);
+        return (
+        <div key={dep.id} style={{ ...sectionCard, padding: '14px 16px', border: `1.5px solid ${theme.colors.border}` }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.md, color: theme.colors.text }}>{dep.codigo}</div>
+              <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginTop: '2px' }}>{dep.ubicacion}</div>
+              <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginTop: '4px', lineHeight: 1.6 }}>
+                Depósito → Depto <strong>{depto}</strong> → Propietario: <strong>{propietario}</strong> · Anfitrión: <strong>{anfitrion}</strong>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button onClick={() => { setEditDeposito(dep); setFormDeposito({ codigo: dep.codigo, ubicacion: dep.ubicacion, unidadId: String(dep.unidadId || '') }); setShowDepositoForm(true); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.colors.primary, fontSize: theme.fonts.sizes.xs }}>Editar</button>
+              <button onClick={() => eliminarDeposito(dep.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.colors.danger, fontSize: theme.fonts.sizes.xs }}>Eliminar</button>
+            </div>
+          </div>
+        </div>
+        );
+      })}
+      {depositosTorre.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '32px 16px', color: theme.colors.textSecondary, fontSize: theme.fonts.sizes.sm }}>No hay depósitos en esta torre.</div>
+      )}
+      <Modal isOpen={showDepositoForm} onClose={() => { setShowDepositoForm(false); setEditDeposito(null); }} title={editDeposito ? 'Editar depósito' : 'Nuevo depósito'}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <InputField label="Código" value={formDeposito.codigo} onChange={v => setFormDeposito(p => ({ ...p, codigo: v }))} placeholder="Ej: DEP-010" />
+          <InputField label="Ubicación" value={formDeposito.ubicacion} onChange={v => setFormDeposito(p => ({ ...p, ubicacion: v }))} placeholder="Sótano -2" />
+          <div>
+            <span style={labelStyle}>Departamento asociado</span>
+            <SelectField value={formDeposito.unidadId} options={unidadesTorre.map(u => ({ value: String(u.id), label: `${u.codigo} - ${u.propietarioAsignado || 'Sin propietario'}` }))} onChange={v => setFormDeposito(p => ({ ...p, unidadId: v }))} placeholder="Seleccionar depto" />
+          </div>
+          <Button variant="primary" fullWidth onClick={() => {
+            const unidad = unidades.find(u => String(u.id) === String(formDeposito.unidadId));
+            const datos = { codigo: formDeposito.codigo, ubicacion: formDeposito.ubicacion, torreNumero: torre.numero, unidadId: unidad ? unidad.id : null, departamentoCodigo: unidad ? unidad.codigo : '' };
+            if (editDeposito) { actualizarDeposito({ ...editDeposito, ...datos }); } else { agregarDeposito(datos); }
+            setShowDepositoForm(false); setEditDeposito(null);
+          }}>{editDeposito ? 'Guardar' : 'Crear'}</Button>
+        </div>
+      </Modal>
     </>
   );
 
@@ -688,7 +757,7 @@ function TorreDetailView({ torre, onBack }) {
 
       <Tabs tabs={TORRE_TABS} active={activeTab} onChange={setActiveTab} variant="chip" />
 
-      {activeTab === 'departamentos' ? renderDepartamentos() : renderEstacionamientos()}
+      {activeTab === 'departamentos' ? renderDepartamentos() : activeTab === 'estacionamientos' ? renderEstacionamientos() : renderDepositos()}
 
       <BottomSheet isOpen={!!menuUnidad} onClose={() => setMenuUnidad(null)}>
         <BottomSheetOption label="Editar" onPress={() => abrirEditar(menuUnidad)} />
@@ -1180,9 +1249,7 @@ function PorteriasTab() {
 const TABS = [
   { value: 'condominio', label: 'Condominio' },
   { value: 'torres', label: 'Torres' },
-  { value: 'tipologias', label: 'Tipologias' },
-  { value: 'porterias', label: 'Porterias' },
-  { value: 'almacenes', label: 'Almacenes' },
+  { value: 'porterias', label: 'Porterías' },
 ];
 
 export default function AdministradorArquitecturaPage() {
@@ -1201,9 +1268,7 @@ export default function AdministradorArquitecturaPage() {
     switch (activeTab) {
       case 'condominio': return <CondominioTab />;
       case 'torres': return <TorresTab onSelectTorre={setTorreDetail} />;
-      case 'tipologias': return <TipologiasTab />;
       case 'porterias': return <PorteriasTab />;
-      case 'almacenes': return <AlmacenesTab />;
       default: return null;
     }
   };

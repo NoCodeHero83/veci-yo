@@ -87,6 +87,15 @@ export function AppProvider({ children }) {
   const [bloques, setBloques] = useState(bloquesData);
   const [unidades, setUnidades] = useState(unidadesData);
   const [propietariosInvited, setPropietariosInvited] = useState(initialPropietariosInvited);
+  // Depósitos (almacenes) - movidos dentro de Torres
+  const [depositos, setDepositos] = useState([
+    { id: 1, codigo: 'DEP-001', torreNumero: 1, ubicacion: 'Sótano -2', unidadId: 1, departamentoCodigo: '101' },
+    { id: 2, codigo: 'DEP-002', torreNumero: 1, ubicacion: 'Sótano -2', unidadId: 6, departamentoCodigo: '201' },
+    { id: 3, codigo: 'DEP-003', torreNumero: 2, ubicacion: 'Sótano -1', unidadId: 12, departamentoCodigo: '201' },
+  ]);
+  const agregarDeposito = useCallback((datos) => setDepositos(prev => [...prev, { id: Date.now(), ...datos }]), []);
+  const actualizarDeposito = useCallback((item) => setDepositos(prev => prev.map(d => d.id === item.id ? { ...d, ...item } : d)), []);
+  const eliminarDeposito = useCallback((id) => setDepositos(prev => prev.filter(d => d.id !== id)), []);
 
   // ─── Residentes · Vehículos privados (placa + tipo) ──────────────────────
   // unidadId -> [{ id, placa, tipo }]
@@ -974,6 +983,7 @@ export function AppProvider({ children }) {
       bloques, agregarBloque, actualizarBloque, eliminarBloque,
       unidades, agregarUnidad, actualizarUnidad, eliminarUnidad, actualizarEstadoUnidad,
       asignarPropietarioUnidad, propietariosInvited, aceptarInvitacion,
+      depositos, agregarDeposito, actualizarDeposito, eliminarDeposito,
       marcarUnidadConfigurada,
       vehiculosPrivados, agregarVehiculo, eliminarVehiculo, actualizarVehiculo,
       permisos, actualizarPermisos,
