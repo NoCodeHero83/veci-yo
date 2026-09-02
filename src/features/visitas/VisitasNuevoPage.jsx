@@ -133,6 +133,7 @@ export default function VisitasNuevoPage() {
   }, [tipoSeleccionado]);
 
   const esGuardiaOAdmin = rolActivo === 'guardia' || rolActivo === 'administrador';
+  const esGuardia = rolActivo === 'guardia';
 
   useEffect(() => {
     if (!esGuardiaOAdmin && ubicacionActiva) {
@@ -297,6 +298,7 @@ export default function VisitasNuevoPage() {
     }
     setIdentificacionError('');
     setAcompanantesCiErrors({});
+    const fechaVisita = esGuardia ? new Date() : selectedDate;
     const invitados = acompanantes
       .filter(a => a.nombre.trim())
       .map(a => ({ nombre: a.nombre, ci: a.ci || '', esMenor: !!a.esMenor, llego: false }));
@@ -317,8 +319,8 @@ export default function VisitasNuevoPage() {
       tipoNotificacion,
       tieneVehiculo,
       instruccionesCumplidas: {},
-      fechaDesde: selectedDate.toLocaleDateString('es-AR'),
-      fechaHasta: selectedDate.toLocaleDateString('es-AR'),
+      fechaDesde: fechaVisita.toLocaleDateString('es-AR'),
+      fechaHasta: fechaVisita.toLocaleDateString('es-AR'),
       invitados,
       reserva: `N°: ${num}`,
       codigoAcceso: cod,
@@ -470,8 +472,16 @@ export default function VisitasNuevoPage() {
               </div>
             )}
 
-            {/* Calendar */}
-            <Calendar selected={selectedDate} onSelect={setSelectedDate} />
+            {/* Calendar — Guardia solo hoy */}
+            {esGuardia ? (
+              <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card, textAlign: 'center' }}>
+                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '6px' }}>Fecha de la visita</div>
+                <div style={{ fontSize: theme.fonts.sizes.lg, fontWeight: theme.fonts.weights.bold, color: theme.colors.text }}>Hoy — {new Date().toLocaleDateString('es-AR')}</div>
+                <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, marginTop: '4px' }}>El Guardia solo puede registrar visitas del mismo día</div>
+              </div>
+            ) : (
+              <Calendar selected={selectedDate} onSelect={setSelectedDate} />
+            )}
 
             {/* Person info — todos los campos editables */}
             <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card, display: 'flex', flexDirection: 'column', gap: '10px' }}>

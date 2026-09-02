@@ -594,13 +594,27 @@ export function AppProvider({ children }) {
     }));
   }, []);
 
-  // Propietario · Residentes
+  // Propietario · Residentes — Anfitrión primario (único por propiedad)
   const agregarResidente = useCallback((datos) => {
-    setResidentesPropietario(prev => [...prev, { id: Date.now(), ...datos }]);
+    setResidentesPropietario(prev => {
+      const esPrimario = datos.esAnfitrionPrimario === true;
+      const base = esPrimario ? prev.map(r => ({ ...r, esAnfitrionPrimario: false })) : prev;
+      return [...base, { id: Date.now(), ...datos }];
+    });
   }, []);
 
   const actualizarResidente = useCallback((residente) => {
-    setResidentesPropietario(prev => prev.map(r => r.id === residente.id ? { ...r, ...residente } : r));
+    setResidentesPropietario(prev => {
+      const esPrimario = residente.esAnfitrionPrimario === true;
+      if (esPrimario) {
+        return prev.map(r => r.id === residente.id ? { ...r, ...residente } : { ...r, esAnfitrionPrimario: false });
+      }
+      return prev.map(r => r.id === residente.id ? { ...r, ...residente } : r);
+    });
+  }, []);
+
+  const setAnfitrionPrimario = useCallback((id) => {
+    setResidentesPropietario(prev => prev.map(r => ({ ...r, esAnfitrionPrimario: r.id === id })));
   }, []);
 
   const eliminarResidente = useCallback((id) => {
@@ -862,6 +876,32 @@ export function AppProvider({ children }) {
     return `Vecino ${Math.floor(100 + Math.random() * 900)}`;
   }, [ubicacionActiva, unidades]);
 
+  // ─── Directorio: Pagos mantenimiento y Comité ──────────────────────────
+  const [pagosMantenimiento, setPagosMantenimiento] = useState({}); // unidadId -> boolean
+  const marcarPagoMantenimiento = useCallback((unidadId, pagado) => {
+    setPagosMantenimiento(prev => ({ ...prev, [unidadId]: pagado }));
+  }, []);
+  const cargarPagosExcel = useCallback((deptos) => {
+    setPagosMantenimiento(prev => {
+      const next = { ...prev };
+      deptos.forEach(codigo => {
+        const u = unidades.find(un => un.codigo === codigo);
+        if (u) next[u.id] = true;
+      });
+      return next;
+    });
+  }, [unidades]);
+  const [comitePropietarios, setComitePropietarios] = useState({}); // email -> boolean
+  const toggleComite = useCallback((email) => {
+    setComitePropietarios(prev => ({ ...prev, [email]: !prev[email] }));
+  }, []);
+
+  // ─── Guestbook ───────────────────────────────────────────────────
+  const [guestbook, setGuestbook] = useState({}); // ubicacionId -> {wifiName, wifiPassword, doorPassword, instructions, notes}
+  const actualizarGuestbook = useCallback((ubicacionId, datos) => {
+    setGuestbook(prev => ({ ...prev, [ubicacionId]: { ...prev[ubicacionId], ...datos } }));
+  }, []);
+
   const [alias, setAlias] = useState(() => usuario?.alias || '');
   const [usaAliasCuadroHonor, setUsaAliasCuadroHonor] = useState(usuario?.usaAliasCuadroHonor !== false);
   const [usaAliasZonas, setUsaAliasZonas] = useState(usuario?.usaAliasZonas !== false);
@@ -902,7 +942,7 @@ export function AppProvider({ children }) {
       vehiculosPrivados, agregarVehiculo, eliminarVehiculo, actualizarVehiculo,
       permisos, actualizarPermisos,
       guardias, agregarGuardia, actualizarGuardia, eliminarGuardia,
-      residentesPropietario, agregarResidente, actualizarResidente, eliminarResidente,
+      residentesPropietario, agregarResidente, actualizarResidente, eliminarResidente, setAnfitrionPrimario,
       ubicaciones, agregarUbicacion, toggleFavoritoUbicacion, eliminarUbicacion, actualizarUbicacion,
       seguridad, actualizarSeguridad, pausarCuenta,
       configuracionApp, actualizarConfiguracionApp,
@@ -912,6 +952,9 @@ export function AppProvider({ children }) {
       alias, usaAliasCuadroHonor, usaAliasZonas, actualizarAlias, sugerirAlias,
       coadministradores, agregarCoadministrador, actualizarCoadministrador, eliminarCoadministrador,
       gratitudUsada, setGratitudUsada,
+      pagosMantenimiento, marcarPagoMantenimiento, cargarPagosExcel,
+      comitePropietarios, toggleComite,
+      guestbook, actualizarGuestbook,
       tiposDocumentoPorPais,
     }}>
       {children}

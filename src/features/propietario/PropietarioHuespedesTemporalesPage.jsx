@@ -81,6 +81,7 @@ export default function PropietarioHuespedesTemporalesPage() {
   const [legal, setLegal] = useState(config?.legal ?? { rnt: '' });
   const [cumplimiento, setCumplimiento] = useState(config?.cumplimiento ?? { antirruido: false, noFumar: false, sensor: false });
   const [ocultarNumero, setOcultarNumero] = useState(config?.ocultarNumero ?? false);
+  const [guestbookLocal, setGuestbookLocal] = useState(config?.guestbook ?? { wifiName: '', wifiPassword: '', doorPassword: '', instructions: '', notes: '' });
 
   const handleGuardar = () => {
     if (!ubicacionId) return;
@@ -99,6 +100,7 @@ export default function PropietarioHuespedesTemporalesPage() {
       permiteVisitasHuespedes,
       cumplimiento,
       ocultarNumero,
+      guestbook: guestbookLocal,
     });
     addToast('Configuración guardada exitosamente', 'success');
     const from = location.state?.from;
@@ -432,6 +434,21 @@ export default function PropietarioHuespedesTemporalesPage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0' }}>
                 <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>Ocultar número de departamento en la lista pública</span>
                 <Toggle value={ocultarNumero} onChange={setOcultarNumero} />
+              </div>
+            </div>
+
+            <div style={sectionCard}>
+              <h3 style={sectionTitle}>Información del alojamiento — Guestbook</h3>
+              <InputField label="Wi-Fi (nombre)" value={guestbookLocal.wifiName} onChange={v=>setGuestbookLocal(p=>({...p,wifiName:v}))} placeholder="Nombre de red" />
+              <InputField label="Contraseña Wi-Fi" value={guestbookLocal.wifiPassword} onChange={v=>setGuestbookLocal(p=>({...p,wifiPassword:v}))} placeholder="Contraseña" />
+              <InputField label="Contraseña de la puerta" value={guestbookLocal.doorPassword} onChange={v=>setGuestbookLocal(p=>({...p,doorPassword:v}))} placeholder="Código / contraseña" />
+              <div style={{ marginTop:'8px' }}>
+                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom:'4px' }}>Instrucciones adicionales</div>
+                <textarea value={guestbookLocal.instructions} onChange={e=>setGuestbookLocal(p=>({...p,instructions:e.target.value}))} rows={3} style={{ ...inputStyle, resize:'vertical' }} placeholder="Instrucciones de acceso..." />
+              </div>
+              <div style={{ marginTop:'8px' }}>
+                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom:'4px' }}>Notas del alojamiento</div>
+                <textarea value={guestbookLocal.notes} onChange={e=>setGuestbookLocal(p=>({...p,notes:e.target.value}))} rows={3} style={{ ...inputStyle, resize:'vertical' }} placeholder="Notas adicionales..." />
               </div>
             </div>
 

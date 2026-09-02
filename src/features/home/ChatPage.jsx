@@ -45,7 +45,7 @@ function truncate(text, max) {
 
 export default function ChatPage() {
   const navigate = useNavigate();
-  const { mensajes, enviarMensaje, marcarMensajesLeidos, rolActivo, usuario, gruposChat, enviarMensajeGrupo, marcarMensajesGrupoLeidos } = useApp();
+  const { mensajes, enviarMensaje, marcarMensajesLeidos, rolActivo, usuario, gruposChat, enviarMensajeGrupo, marcarMensajesGrupoLeidos, comitePropietarios } = useApp();
   const [vista, setVista] = useState('lista');
   const [selectedConv, setSelectedConv] = useState(null);
   const [torre, setTorre] = useState('Torre 1');
@@ -432,7 +432,7 @@ export default function ChatPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>
-                          {conv.nombre}
+                          {conv.nombre} {comitePropietarios[conv.nombre] || comitePropietarios[conv.id] ? <span style={{ fontSize:'9px', background:'#DBEAFE', color:'#1E40AF', padding:'1px 5px', borderRadius: theme.radius.full }}>Comité</span> : null}
                         </span>
                         {conv.tipo === 'grupo' && (
                           <span style={{

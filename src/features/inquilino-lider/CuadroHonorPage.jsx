@@ -34,7 +34,9 @@ const badgeStyle = {
 
 export default function CuadroHonorPage() {
   const navigate = useNavigate();
-  const { addToast, rolActivo, esResidente } = useApp();
+  const { addToast, rolActivo, esResidente, pagosMantenimiento, unidades } = useApp();
+  const pagadosCount = Object.values(pagosMantenimiento).filter(Boolean).length;
+  const noPagados = unidades.length - pagadosCount;
 
   const [search, setSearch] = useState('');
   const [showReconocimientoPopup, setShowReconocimientoPopup] = useState(false);
@@ -66,6 +68,12 @@ export default function CuadroHonorPage() {
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {/* Histórico de cuota de administración por mes (carrusel, incluye mes actual) */}
         <CarruselCuotas historial={cuotaAdministracionHistorial} />
+        {pagadosCount>0 && (
+          <div style={{ ...cardStyle, padding:'12px', display:'flex', justifyContent:'space-around', textAlign:'center' }}>
+            <div><div style={{ fontWeight:'bold', fontSize: theme.fonts.sizes.lg }}>{pagadosCount}</div><div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>Pagaron</div></div>
+            <div><div style={{ fontWeight:'bold', fontSize: theme.fonts.sizes.lg }}>{noPagados}</div><div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>No pagaron</div></div>
+          </div>
+        )}
 
         {/* Dar reconocimiento button */}
         {puedeParticipar && (

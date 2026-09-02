@@ -236,17 +236,13 @@ export default function VisitasHistorialPage() {
   // Solo Seguridad, Administrador y Huésped Temporal pueden filtrar por piso/torre.
   const puedeFiltrarTorrePiso = rolActivo === 'guardia' || rolActivo === 'administrador' || rolActivo === 'huesped-temporal';
 
+  const huespedDisponible = suscripcionActiva || ['guardia','administrador','huesped-temporal'].includes(rolActivo) || (rolActivo !== 'propietario' && rolActivo !== 'inquilino-lider');
   const TIPO_TABS = useMemo(() => {
     if (rolActivo === 'huesped-temporal') return [{ value: 'visitas', label: 'Visitas' }];
-    if (sinCalendario) return [
-      { value: 'visitas', label: 'Visitas' },
-      { value: 'huespedes', label: 'Huéspedes' },
-    ];
-    return [
-      { value: 'visitas', label: 'Visitas' },
-      { value: 'huespedes', label: 'Huéspedes' },
-    ];
-  }, [rolActivo, sinCalendario]);
+    const base = [{ value: 'visitas', label: 'Visitas' }];
+    if (huespedDisponible) base.push({ value: 'huespedes', label: 'Huéspedes' });
+    return base;
+  }, [rolActivo, sinCalendario, huespedDisponible]);
 
   const diasRestantes = (fechaStr) => {
     if (!fechaStr) return Infinity;
@@ -431,11 +427,10 @@ export default function VisitasHistorialPage() {
 
   const renderKpiHuespedes = () => {
     const reservas = filtered.filter(v => v.tipo === 'huesped-temporal');
-    let total = 0, verificados = 0, conHallazgos = 0, traPendiente = 0, menores = 0;
+    let total = 0, verificados = 0, traPendiente = 0, menores = 0;
     reservas.forEach(v => (v.invitados || []).forEach(inv => {
       total += 1;
       if (inv.timeline?.verificacionAprobada === true) verificados += 1;
-      if (inv.timeline?.verificacionHallazgos === true) conHallazgos += 1;
       if (!inv.traSireReported) traPendiente += 1;
       if (inv.esMenor) menores += 1;
     }));
@@ -445,11 +440,11 @@ export default function VisitasHistorialPage() {
         <div style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textSecondary, marginTop: '2px' }}>{label}</div>
       </div>
     );
+    // KPIs relevantes arriba — sin "hallazgos" para Seguridad/Anfitrión (top only)
     return (
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
         {kpi('Huéspedes', total, theme.colors.text)}
         {kpi('Verificados', verificados, theme.colors.success)}
-        {kpi('Con hallazgos', conHallazgos, '#92400E')}
         {kpi('TRA/SIRE pendiente', traPendiente, theme.colors.warning)}
         {kpi('Menores', menores, theme.colors.secondary)}
       </div>
@@ -588,27 +583,39 @@ export default function VisitasHistorialPage() {
 
       <ModuloGate helpKey="visitas">
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {/* Tipos de visita directos para registrar (vista combinada, opción 2) */}
+        {!huespedDisponible && (
+          <div style={{ background: '#F3F4F6', borderRadius: theme.radius.lg, padding: '12px', display: 'flex', alignItems: 'center', gap: '10px', border: `1px solid ${theme.colors.border}` }}>
+            <span style={{ fontSize: '20px' }}>🔒</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.bold, color: theme.colors.textSecondary }}>Huésped Temporal — Requiere suscripción</div>
+              <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>Activa la funcionalidad desde Configuración de Huéspedes Temporales</div>
+            </div>
+          </div>
+        )}
+        {/* Tipos de visita directos para registrar */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
           {(rolActivo === 'guardia' || rolActivo === 'huesped-temporal' || rolActivo === 'administrador'
             ? ['amigos', 'temporal']
-            : ['amigos', 'temporal', 'permanente', 'huesped-temporal']
-          ).map(id => (
+            : (huespedDisponible ? ['amigos', 'temporal', 'permanente', 'huesped-temporal'] : ['amigos', 'temporal', 'permanente'])
+          ).map(id => {
+            const esHuesped = id === 'huesped-temporal';
+            const bloqueado = esHuesped && !huespedDisponible;
+            return (
             <button
               key={id}
-              onClick={() => navigate('/visitas/nuevo', { state: { tipoPreseleccionado: id } })}
+              onClick={() => { if (bloqueado) { addToast('Requiere activación de Huésped Temporal', 'warning'); return; } navigate('/visitas/nuevo', { state: { tipoPreseleccionado: id } }); }}
               style={{
                 display: 'flex', alignItems: 'center', gap: '8px',
                 padding: '10px 12px', borderRadius: theme.radius.lg,
-                border: `1px solid ${theme.colors.border}`, background: theme.colors.bgCard,
-                boxShadow: theme.shadows.card, cursor: 'pointer', fontFamily: theme.fonts.family,
-                textAlign: 'left',
+                border: `1px solid ${theme.colors.border}`, background: bloqueado ? '#F3F4F6' : theme.colors.bgCard,
+                boxShadow: theme.shadows.card, cursor: bloqueado ? 'not-allowed' : 'pointer', fontFamily: theme.fonts.family,
+                textAlign: 'left', opacity: bloqueado ? 0.5 : 1, filter: bloqueado ? 'grayscale(0.6)' : 'none',
               }}
             >
               <img src={tipoVisitaIcons[id]} alt={TIPO_LABELS[id]} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-              <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>{TIPO_LABELS[id]}</span>
+              <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>{TIPO_LABELS[id]} {bloqueado ? '🔒' : ''}</span>
             </button>
-          ))}
+          );})}
         </div>
 
         {/* Type tabs: Visitas / Huéspedes */}

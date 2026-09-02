@@ -561,6 +561,31 @@ export default function InquilinoLiderHome() {
         )}
 
         {/* Tabla resumen + botones */}
+        {/* Directorio de Propiedades — Seguridad y Administrador */}
+        {(esAdmin || esGuardia) && (
+        <div style={{ ...cardStyle, padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '20px' }}>🏢</span>
+              <span style={{ fontSize: theme.fonts.sizes.base, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>
+                Directorio de Propiedades
+              </span>
+            </div>
+            <button
+              onClick={() => navigate('/directorio-propiedades')}
+              style={{
+                padding: '6px 14px', borderRadius: theme.radius.full,
+                background: theme.colors.primary, color: '#fff', border: 'none',
+                cursor: 'pointer', fontFamily: theme.fonts.family,
+                fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold,
+              }}
+            >
+              Ver
+            </button>
+          </div>
+          <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>Buscar por torre, ver deptos, estacionamientos y depósitos asociados</div>
+        </div>
+        )}
         {/* Estacionamientos de visita — acceso rápido (solo Administrador y Guardia de Seguridad) */}
         {(esAdmin || esGuardia) && (
         <div style={{ ...cardStyle, padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>

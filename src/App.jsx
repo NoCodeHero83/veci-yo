@@ -73,6 +73,7 @@ import AnuncioDetallePage from './features/anuncios/AnuncioDetallePage';
 // Reglas
 import ReglasPage from './features/reglas/ReglasPage';
 import ReglaDetallePage from './features/reglas/ReglaDetallePage';
+import DirectorioPropiedadesPage from './features/directorio/DirectorioPropiedadesPage';
 
 // Comunidad
 import ComunidadPage from './features/comunidad/ComunidadPage';
@@ -184,6 +185,7 @@ export default function App() {
         <Route path="/ranking" element={<PlaceholderPage title="Ranking" />} />
         <Route path="/reglas" element={<ReglasPage />} />
         <Route path="/reglas/:tipo" element={<ReglaDetallePage />} />
+        <Route path="/directorio-propiedades" element={<DirectorioPropiedadesPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

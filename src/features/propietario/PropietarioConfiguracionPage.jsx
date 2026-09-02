@@ -65,7 +65,7 @@ function mensajeResidencia(esResidente) {
 
 export default function PropietarioConfiguracionPage({ basePath = '/propietario/configuracion' } = {}) {
   const navigate = useNavigate();
-  const { residentesPropietario, eliminarResidente, agregarResidente, addToast, rolActivo, unidades, propietariosInvited, aceptarInvitacion, agregarUbicacion, usuario, tipologias, esResidente, togglePropietarioResidente, ubicacionActiva, vehiculosPrivados, agregarVehiculo, eliminarVehiculo } = useApp();
+  const { residentesPropietario, eliminarResidente, agregarResidente, addToast, rolActivo, unidades, propietariosInvited, aceptarInvitacion, agregarUbicacion, usuario, tipologias, esResidente, togglePropietarioResidente, ubicacionActiva, vehiculosPrivados, agregarVehiculo, eliminarVehiculo, setAnfitrionPrimario } = useApp();
 
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [menuResidente, setMenuResidente] = useState(null);
@@ -282,13 +282,19 @@ const handleAgregarFamiliar = () => {
                 <div key={r.id} style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '16px', boxShadow: theme.shadows.card }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: theme.fonts.sizes.md, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, marginBottom: '8px' }}>
-                        {r.nombre}
+                      <p style={{ fontSize: theme.fonts.sizes.md, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, marginBottom: '4px' }}>
+                        {r.nombre} {r.esAnfitrionPrimario && <span style={{ fontSize: theme.fonts.sizes.xs, background: theme.colors.primaryLight, color: theme.colors.primary, padding: '2px 6px', borderRadius: theme.radius.full, fontWeight: theme.fonts.weights.bold }}>Anfitrión primario</span>}
                       </p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
                         <span>Ci:{r.ci}</span>
                         <span>{r.fecha}</span>
                       </div>
+                      {(r.rol === 'Anfitrión' || r.rol === 'Propietario') && (
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={!!r.esAnfitrionPrimario} onChange={() => { if (!r.esAnfitrionPrimario) setAnfitrionPrimario(r.id); }} style={{ width: '16px', height: '16px', accentColor: theme.colors.primary }} />
+                          <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>Anfitrión primario</span>
+                        </label>
+                      )}
                     </div>
                     <DotsMenuButton onClick={() => setMenuResidente(r)} />
                   </div>

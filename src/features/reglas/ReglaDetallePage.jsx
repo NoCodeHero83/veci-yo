@@ -33,10 +33,11 @@ const iconButtonStyle = {
 export default function ReglaDetallePage() {
   const { tipo } = useParams();
   const navigate = useNavigate();
-  const { addToast, rolActivo } = useApp();
+  const { addToast, rolActivo, residentesPropietario } = useApp();
   const esHT = rolActivo === 'huesped-temporal';
   const contenido = reglasContenido[tipo];
-  const contactos = contactosDepartamento;
+  const primario = residentesPropietario.find(r => r.esAnfitrionPrimario);
+  const contactos = primario ? { ...contactosDepartamento, anfitrion: { nombre: primario.nombre, telefono: primario.telefono || contactosDepartamento.anfitrion.telefono } } : contactosDepartamento;
 
   const [cargaOpen, setCargaOpen] = useState(false);
   const [exitoOpen, setExitoOpen] = useState(false);

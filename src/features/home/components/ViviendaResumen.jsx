@@ -41,7 +41,8 @@ export default function ViviendaResumen() {
   const navigate = useNavigate();
   const [configOpen, setConfigOpen] = useState(false);
   const [popupKey, setPopupKey] = useState(null);
-  const { rolActivo, esIncognito, sinPropiedades, esResidente, ubicacionActiva } = useApp();
+  const { rolActivo, esIncognito, sinPropiedades, esResidente, ubicacionActiva, configHuespedesTemporales } = useApp();
+  const guestbook = ubicacionActiva ? configHuespedesTemporales[ubicacionActiva.id]?.guestbook : null;
   const esAdministrador = rolActivo === 'administrador';
   const esHuespedTemporal = rolActivo === 'huesped-temporal';
   const esGuardia = rolActivo === 'guardia';
@@ -228,6 +229,16 @@ export default function ViviendaResumen() {
         })}
       </div>
 
+      {guestbook && (guestbook.wifiName || guestbook.instructions) && (
+        <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding:'16px', boxShadow: theme.shadows.card, display:'flex', flexDirection:'column', gap:'8px' }}>
+          <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base }}>Guestbook — Mi alojamiento</div>
+          <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{ubicacionActiva?.alias} · {ubicacionActiva?.direccion}</div>
+          {guestbook.wifiName && <div style={{ fontSize: theme.fonts.sizes.sm }}>Wi-Fi: <strong>{guestbook.wifiName}</strong> {guestbook.wifiPassword && `· Contraseña: ${guestbook.wifiPassword}`}</div>}
+          {guestbook.doorPassword && <div style={{ fontSize: theme.fonts.sizes.sm }}>Contraseña puerta: <strong>{guestbook.doorPassword}</strong></div>}
+          {guestbook.instructions && <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>Instrucciones: {guestbook.instructions}</div>}
+          {guestbook.notes && <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>Notas: {guestbook.notes}</div>}
+        </div>
+      )}
       {/* Bottom spacing for FABs */}
       <div style={{ height: '80px' }} />
     </div>

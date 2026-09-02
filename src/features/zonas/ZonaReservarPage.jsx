@@ -63,6 +63,7 @@ export default function ZonaReservarPage() {
   const [depto, setDepto] = useState(location.state?.deptoReserva || '506 C');
   const [cargoCuota, setCargoCuota] = useState(false);
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
+  const [comprobante, setComprobante] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [reservaGenerada, setReservaGenerada] = useState(null);
 
@@ -98,6 +99,8 @@ export default function ZonaReservarPage() {
       estado,
       personas: personasList,
       comentarios,
+      comprobante: comprobante ? comprobante.name || 'comprobante.pdf' : null,
+      requiereAprobacion,
     };
     agregarReserva(reserva);
     setReservaGenerada(reserva);
@@ -264,9 +267,16 @@ export default function ZonaReservarPage() {
         <Toggle value={aceptaTerminos} onChange={setAceptaTerminos} labelRight="Acepta términos y condiciones" />
 
         {requiereAprobacion && (
-          <div style={{ background: theme.colors.warningLight, borderRadius: theme.radius.lg, padding: '10px 14px', fontSize: theme.fonts.sizes.xs, color: theme.colors.warning, lineHeight: 1.5, textAlign: 'center' }}>
-            Esta area requiere aprobacion manual. La reserva quedara en estado Pendiente hasta que un administrador la revise.
-          </div>
+          <>
+            <div style={{ background: theme.colors.warningLight, borderRadius: theme.radius.lg, padding: '10px 14px', fontSize: theme.fonts.sizes.xs, color: theme.colors.warning, lineHeight: 1.5, textAlign: 'center' }}>
+              Esta area requiere aprobacion manual. La reserva quedara en estado Pendiente hasta que un administrador la revise.
+            </div>
+            <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card }}>
+              <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.semibold, marginBottom: '8px' }}>Comprobante de pago</div>
+              <input type="file" accept=".pdf,.jpg,.png" onChange={e=>setComprobante(e.target.files[0])} style={{ width: '100%', fontSize: theme.fonts.sizes.sm }} />
+              {comprobante && <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.success, marginTop: '6px' }}>✓ {comprobante.name}</div>}
+            </div>
+          </>
         )}
 
         <Button variant="primary" fullWidth onClick={handleAceptar}>Aceptar</Button>

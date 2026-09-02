@@ -73,19 +73,6 @@ export default function AdministracionUbicacionPage() {
     <AppShell>
       <PageHeader
         title="Administración de ubicación"
-        action={
-          <button
-            onClick={abrirAgregar}
-            style={{
-              width: '36px', height: '36px', borderRadius: theme.radius.md,
-              background: theme.colors.primary, color: '#fff', fontSize: '22px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: 'none', cursor: 'pointer', fontWeight: 'bold',
-            }}
-          >
-            +
-          </button>
-        }
       />
 
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>

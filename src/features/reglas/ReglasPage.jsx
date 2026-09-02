@@ -105,7 +105,8 @@ function TipoCard({ icon, label, onClick, emoji }) {
 // Pendiente) y acciones de comunicación.
 export default function ReglasPage() {
   const navigate = useNavigate();
-  const { rolActivo } = useApp();
+  const { rolActivo, residentesPropietario } = useApp();
+  const anfitrionPrimario = residentesPropietario.find(r => r.esAnfitrionPrimario);
 
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('Todos');
@@ -218,7 +219,7 @@ export default function ReglasPage() {
                 {dept.ocultarNumero ? 'Departamento (oculto)' : dept.departamento}
               </div>
               <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, lineHeight: '1.5' }}>
-                Anfitrión: {dept.anfitrion} {dept.telAnfitrion ? <span style={{ color: theme.colors.success, fontWeight: 'bold' }} title="Contacto completo">✓</span> : <span style={{ color: theme.colors.danger, fontWeight: 'bold' }} title="Contacto incompleto">✕</span>}<br />
+                Anfitrión: {anfitrionPrimario ? anfitrionPrimario.nombre : dept.anfitrion} {dept.telAnfitrion ? <span style={{ color: theme.colors.success, fontWeight: 'bold' }} title="Contacto completo">✓</span> : <span style={{ color: theme.colors.danger, fontWeight: 'bold' }} title="Contacto incompleto">✕</span>} {anfitrionPrimario && <span style={{ fontSize: '9px', background: theme.colors.primaryLight, color: theme.colors.primary, padding: '1px 5px', borderRadius: theme.radius.full }}>Primario</span>}<br />
                 Administrador: {dept.administrador} {dept.telAdmin ? <span style={{ color: theme.colors.success, fontWeight: 'bold' }} title="Contacto completo">✓</span> : <span style={{ color: theme.colors.danger, fontWeight: 'bold' }} title="Contacto incompleto">✕</span>}<br />
                 Propietario: {dept.propietario} {dept.telPropietario ? <span style={{ color: theme.colors.success, fontWeight: 'bold' }} title="Contacto completo">✓</span> : <span style={{ color: theme.colors.danger, fontWeight: 'bold' }} title="Contacto incompleto">✕</span>}
               </div>

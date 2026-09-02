@@ -11,7 +11,7 @@ import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
 import { tiposDocumentoPorPais } from '../../data/mockData';
 
-const ROLES_OPCIONES = ['Residente Inquilino Lider', 'Coadministrador', 'Residente'];
+const ROLES_OPCIONES = ['Residente Inquilino Lider', 'Coadministrador', 'Residente', 'Anfitrión', 'Propietario', 'Administrador'];
 const TIPO_DOC_OPCIONES = tiposDocumentoPorPais?.default || ['Cedula', 'Pasaporte', 'DNI'];
 const SERVICIOS_INIT = { luz: false, agua: false, gas: false, internet: false, mantenimiento: false, alquiler: false };
 
@@ -48,6 +48,7 @@ export default function PropietarioCrearRolPage() {
     duracion: editData?.duracion || '',
     montoAlquiler: editData?.montoAlquiler || '',
     monitoreoPago: editData?.monitoreoPago || false,
+    esAnfitrionPrimario: editData?.esAnfitrionPrimario || false,
   });
 
   const [servicios, setServicios] = useState({ ...SERVICIOS_INIT, ...editData?.servicios });
@@ -81,6 +82,12 @@ export default function PropietarioCrearRolPage() {
 
       <div className="scrollable" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <SelectField value={form.rol} options={ROLES_OPCIONES} onChange={setField('rol')} placeholder="Seleccione Rol:" />
+        {(form.rol === 'Anfitrión' || form.rol === 'Propietario' || form.rol === 'Administrador') && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '8px 0' }}>
+            <input type="checkbox" checked={!!form.esAnfitrionPrimario} onChange={e => setField('esAnfitrionPrimario')(e.target.checked)} style={{ width: '18px', height: '18px', accentColor: theme.colors.primary }} />
+            <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>Anfitrión primario</span>
+          </label>
+        )}
         <InputField value={form.nombre} onChange={setField('nombre')} placeholder="Nombre y Apellido" showEditIcon />
         <InputField value={form.correo} onChange={setField('correo')} placeholder="Correo electrónico" type="email" showEditIcon />
 

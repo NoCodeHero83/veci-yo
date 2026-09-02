@@ -170,6 +170,7 @@ export default function AdministradorGestionZonaFormPage() {
     costoReserva: existing?.costoReserva || 0,
     moneda: existing?.moneda || 'COP',
     activa: existing?.activa !== undefined ? existing.activa : true,
+    requiereAprobacion: existingConfig?.requiereAprobacion || false,
     permiteCorta: existing?.permiteCorta !== undefined ? existing.permiteCorta : true,
     permiteLarga: existing?.permiteLarga !== undefined ? existing.permiteLarga : true,
     usaSlots: existingConfig?.usaSlots || false,
@@ -473,6 +474,14 @@ export default function AdministradorGestionZonaFormPage() {
             {form.activa
               ? 'La zona estará disponible para reservas de los residentes.'
               : 'Al estar inactiva, no aparecerá para reservas de los residentes.'}
+          </p>
+        </SectionCard>
+
+        {/* Aprobación del administrador */}
+        <SectionCard title="Aprobación del administrador">
+          <Toggle value={form.requiereAprobacion || false} onChange={v => setForm(prev=> ({...prev, requiereAprobacion: v}))} labelRight="Las reservas requieren aprobación del administrador" />
+          <p style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted, margin: 0 }}>
+            {form.requiereAprobacion ? 'Las reservas quedarán en estado Pendiente y deberán ser aprobadas por el administrador. El usuario podrá subir comprobante de pago.' : 'Las reservas se confirmarán automáticamente.'}
           </p>
         </SectionCard>
 
