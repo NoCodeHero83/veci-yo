@@ -86,7 +86,7 @@ export default function PropietarioCrearRolPage() {
 
       <div className="scrollable" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <SelectField value={form.rol} options={ROLES_OPCIONES} onChange={setField('rol')} placeholder="Seleccione Rol:" />
-        {(form.rol === 'Residente' || form.rol === 'Residente Inquilino Lider' || form.rol === 'Propietario') && (
+        {(form.rol === 'Residente' || form.rol === 'Inquilino Lider' || form.rol === 'Propietario') && (
           <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '8px 0' }}>
             <input type="checkbox" checked={!!form.esAnfitrionPrimario} onChange={e => setField('esAnfitrionPrimario')(e.target.checked)} style={{ width: '18px', height: '18px', accentColor: theme.colors.primary }} />
             <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>Anfitrión primario</span>

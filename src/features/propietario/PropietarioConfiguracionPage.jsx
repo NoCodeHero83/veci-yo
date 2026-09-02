@@ -305,7 +305,7 @@ const handleAgregarFamiliar = () => {
                         <span>{r.contactableChat ? '💬 Chat' : '💬✕'}</span>
                         <span>{r.contactableWhatsapp ? '📱 WhatsApp' : '📱✕'}</span>
                       </div>
-                      {(r.rol === 'Residente' || r.rol === 'Residente Inquilino Lider' || r.rol === 'Propietario') && (
+                      {(r.rol === 'Residente' || r.rol === 'Corresidente' || r.rol === 'Inquilino Lider' || r.rol === 'Propietario') && (
                         <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', cursor: 'pointer' }}>
                           <input type="checkbox" checked={!!r.esAnfitrionPrimario} onChange={() => { if (!r.esAnfitrionPrimario) setAnfitrionPrimario(r.id); }} style={{ width: '16px', height: '16px', accentColor: theme.colors.primary }} />
                           <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>Anfitrión primario</span>
