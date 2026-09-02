@@ -14,6 +14,7 @@ import Modal from '../../components/ui/Modal';
 import Button from '../../components/ui/Button';
 import SelectField from '../../components/ui/SelectField';
 import Toggle from '../../components/ui/Toggle';
+import InputField from '../../components/ui/InputField';
 import { ModuloGate, ModuloHeaderInfo } from '../../components/ui/ModuloEstado';
 import { useApp } from '../../context/AppContext';
 import theme from '../../config/theme';
@@ -186,7 +187,7 @@ export default function VisitasHistorialPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const fromHome = location.state?.fromHome || false;
-  const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado, aprobarInvitado, rolActivo, addToast, verificaciones, actualizarVerificacion, actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion, toggleInstruccionCumplida, estacionamientosVisitantes, estacionamientosAsignados, asignarEstacionamientoVisita, configHuespedesTemporales, ubicacionActiva, suscripcionActiva, reportarTraSire, usuario, actualizarConfigHuespedTemporal, esResidente, actualizarTimeline, aprobarTerminosManual, aprobarVerificacion, aprobarVerificacionConHallazgos, actualizarVisita } = useApp();
+  const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado, aprobarInvitado, rolActivo, addToast, verificaciones, actualizarVerificacion, actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion, toggleInstruccionCumplida, estacionamientosVisitantes, estacionamientosAsignados, asignarEstacionamientoVisita, configHuespedesTemporales, ubicacionActiva, suscripcionActiva, activarSuscripcion, reportarTraSire, usuario, actualizarConfigHuespedTemporal, esResidente, actualizarTimeline, aprobarTerminosManual, aprobarVerificacion, aprobarVerificacionConHallazgos, actualizarVisita } = useApp();
 
   const esAdminRol = rolActivo === 'administrador';
   const esGuardiaRol = rolActivo === 'guardia';
@@ -228,6 +229,10 @@ export default function VisitasHistorialPage() {
   const [reservaGuardia, setReservaGuardia] = useState(null);
   const [parkingTarget, setParkingTarget] = useState(null);
   const [calendarioMonth, setCalendarioMonth] = useState(new Date());
+  const [showSuscripcionModal, setShowSuscripcionModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({ cardNumber: '', cardName: '', cardExpiry: '', cardCvv: '' });
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   const algunFiltroActivo = search || fechaDesdeFilter || fechaHastaFilter || torreFilter || deptoFilter || tipoFilter !== 'Todos';
 
@@ -588,7 +593,7 @@ export default function VisitasHistorialPage() {
             <span style={{ fontSize: '20px' }}>🔒</span>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.bold, color: theme.colors.textSecondary }}>Huésped Temporal — Requiere suscripción</div>
-              <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>Activa la funcionalidad desde Configuración de Huéspedes Temporales</div>
+              <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>Puedes activarlo desde Configuración &gt; Huéspedes Temporales o tocando el card Huésped Temporal aquí mismo para suscribirte.</div>
             </div>
           </div>
         )}
@@ -596,20 +601,20 @@ export default function VisitasHistorialPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
           {(rolActivo === 'guardia' || rolActivo === 'huesped-temporal' || rolActivo === 'administrador'
             ? ['amigos', 'temporal']
-            : (huespedDisponible ? ['amigos', 'temporal', 'permanente', 'huesped-temporal'] : ['amigos', 'temporal', 'permanente'])
+            : ['amigos', 'temporal', 'permanente', 'huesped-temporal']
           ).map(id => {
             const esHuesped = id === 'huesped-temporal';
             const bloqueado = esHuesped && !huespedDisponible;
             return (
             <button
               key={id}
-              onClick={() => { if (bloqueado) { addToast('Requiere activación de Huésped Temporal', 'warning'); return; } navigate('/visitas/nuevo', { state: { tipoPreseleccionado: id } }); }}
+              onClick={() => { if (bloqueado) { setShowSuscripcionModal(true); return; } navigate('/visitas/nuevo', { state: { tipoPreseleccionado: id } }); }}
               style={{
                 display: 'flex', alignItems: 'center', gap: '8px',
                 padding: '10px 12px', borderRadius: theme.radius.lg,
                 border: `1px solid ${theme.colors.border}`, background: bloqueado ? '#F3F4F6' : theme.colors.bgCard,
-                boxShadow: theme.shadows.card, cursor: bloqueado ? 'not-allowed' : 'pointer', fontFamily: theme.fonts.family,
-                textAlign: 'left', opacity: bloqueado ? 0.5 : 1, filter: bloqueado ? 'grayscale(0.6)' : 'none',
+                boxShadow: theme.shadows.card, cursor: bloqueado ? 'pointer' : 'pointer', fontFamily: theme.fonts.family,
+                textAlign: 'left', opacity: bloqueado ? 0.6 : 1, filter: bloqueado ? 'grayscale(0.6)' : 'none',
               }}
             >
               <img src={tipoVisitaIcons[id]} alt={TIPO_LABELS[id]} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
@@ -2862,6 +2867,40 @@ export default function VisitasHistorialPage() {
             </Button>
           </div>
         )}
+      </Modal>
+
+      {/* Suscripción Huésped Temporal */}
+      <Modal isOpen={showSuscripcionModal} onClose={() => setShowSuscripcionModal(false)} title="VeciYo Huésped Temporal">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', textAlign: 'center' }}>
+          <div style={{ width: '100%', height: '180px', borderRadius: theme.radius.xl, background: theme.colors.bgMuted, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '48px' }}>▶️</div>
+          <p style={{ fontSize: theme.fonts.sizes.base, color: theme.colors.text, lineHeight: theme.fonts.lineHeights.relaxed, margin: 0 }}>Los primeros 30 días son gratuitos. Suscríbete y disfruta de todos los beneficios!</p>
+          <Button variant="primary" fullWidth onClick={() => { setShowSuscripcionModal(false); setShowPaymentModal(true); }}>Suscribirse</Button>
+        </div>
+      </Modal>
+      <Modal isOpen={showPaymentModal} onClose={() => { if (!paymentLoading) setShowPaymentModal(false); }} title="Pago de suscripción">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '4px 0' }}>
+          <div style={{ textAlign: 'center', padding: '12px 0', borderBottom: `1px solid ${theme.colors.borderLight}` }}>
+            <div style={{ fontSize: theme.fonts.sizes.xl, fontWeight: theme.fonts.weights.bold, color: theme.colors.text }}>$15.00</div>
+            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>por mes - Huésped Temporal</div>
+          </div>
+          <InputField label="Nombre del titular" value={paymentForm.cardName} onChange={v => setPaymentForm(p => ({ ...p, cardName: v }))} placeholder="Como figura en la tarjeta" disabled={paymentLoading} />
+          <InputField label="Número de tarjeta" value={paymentForm.cardNumber} onChange={v => { const d=v.replace(/\D/g,'').slice(0,16); const f=d.replace(/(\d{4})(?=\d)/g,'$1 '); setPaymentForm(p=>({...p, cardNumber:f})); }} placeholder="1234 5678 9012 3456" disabled={paymentLoading} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <InputField label="Vencimiento" value={paymentForm.cardExpiry} onChange={v => { const d=v.replace(/\D/g,'').slice(0,4); const f=d.length>2?d.slice(0,2)+'/'+d.slice(2):d; setPaymentForm(p=>({...p, cardExpiry:f})); }} placeholder="MM/AA" disabled={paymentLoading} />
+            <InputField label="CVV" value={paymentForm.cardCvv} onChange={v => setPaymentForm(p=>({...p, cardCvv:v.replace(/\D/g,'').slice(0,4)}))} placeholder="123" disabled={paymentLoading} />
+          </div>
+          <div style={{ background: theme.colors.secondaryLight, borderRadius: theme.radius.lg, padding: '10px 14px', fontSize: theme.fonts.sizes.xs, color: theme.colors.secondary, lineHeight: 1.5 }}>Pago 100% simulado. No se realizará ningún cobro real.</div>
+          <Button variant="primary" fullWidth disabled={paymentLoading} onClick={() => {
+            if (!paymentForm.cardNumber || !paymentForm.cardName || !paymentForm.cardExpiry || !paymentForm.cardCvv) return;
+            setPaymentLoading(true);
+            setTimeout(() => {
+              if (ubicacionActiva) activarSuscripcion(ubicacionActiva.id);
+              setPaymentLoading(false); setShowPaymentModal(false); setPaymentForm({ cardNumber:'', cardName:'', cardExpiry:'', cardCvv:'' });
+              const base = rolActivo==='inquilino-lider' ? '/inquilino-lider/configuracion/huespedes-temporales' : '/propietario/configuracion/huespedes-temporales';
+              navigate(base);
+            }, 1200);
+          }}>{paymentLoading ? 'Procesando pago...' : 'Pagar $15.00 y suscribirse'}</Button>
+        </div>
       </Modal>
 
       {/* Hallazgos summary popup */}

@@ -225,7 +225,8 @@ export default function VisitasNuevoPage() {
       setShowPaymentModal(false);
       setShowSuscripcionModal(false);
       setPaymentForm({ cardNumber: '', cardName: '', cardExpiry: '', cardCvv: '' });
-      setTipoSeleccionado('huesped-temporal');
+      const base = rolActivo==='inquilino-lider' ? '/inquilino-lider/configuracion/huespedes-temporales' : '/propietario/configuracion/huespedes-temporales';
+      navigate(base);
     }, 1500);
   };
 
