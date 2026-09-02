@@ -65,7 +65,7 @@ function mensajeResidencia(esResidente) {
 
 export default function PropietarioConfiguracionPage({ basePath = '/propietario/configuracion' } = {}) {
   const navigate = useNavigate();
-  const { residentesPropietario, eliminarResidente, agregarResidente, addToast, rolActivo, unidades, propietariosInvited, aceptarInvitacion, agregarUbicacion, usuario, tipologias, esResidente, togglePropietarioResidente, ubicacionActiva, vehiculosPrivados, agregarVehiculo, eliminarVehiculo, setAnfitrionPrimario } = useApp();
+  const { residentesPropietario, eliminarResidente, agregarResidente, actualizarResidente, addToast, rolActivo, unidades, propietariosInvited, aceptarInvitacion, agregarUbicacion, usuario, tipologias, esResidente, togglePropietarioResidente, ubicacionActiva, vehiculosPrivados, agregarVehiculo, eliminarVehiculo, setAnfitrionPrimario, setAdministradorPrimario, propietarioAnfitrionPrimario, propietarioAdministradorPrimario } = useApp();
 
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [menuResidente, setMenuResidente] = useState(null);
@@ -216,11 +216,11 @@ const handleAgregarFamiliar = () => {
           </div>
         )}
         {rolActivo === 'propietario' && usuario && (
-          <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '16px', boxShadow: theme.shadows.card }}>
+          <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '16px', boxShadow: theme.shadows.card, display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontSize: theme.fonts.sizes.md, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, marginBottom: '4px' }}>
-                  {usuario.nombre} {usuario.apellido || ''}
+                  {usuario.nombre} {usuario.apellido || ''} {propietarioAnfitrionPrimario && <span style={{ fontSize: theme.fonts.sizes.xs, background: theme.colors.primaryLight, color: theme.colors.primary, padding: '2px 6px', borderRadius: theme.radius.full, fontWeight: 700 }}>Anfitrión primario</span>} {propietarioAdministradorPrimario && <span style={{ fontSize: theme.fonts.sizes.xs, background: '#FCE7F3', color: '#BE185D', padding: '2px 6px', borderRadius: theme.radius.full, fontWeight: 700 }}>Admin primario</span>}
                 </p>
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
                   <span style={{ display: 'inline-block', fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.bold, color: ROL_COLORES['Propietario'].color, background: ROL_COLORES['Propietario'].bg, borderRadius: theme.radius.full, padding: '2px 10px' }}>
@@ -259,6 +259,17 @@ const handleAgregarFamiliar = () => {
                 </div>
               </div>
             </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderTop: `1px solid ${theme.colors.borderLight}`, paddingTop: '10px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input type="checkbox" checked={propietarioAnfitrionPrimario} onChange={() => setAnfitrionPrimario('propietario')} style={{ width: '16px', height: '16px', accentColor: theme.colors.primary }} />
+                <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.text }}>Anfitrión primario</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input type="checkbox" checked={propietarioAdministradorPrimario} onChange={() => setAdministradorPrimario('propietario')} style={{ width: '16px', height: '16px', accentColor: theme.colors.primary }} />
+                <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.text }}>Administrador primario</span>
+              </label>
+              <p style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, margin: 0 }}>Por defecto el propietario es anfitrión y administrador primario. Puedes reasignarlo.</p>
+            </div>
           </div>
         )}
 
@@ -283,16 +294,27 @@ const handleAgregarFamiliar = () => {
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: theme.fonts.sizes.md, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text, marginBottom: '4px' }}>
-                        {r.nombre} {r.esAnfitrionPrimario && <span style={{ fontSize: theme.fonts.sizes.xs, background: theme.colors.primaryLight, color: theme.colors.primary, padding: '2px 6px', borderRadius: theme.radius.full, fontWeight: theme.fonts.weights.bold }}>Anfitrión primario</span>}
+                        {r.nombre} {r.esAnfitrionPrimario && <span style={{ fontSize: theme.fonts.sizes.xs, background: theme.colors.primaryLight, color: theme.colors.primary, padding: '2px 6px', borderRadius: theme.radius.full, fontWeight: theme.fonts.weights.bold }}>Anfitrión primario</span>} {r.esAdministradorPrimario && <span style={{ fontSize: theme.fonts.sizes.xs, background: '#FCE7F3', color: '#BE185D', padding: '2px 6px', borderRadius: theme.radius.full, fontWeight: theme.fonts.weights.bold }}>Admin primario</span>}
                       </p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
                         <span>Ci:{r.ci}</span>
                         <span>{r.fecha}</span>
                       </div>
-                      {(r.rol === 'Anfitrión' || r.rol === 'Propietario') && (
+                      <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, marginTop: '4px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        <span>{r.datosVisibles === false ? '🔒 Datos ocultos' : '👁️ Datos visibles'}</span>
+                        <span>{r.contactableChat ? '💬 Chat' : '💬✕'}</span>
+                        <span>{r.contactableWhatsapp ? '📱 WhatsApp' : '📱✕'}</span>
+                      </div>
+                      {(r.rol === 'Residente' || r.rol === 'Residente Inquilino Lider' || r.rol === 'Propietario') && (
                         <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', cursor: 'pointer' }}>
                           <input type="checkbox" checked={!!r.esAnfitrionPrimario} onChange={() => { if (!r.esAnfitrionPrimario) setAnfitrionPrimario(r.id); }} style={{ width: '16px', height: '16px', accentColor: theme.colors.primary }} />
                           <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>Anfitrión primario</span>
+                        </label>
+                      )}
+                      {(r.rol === 'Coadministrador' || r.rol === 'Propietario') && (
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', cursor: 'pointer' }}>
+                          <input type="checkbox" checked={!!r.esAdministradorPrimario} onChange={() => { if (!r.esAdministradorPrimario) setAdministradorPrimario(r.id); }} style={{ width: '16px', height: '16px', accentColor: theme.colors.primary }} />
+                          <span style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>Administrador primario</span>
                         </label>
                       )}
                     </div>

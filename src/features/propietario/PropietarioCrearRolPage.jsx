@@ -11,7 +11,7 @@ import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
 import { tiposDocumentoPorPais } from '../../data/mockData';
 
-const ROLES_OPCIONES = ['Residente Inquilino Lider', 'Coadministrador', 'Residente', 'Anfitrión', 'Propietario', 'Administrador'];
+const ROLES_OPCIONES = ['Residente Inquilino Lider', 'Coadministrador', 'Residente', 'Propietario'];
 const TIPO_DOC_OPCIONES = tiposDocumentoPorPais?.default || ['Cedula', 'Pasaporte', 'DNI'];
 const SERVICIOS_INIT = { luz: false, agua: false, gas: false, internet: false, mantenimiento: false, alquiler: false };
 
@@ -49,6 +49,10 @@ export default function PropietarioCrearRolPage() {
     montoAlquiler: editData?.montoAlquiler || '',
     monitoreoPago: editData?.monitoreoPago || false,
     esAnfitrionPrimario: editData?.esAnfitrionPrimario || false,
+    esAdministradorPrimario: editData?.esAdministradorPrimario || false,
+    datosVisibles: editData?.datosVisibles ?? true,
+    contactableChat: editData?.contactableChat ?? true,
+    contactableWhatsapp: editData?.contactableWhatsapp ?? true,
   });
 
   const [servicios, setServicios] = useState({ ...SERVICIOS_INIT, ...editData?.servicios });
@@ -82,10 +86,16 @@ export default function PropietarioCrearRolPage() {
 
       <div className="scrollable" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <SelectField value={form.rol} options={ROLES_OPCIONES} onChange={setField('rol')} placeholder="Seleccione Rol:" />
-        {(form.rol === 'Anfitrión' || form.rol === 'Propietario' || form.rol === 'Administrador') && (
+        {(form.rol === 'Residente' || form.rol === 'Residente Inquilino Lider' || form.rol === 'Propietario') && (
           <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '8px 0' }}>
             <input type="checkbox" checked={!!form.esAnfitrionPrimario} onChange={e => setField('esAnfitrionPrimario')(e.target.checked)} style={{ width: '18px', height: '18px', accentColor: theme.colors.primary }} />
             <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>Anfitrión primario</span>
+          </label>
+        )}
+        {(form.rol === 'Coadministrador' || form.rol === 'Propietario') && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', padding: '8px 0' }}>
+            <input type="checkbox" checked={!!form.esAdministradorPrimario} onChange={e => setField('esAdministradorPrimario')(e.target.checked)} style={{ width: '18px', height: '18px', accentColor: theme.colors.primary }} />
+            <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text, fontWeight: theme.fonts.weights.medium }}>Administrador primario</span>
           </label>
         )}
         <InputField value={form.nombre} onChange={setField('nombre')} placeholder="Nombre y Apellido" showEditIcon />
@@ -135,6 +145,23 @@ export default function PropietarioCrearRolPage() {
         </div>
 
         <InputField value={form.montoAlquiler} onChange={setField('montoAlquiler')} placeholder="Monto de alquiler:" showEditIcon />
+
+        <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px', boxShadow: theme.shadows.card, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.bold, color: theme.colors.text }}>Visibilidad y contacto</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>Datos visibles</span>
+            <Toggle value={form.datosVisibles} onChange={setField('datosVisibles')} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>Contactable por chat app</span>
+            <Toggle value={form.contactableChat} onChange={setField('contactableChat')} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.text }}>Contactable por WhatsApp</span>
+            <Toggle value={form.contactableWhatsapp} onChange={setField('contactableWhatsapp')} />
+          </div>
+          <p style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, margin: 0 }}>Si desactivas visibilidad, el contacto aparecerá como (oculto) y no será contactable.</p>
+        </div>
 
         <button
           type="button"

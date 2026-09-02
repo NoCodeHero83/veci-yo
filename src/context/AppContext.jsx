@@ -594,27 +594,63 @@ export function AppProvider({ children }) {
     }));
   }, []);
 
-  // Propietario · Residentes — Anfitrión primario (único por propiedad)
+  // Propietario · Primarios por defecto
+  const [propietarioAnfitrionPrimario, setPropietarioAnfitrionPrimario] = useState(true);
+  const [propietarioAdministradorPrimario, setPropietarioAdministradorPrimario] = useState(true);
+
+  // Propietario · Residentes — Anfitrión/Administrador primario (único por propiedad)
   const agregarResidente = useCallback((datos) => {
     setResidentesPropietario(prev => {
-      const esPrimario = datos.esAnfitrionPrimario === true;
-      const base = esPrimario ? prev.map(r => ({ ...r, esAnfitrionPrimario: false })) : prev;
-      return [...base, { id: Date.now(), ...datos }];
+      let base = prev;
+      if (datos.esAnfitrionPrimario) {
+        base = base.map(r => ({ ...r, esAnfitrionPrimario: false }));
+        setPropietarioAnfitrionPrimario(false);
+      }
+      if (datos.esAdministradorPrimario) {
+        base = base.map(r => ({ ...r, esAdministradorPrimario: false }));
+        setPropietarioAdministradorPrimario(false);
+      }
+      // defaults visibilidad/contactable
+      const enriched = { datosVisibles: true, contactableChat: true, contactableWhatsapp: true, ...datos };
+      return [...base, { id: Date.now(), ...enriched }];
     });
   }, []);
 
   const actualizarResidente = useCallback((residente) => {
     setResidentesPropietario(prev => {
-      const esPrimario = residente.esAnfitrionPrimario === true;
-      if (esPrimario) {
-        return prev.map(r => r.id === residente.id ? { ...r, ...residente } : { ...r, esAnfitrionPrimario: false });
+      let next = prev;
+      if (residente.esAnfitrionPrimario) {
+        next = next.map(r => r.id === residente.id ? { ...r, ...residente } : { ...r, esAnfitrionPrimario: false });
+        setPropietarioAnfitrionPrimario(false);
+        return next;
+      }
+      if (residente.esAdministradorPrimario) {
+        next = next.map(r => r.id === residente.id ? { ...r, ...residente } : { ...r, esAdministradorPrimario: false });
+        setPropietarioAdministradorPrimario(false);
+        return next;
       }
       return prev.map(r => r.id === residente.id ? { ...r, ...residente } : r);
     });
   }, []);
 
   const setAnfitrionPrimario = useCallback((id) => {
-    setResidentesPropietario(prev => prev.map(r => ({ ...r, esAnfitrionPrimario: r.id === id })));
+    if (id === 'propietario') {
+      setPropietarioAnfitrionPrimario(true);
+      setResidentesPropietario(prev => prev.map(r => ({ ...r, esAnfitrionPrimario: false })));
+    } else {
+      setPropietarioAnfitrionPrimario(false);
+      setResidentesPropietario(prev => prev.map(r => ({ ...r, esAnfitrionPrimario: r.id === id })));
+    }
+  }, []);
+
+  const setAdministradorPrimario = useCallback((id) => {
+    if (id === 'propietario') {
+      setPropietarioAdministradorPrimario(true);
+      setResidentesPropietario(prev => prev.map(r => ({ ...r, esAdministradorPrimario: false })));
+    } else {
+      setPropietarioAdministradorPrimario(false);
+      setResidentesPropietario(prev => prev.map(r => ({ ...r, esAdministradorPrimario: r.id === id })));
+    }
   }, []);
 
   const eliminarResidente = useCallback((id) => {
@@ -942,7 +978,8 @@ export function AppProvider({ children }) {
       vehiculosPrivados, agregarVehiculo, eliminarVehiculo, actualizarVehiculo,
       permisos, actualizarPermisos,
       guardias, agregarGuardia, actualizarGuardia, eliminarGuardia,
-      residentesPropietario, agregarResidente, actualizarResidente, eliminarResidente, setAnfitrionPrimario,
+      residentesPropietario, agregarResidente, actualizarResidente, eliminarResidente, setAnfitrionPrimario, setAdministradorPrimario,
+      propietarioAnfitrionPrimario, propietarioAdministradorPrimario,
       ubicaciones, agregarUbicacion, toggleFavoritoUbicacion, eliminarUbicacion, actualizarUbicacion,
       seguridad, actualizarSeguridad, pausarCuenta,
       configuracionApp, actualizarConfiguracionApp,
