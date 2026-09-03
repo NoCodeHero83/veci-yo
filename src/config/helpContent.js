@@ -151,6 +151,25 @@ export const HELP = {
       accion: ACCION_AGREGAR,
     },
   },
+
+  'mi-alojamiento': {
+    info: {
+      titulo: 'Mi alojamiento',
+      descripcion: 'Toda la información de tu alojamiento temporal preparada por tu anfitrión: Wi-Fi, acceso, instrucciones y recomendaciones para que tu estadía sea perfecta.',
+      bullets: [
+        'Wi-Fi: nombre de red y contraseña con copia rápida.',
+        'Acceso: código de puerta y consejos de seguridad.',
+        'Instrucciones y notas del anfitrión para tu llegada.',
+      ],
+      ejemplo: 'Ej.: "Casa Amorcito — Wi-Fi VeciYo_5G / Código 4829 / Instrucciones de check-in".',
+    },
+    bloqueo: {
+      titulo: 'Mi alojamiento',
+      descripcion: 'Consulta la guía completa de tu alojamiento temporal.',
+      motivo: 'Necesitas una reserva activa como huésped temporal para ver esta información.',
+      accion: ACCION_AGREGAR,
+    },
+  },
 };
 
 /** Texto del banner de modo incógnito reutilizado en los módulos. */

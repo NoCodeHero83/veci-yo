@@ -12,6 +12,7 @@ import iconAnuncios from '../../../assets/icons/home/anuncios.png';
 import iconRanking from '../../../assets/icons/home/Finales/ranking-final-final.png';
 import iconReglas from '../../../assets/icons/home/reglas.png';
 import iconVivienda from '../../../assets/icons/home/vivienda.png';
+import iconMiAlojamiento from '../../../assets/icons/home/Finales/mi-alojamiento.jfif';
 
 // Panel de "Configuración" del Administrador — un componente desplegable
 // in-place, no pantallas separadas. Sumar/quitar una sección del flujo de
@@ -33,6 +34,8 @@ const modules = [
   { id: 'ranking',         label: 'Cuadro de Honor',           icon: iconRanking,         path: '/cuadro-honor',   helpKey: 'ranking' },
   { id: 'reglas',          label: 'Reglamentos y renta corta', icon: iconReglas,          path: '/reglas',         helpKey: 'reglas' },
 ];
+
+const guestbookModule = { id: 'mi-alojamiento', label: 'Mi alojamiento', icon: iconMiAlojamiento, path: '/vivienda/mi-alojamiento', helpKey: 'mi-alojamiento' };
 
 // Resumen de "Vivienda": tarjeta del edificio + grilla de módulos.
 // Es el contenido principal de "/" para la mayoría de roles, y de "/vivienda"
@@ -168,7 +171,12 @@ export default function ViviendaResumen() {
           gap: '12px',
         }}
       >
-        {(esHuespedTemporal ? modules.filter(m => m.id !== 'ranking') : (noResidente ? modules.filter(m => !['correspondencia', 'visitas', 'zonas-comunes'].includes(m.id)) : modules)).map(mod => {
+        {(() => {
+          const visibleModules = esHuespedTemporal
+            ? [...modules.filter(m => m.id !== 'ranking'), guestbookModule]
+            : (noResidente ? modules.filter(m => !['correspondencia', 'visitas', 'zonas-comunes'].includes(m.id)) : modules);
+          return visibleModules;
+        })().map(mod => {
           const help = HELP[mod.helpKey];
           const bloqueado = sinPropiedades;
           return (
@@ -229,7 +237,7 @@ export default function ViviendaResumen() {
         })}
       </div>
 
-      {guestbook && (guestbook.wifiName || guestbook.instructions) && (
+      {!esHuespedTemporal && guestbook && (guestbook.wifiName || guestbook.instructions) && (
         <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding:'16px', boxShadow: theme.shadows.card, display:'flex', flexDirection:'column', gap:'8px' }}>
           <div style={{ fontWeight: theme.fonts.weights.bold, fontSize: theme.fonts.sizes.base }}>Guestbook — Mi alojamiento</div>
           <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>{ubicacionActiva?.alias} · {ubicacionActiva?.direccion}</div>

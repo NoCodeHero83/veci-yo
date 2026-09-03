@@ -16,6 +16,7 @@ import CallInProgressPage from './features/home/CallInProgressPage';
 import ChatPage from './features/home/ChatPage';
 import NotificacionesPage from './features/home/NotificacionesPage';
 import PerfilPage from './features/home/PerfilPage';
+import MiAlojamientoPage from './features/huesped/MiAlojamientoPage';
 
 // Perfil · Seguridad y Soporte
 import ConfiguracionPage from './features/perfil/ConfiguracionPage';
@@ -121,6 +122,7 @@ export default function App() {
       <Route element={<RequireAuth />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/vivienda" element={<ViviendaPage />} />
+        <Route path="/vivienda/mi-alojamiento" element={<MiAlojamientoPage />} />
         <Route path="/administracion-ubicacion" element={<AdministracionUbicacionPage />} />
         <Route path="/cuadro-honor" element={<CuadroHonorPage />} />
         <Route path="/reputacion" element={<ReputacionPage />} />
