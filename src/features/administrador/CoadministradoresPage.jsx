@@ -5,6 +5,7 @@ import BottomSheet, { BottomSheetOption } from '../../components/ui/BottomSheet'
 import Modal from '../../components/ui/Modal';
 import InputField from '../../components/ui/InputField';
 import Button from '../../components/ui/Button';
+import Toggle from '../../components/ui/Toggle';
 import theme from '../../config/theme';
 import { useApp } from '../../context/AppContext';
 import DotsMenuButton from './components/DotsMenuButton';
@@ -16,7 +17,20 @@ const cardStyle = {
   padding: '16px',
 };
 
-const FORM_VACIO = { nombre: '', apellido: '', correo: '', celular: '' };
+const PERMISOS_CONFIG = [
+  { key: 'actualizarResidentes', label: 'Gestionar residentes', desc: 'Alta, edición y baja de residentes, inquilinos y propietarios del padrón' },
+  { key: 'contestarChat', label: 'Responder chats', desc: 'Responder y gestionar los chats de residentes y de portería' },
+  { key: 'modificarSeguridad', label: 'Gestionar seguridad', desc: 'Crear y editar guardias, porterías, turnos y personal de vigilancia' },
+  { key: 'modificarCuadroHonor', label: 'Administrar cuadro de honor', desc: 'Editar ranking, medallas, logros y reconocimientos por departamento' },
+  { key: 'visualizarVisitas', label: 'Consultar visitas', desc: 'Acceso de solo lectura a todas las visitas (familiares, profesionales, huéspedes temporales)' },
+  { key: 'visualizarCorrespondencia', label: 'Consultar correspondencia', desc: 'Ver toda la paquetería y encomiendas registradas en el edificio' },
+  { key: 'visualizarZonasComunes', label: 'Consultar zonas comunes', desc: 'Ver reservas, disponibilidad y ocupación de amenidades (piscina, gimnasio, BBQ, etc.)' },
+  { key: 'visualizarEncuestas', label: 'Consultar encuestas', desc: 'Ver encuestas activas, historial y resultados de participación' },
+];
+
+const PERMISOS_DEF = Object.fromEntries(PERMISOS_CONFIG.map(p => [p.key, true]));
+
+const FORM_VACIO = { nombre: '', apellido: '', correo: '', celular: '', permisos: { ...PERMISOS_DEF } };
 
 export default function CoadministradoresPage() {
   const { coadministradores, agregarCoadministrador, actualizarCoadministrador, eliminarCoadministrador, addToast } = useApp();
@@ -38,7 +52,13 @@ export default function CoadministradoresPage() {
   const abrirEditar = (item) => {
     setMenuCoadmin(null);
     setModoForm('editar');
-    setForm({ nombre: item.nombre || '', apellido: item.apellido || '', correo: item.correo || '', celular: item.celular || '' });
+    setForm({
+      nombre: item.nombre || '',
+      apellido: item.apellido || '',
+      correo: item.correo || '',
+      celular: item.celular || '',
+      permisos: { ...PERMISOS_DEF, ...(item.permisos || {}) },
+    });
     setEditItem(item);
     setShowForm(true);
   };
@@ -74,7 +94,7 @@ export default function CoadministradoresPage() {
         {/* Header info */}
         <div style={{ ...cardStyle, padding: '14px 16px' }}>
           <p style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, margin: 0, lineHeight: 1.5 }}>
-            Los coadministradores heredan todos los privilegios de administración del condominio.
+            Define qué puede hacer cada coadministrador. Activa solo los permisos necesarios para su rol; los permisos de solo lectura no permiten editar.
           </p>
         </div>
 
@@ -121,6 +141,16 @@ export default function CoadministradoresPage() {
                     </div>
                   )}
                 </div>
+                {/* Permisos resumen */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
+                  {(item.permisos ? PERMISOS_CONFIG.filter(p => item.permisos[p.key]) : PERMISOS_CONFIG).slice(0, 4).map(p => (
+                    <span key={p.key} style={{ fontSize: '10px', padding: '2px 6px', borderRadius: theme.radius.full, background: theme.colors.bgMuted, color: theme.colors.textSecondary, border: `1px solid ${theme.colors.border}` }}>{p.label}</span>
+                  ))}
+                  {item.permisos && Object.values(item.permisos).filter(Boolean).length > 4 && (
+                    <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: theme.radius.full, background: theme.colors.primaryLight, color: theme.colors.primary }}>+{Object.values(item.permisos).filter(Boolean).length - 4} más</span>
+                  )}
+                  {!item.permisos && <span style={{ fontSize: '10px', color: theme.colors.textMuted }}>Todos los permisos (heredado)</span>}
+                </div>
               </div>
               {/* Menu */}
               <div onClick={() => setMenuCoadmin(item)}>
@@ -146,6 +176,23 @@ export default function CoadministradoresPage() {
           <InputField label="Apellido" value={form.apellido} onChange={v => setForm(p => ({ ...p, apellido: v }))} placeholder="Apellido" />
           <InputField label="Correo electrónico *" value={form.correo} onChange={v => setForm(p => ({ ...p, correo: v }))} placeholder="correo@ejemplo.com" type="email" />
           <InputField label="Celular" value={form.celular} onChange={v => setForm(p => ({ ...p, celular: v }))} placeholder="+593 999999999" />
+
+          <div style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px', border: `1px solid ${theme.colors.border}` }}>
+            <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.bold, color: theme.colors.text }}>Permisos</div>
+            <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, lineHeight: 1.4, marginTop: '-4px' }}>
+              Activa o desactiva cada acceso. Los de visualización son solo lectura; los de gestión permiten crear y editar.
+            </div>
+            {PERMISOS_CONFIG.map(p => (
+              <label key={p.key} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', padding: '8px 0', borderTop: `1px solid ${theme.colors.borderLight}`, cursor: 'pointer' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: theme.fonts.sizes.sm, fontWeight: theme.fonts.weights.semibold, color: theme.colors.text }}>{p.label}</div>
+                  <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, lineHeight: 1.4, marginTop: '2px' }}>{p.desc}</div>
+                </div>
+                <Toggle value={!!form.permisos?.[p.key]} onChange={v => setForm(prev => ({ ...prev, permisos: { ...prev.permisos, [p.key]: v } }))} />
+              </label>
+            ))}
+          </div>
+
           <Button variant="primary" fullWidth onClick={guardar}>
             {modoForm === 'agregar' ? 'Agregar coadministrador' : 'Guardar cambios'}
           </Button>
