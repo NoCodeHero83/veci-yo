@@ -91,6 +91,25 @@ export default function ViviendaResumen() {
         <h2 style={{ fontSize: theme.fonts.sizes.xl, fontWeight: theme.fonts.weights.bold, color: theme.colors.text }}>
           {ubicacionActiva?.alias || 'Vivienda'}
         </h2>
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '5px 14px',
+            borderRadius: theme.radius.full,
+            background: '#F8FAFC',
+            border: `1px solid ${theme.colors.border}`,
+            fontSize: theme.fonts.sizes.xs,
+            fontWeight: theme.fonts.weights.semibold,
+            color: theme.colors.textSecondary,
+            letterSpacing: '0.06em',
+            textTransform: 'uppercase',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+          }}
+        >
+          <span style={{ fontSize: '12px', lineHeight: 1 }}>🏠</span> Vivienda
+        </span>
         {rolActivo !== 'huesped-temporal' && !esGuardia && (
           <button
             onClick={handleConfiguracion}
