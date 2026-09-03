@@ -483,6 +483,7 @@ function TorreDetailView({ torre, onBack }) {
     asignarPropietarioUnidad, propietariosInvited, configHuespedesTemporales,
     vehiculosPrivados, residentesPropietario, propietarioAnfitrionPrimario,
     depositos, agregarDeposito, actualizarDeposito, eliminarDeposito,
+    actualizarTorre, addToast,
   } = useApp();
 
   const unidadesTorre = unidades.filter(u => u.torreNumero === torre.numero);
@@ -495,6 +496,8 @@ function TorreDetailView({ torre, onBack }) {
   const [menuUnidad, setMenuUnidad] = useState(null);
   const [showUnidadDetalle, setShowUnidadDetalle] = useState(null);
   const [form, setForm] = useState({ codigo: '', piso: '1', tipologiaId: '', estacionamientos: '0', ubicacionParking: '', asignarNombre: '', asignarEmail: '', spotAsignado: '' });
+  const [showAddEstacionamiento, setShowAddEstacionamiento] = useState(false);
+  const [formEstacionamiento, setFormEstacionamiento] = useState({ codigo: '', ubicacion: 'Sótano -2', unidadId: '' });
 
   const resetForm = () => setForm({ codigo: '', piso: '1', tipologiaId: '', estacionamientos: '0', ubicacionParking: '', asignarNombre: '', asignarEmail: '', spotAsignado: '' });
 
@@ -642,10 +645,11 @@ function TorreDetailView({ torre, onBack }) {
 
   const renderEstacionamientos = () => (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', gap: '8px' }}>
         <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary }}>
           Total: {totalEstacionamientos} &middot; Ocupados: {spotsOcupados} &middot; Libres: {spotsLibres}
         </span>
+        <Button variant="primary" onClick={() => { const nextId = `T${torre.numero}-P${String(totalEstacionamientos + 1).padStart(3, '0')}`; setFormEstacionamiento({ codigo: nextId, ubicacion: 'Sótano -2', unidadId: '' }); setShowAddEstacionamiento(true); }}>+ Agregar estacionamiento</Button>
       </div>
 
       {parkingSpots.map(spot => {
@@ -689,6 +693,30 @@ function TorreDetailView({ torre, onBack }) {
       <div style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '12px 14px', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary, lineHeight: 1.5, marginTop: '4px' }}>
         Los estacionamientos se asignan automáticamente según la cantidad configurada en cada departamento. Para modificar, edita la cantidad de estacionamientos del departamento.
       </div>
+
+      <Modal isOpen={showAddEstacionamiento} onClose={() => setShowAddEstacionamiento(false)} title="Nuevo estacionamiento">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <InputField label="Código" value={formEstacionamiento.codigo} onChange={v => setFormEstacionamiento(p => ({ ...p, codigo: v }))} placeholder={`T${torre.numero}-P${String(totalEstacionamientos + 1).padStart(3, '0')}`} />
+          <InputField label="Ubicación" value={formEstacionamiento.ubicacion} onChange={v => setFormEstacionamiento(p => ({ ...p, ubicacion: v }))} placeholder="Sótano -2" />
+          <div>
+            <span style={labelStyle}>Departamento asociado (opcional)</span>
+            <SelectField value={formEstacionamiento.unidadId} options={unidadesTorre.map(u => ({ value: String(u.id), label: `${u.codigo} - ${u.propietarioAsignado || 'Sin propietario'}` }))} onChange={v => setFormEstacionamiento(p => ({ ...p, unidadId: v }))} placeholder="Sin asignar (queda libre)" />
+          </div>
+          <Button variant="primary" fullWidth onClick={() => {
+            const codigo = formEstacionamiento.codigo?.trim() || `T${torre.numero}-P${String(totalEstacionamientos + 1).padStart(3, '0')}`;
+            const nuevoTotal = totalEstacionamientos + 1;
+            actualizarTorre({ ...torre, cocherasPrivadas: String(nuevoTotal) });
+            if (formEstacionamiento.unidadId) {
+              const unidad = unidades.find(u => String(u.id) === String(formEstacionamiento.unidadId));
+              if (unidad) {
+                actualizarUnidad({ ...unidad, estacionamientos: (unidad.estacionamientos || 0) + 1, spotAsignado: codigo, ubicacionParking: formEstacionamiento.ubicacion });
+              }
+            }
+            addToast && addToast(`Estacionamiento ${codigo} creado`, 'success');
+            setShowAddEstacionamiento(false);
+          }}>Crear estacionamiento</Button>
+        </div>
+      </Modal>
     </>
   );
 
