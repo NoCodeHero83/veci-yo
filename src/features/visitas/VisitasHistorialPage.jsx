@@ -227,6 +227,7 @@ export default function VisitasHistorialPage() {
   const [parkingSpot, setParkingSpot] = useState('');
   const [reservaDetail, setReservaDetail] = useState(null);
   const [reservaGuardia, setReservaGuardia] = useState(null);
+  const [visitaListaDetalle, setVisitaListaDetalle] = useState(null);
   const [parkingTarget, setParkingTarget] = useState(null);
   const [calendarioMonth, setCalendarioMonth] = useState(new Date());
   const [showSuscripcionModal, setShowSuscripcionModal] = useState(false);
@@ -313,6 +314,30 @@ export default function VisitasHistorialPage() {
 
   // 16: huéspedes a mostrar en la línea de tiempo — siempre al menos una fila para que sea consistente
   const huespedesTimeline = (item) => item.invitados && item.invitados.length > 0 ? item.invitados : [{ nombre: item.nombre }];
+
+  // Helpers para /visitas tab visitas: decidir si va directo a popup o a lista de personas
+  const cantidadPersonasRegistradas = (item) => {
+    if (!item) return 0;
+    // Permanente siempre es 1 persona (se registra de a uno)
+    if (item.tipo === 'permanente') return 1;
+    const invitadosCount = item.invitados ? item.invitados.length : 0;
+    // titular + invitados; si invitados vacío => 1
+    if (invitadosCount === 0) return 1;
+    // Si hay invitados, considerar titular + invitados como total
+    // Para los datos mock de amigos/temporal, invitados son los acompañantes
+    return invitadosCount + 1;
+  };
+  const esVisitaUnicaPersona = (item) => cantidadPersonasRegistradas(item) <= 1;
+  // Lista de personas para una visita normal (titular + invitados)
+  const personasDeVisitaNormal = (item) => {
+    if (!item) return [];
+    if (!item.invitados || item.invitados.length === 0) {
+      return [{ nombre: item.nombre, ci: item.ci, esTitular: true, idx: -1, horaIngreso: item.horaIngreso, horaSalida: item.horaSalida }];
+    }
+    const titular = { nombre: item.nombre, ci: item.ci, esTitular: true, idx: -1, horaIngreso: item.horaIngreso, horaSalida: item.horaSalida };
+    const invitados = item.invitados.map((inv, idx) => ({ ...inv, esTitular: false, idx }));
+    return [titular, ...invitados];
+  };
 
   // 18: estacionamiento ya asignado a una visita (mapa compartido Home ⇄ Visitas)
   const spotDeVisita = (visitaId) => Object.entries(estacionamientosAsignados || {}).find(([, clave]) => String(clave).startsWith(`${visitaId}-`))?.[0] || null;
@@ -464,6 +489,9 @@ export default function VisitasHistorialPage() {
     setTipoTab(value);
     setActiveTab('Todas');
     setVistaSub('lista');
+    setVisitaListaDetalle(null);
+    setReservaDetail(null);
+    setReservaGuardia(null);
   };
 
   const handleEstado = (estado) => {
@@ -831,7 +859,12 @@ export default function VisitasHistorialPage() {
               setReservaDetail(v);
             } else {
               setTipoTab('visitas');
-              setDetalleItem(v);
+              if (esVisitaUnicaPersona(v)) {
+                setDetalleItem(v);
+                setDetallePersonaIdx(null);
+              } else {
+                setVisitaListaDetalle(v);
+              }
             }
           };
           const GAP = 1;
@@ -1113,7 +1146,14 @@ export default function VisitasHistorialPage() {
         {/* Vista de reservas para Guardia (15b) — con mini línea de tiempo y Torre/Depto (16/19) */}
         {vistaSub === 'lista' && esGuardiaRol && !reservaGuardia && filtered.map(item => {
           if (item.tipo !== 'huesped-temporal') {
-            return renderTarjetaVisitaNormal(item, () => setReservaGuardia(item));
+            return renderTarjetaVisitaNormal(item, () => {
+              if (item.tipo === 'permanente' || esVisitaUnicaPersona(item)) {
+                const pers = personasDeReserva(item)[0];
+                setDetalleGuardia(pers);
+              } else {
+                setReservaGuardia(item);
+              }
+            });
           }
           const invitadosTimeline = huespedesTimeline(item);
           return (
@@ -1183,7 +1223,57 @@ export default function VisitasHistorialPage() {
         )}
 
         {/* List — normal roles: card per reservation for huesped-temporal */}
-        {vistaSub === 'lista' && rolActivo !== 'guardia' && (reservaDetail ? (
+        {vistaSub === 'lista' && rolActivo !== 'guardia' && (visitaListaDetalle ? (
+          /* Vista lista de personas para visita normal con múltiples registrados */
+          <div key="visita-lista-detalle" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <button
+              onClick={() => setVisitaListaDetalle(null)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 0',
+                background: 'none', border: 'none', cursor: 'pointer', fontFamily: theme.fonts.family,
+                fontSize: theme.fonts.sizes.sm, color: theme.colors.primary, fontWeight: theme.fonts.weights.semibold,
+                alignSelf: 'flex-start',
+              }}
+            >
+              ← Volver a visitas
+            </button>
+            <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, fontWeight: theme.fonts.weights.semibold }}>
+              {visitaListaDetalle.esEvento ? visitaListaDetalle.nombreEvento : visitaListaDetalle.nombre} · {TIPO_LABELS[visitaListaDetalle.tipo]} · {visitaListaDetalle.fechaDesde}{visitaListaDetalle.fechaHasta ? ` a ${visitaListaDetalle.fechaHasta}` : ''}
+            </div>
+            {personasDeVisitaNormal(visitaListaDetalle).map((p, pi) => (
+              <div
+                key={`${visitaListaDetalle.id}-${pi}`}
+                onClick={() => { setDetalleItem(visitaListaDetalle); setDetallePersonaIdx(p.idx); }}
+                style={{
+                  background: theme.colors.bgCard,
+                  borderRadius: theme.radius.xl,
+                  padding: '14px 16px',
+                  boxShadow: theme.shadows.card,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                  <img
+                    src={tipoVisitaIcons[visitaListaDetalle.tipo]}
+                    alt={TIPO_LABELS[visitaListaDetalle.tipo]}
+                    style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.base, color: theme.colors.text }}>
+                      {p.nombre} {p.esTitular && <span style={{ fontSize: theme.fonts.sizes['2xs'], color: theme.colors.textMuted }}>(Titular)</span>}
+                    </div>
+                    {p.ci && <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>DNI: {p.ci}</div>}
+                    {p.horaIngreso && <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary }}>Ingreso: {p.horaIngreso}{p.horaSalida ? ` · Salida: ${p.horaSalida}` : ''}</div>}
+                  </div>
+                </div>
+                <span style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.primary }}>Ver detalles →</span>
+              </div>
+            ))}
+          </div>
+        ) : reservaDetail ? (
           /* Vista detalle de reserva HT — reemplaza la lista */
           <div key="reserva-detail" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <button
@@ -1337,7 +1427,14 @@ export default function VisitasHistorialPage() {
           return [(
             <div
               key={item.id}
-              onClick={() => setDetalleItem(item)}
+              onClick={() => {
+                if (esVisitaUnicaPersona(item)) {
+                  setDetalleItem(item);
+                  setDetallePersonaIdx(null);
+                } else {
+                  setVisitaListaDetalle(item);
+                }
+              }}
               style={{
                 background: theme.colors.bgCard,
                 borderRadius: theme.radius.xl,
@@ -1841,9 +1938,18 @@ export default function VisitasHistorialPage() {
             {detalleActual.tipo !== 'huesped-temporal' && (() => {
               const tipo = detalleActual.tipo;
               const notificacionLabel = detalleActual.tipoNotificacion === 'notificar-y-anunciar' ? 'Notificar y anunciar' : 'Notificar';
-              const personas = detalleActual.invitados && detalleActual.invitados.length > 0
+              let personasBase = detalleActual.invitados && detalleActual.invitados.length > 0
                 ? detalleActual.invitados
                 : [{ nombre: detalleActual.nombre, horaIngreso: detalleActual.horaIngreso, horaSalida: detalleActual.horaSalida }];
+              // Si se eligió una persona específica desde la lista (visita con múltiples registrados), filtrar solo esa
+              if (detallePersonaIdx !== null && detallePersonaIdx !== undefined) {
+                if (detallePersonaIdx === -1) {
+                  personasBase = [{ nombre: detalleActual.nombre, horaIngreso: detalleActual.horaIngreso, horaSalida: detalleActual.horaSalida, ci: detalleActual.ci }];
+                } else if (detalleActual.invitados && detalleActual.invitados[detallePersonaIdx]) {
+                  personasBase = [detalleActual.invitados[detallePersonaIdx]];
+                }
+              }
+              const personas = personasBase;
               return (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {tipo === 'permanente' && (
