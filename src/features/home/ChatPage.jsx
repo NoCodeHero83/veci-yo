@@ -129,6 +129,40 @@ export default function ChatPage() {
       });
     }
 
+    // Huesped temporal: siempre ofrecer chats con Seguridad y Administrador aunque no haya mensajes
+    if (soloSeguridadAdmin) {
+      if (!result.find(c => c.nombre === 'Seguridad')) {
+        const segMsgs = mensajes.filter(m => m.persona === 'Seguridad');
+        const segNoLeidos = segMsgs.filter(m => !m.leido).length;
+        const ultimoSeg = segMsgs[segMsgs.length - 1] || {};
+        result.push({
+          id: 'Seguridad',
+          tipo: 'individual',
+          nombre: 'Seguridad',
+          ultimoMensaje: ultimoSeg.texto || 'Chat con seguridad — disponible para ayudarte',
+          ultimaHora: ultimoSeg.hora || '',
+          ultimaFecha: ultimoSeg.fecha || '',
+          avatarEmoji: '👮',
+          noLeidos: segNoLeidos,
+        });
+      }
+      if (!result.find(c => c.nombre === 'Administrador')) {
+        const adminMsgs = mensajes.filter(m => m.persona === 'Administrador');
+        const adminNoLeidos = adminMsgs.filter(m => !m.leido).length;
+        const ultimoAdmin = adminMsgs[adminMsgs.length - 1] || {};
+        result.push({
+          id: 'Administrador',
+          tipo: 'individual',
+          nombre: 'Administrador',
+          ultimoMensaje: ultimoAdmin.texto || 'Chat con administración — disponible para ayudarte',
+          ultimaHora: ultimoAdmin.hora || '',
+          ultimaFecha: ultimoAdmin.fecha || '',
+          avatarEmoji: '🛡️',
+          noLeidos: adminNoLeidos,
+        });
+      }
+    }
+
     gruposVisibles.forEach(grupo => {
       const noLeidos = grupo.mensajes.filter(m => !m.leido).length;
       const ultimo = grupo.mensajes[grupo.mensajes.length - 1] || {};
@@ -146,7 +180,7 @@ export default function ChatPage() {
     });
 
     return result;
-  }, [mensajes, gruposVisibles, esGuardia]);
+  }, [mensajes, gruposVisibles, esGuardia, esAdmin, soloSeguridadAdmin]);
 
   const convFiltradas = conversations.filter(c => {
     if (soloNoLeidos && c.noLeidos === 0) return false;
@@ -257,7 +291,7 @@ export default function ChatPage() {
         <>
           <PageHeader title="Chat" onBack={() => navigate(-1)} />
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            {!esGuardia && !soloSeguridadAdmin && (
+            {!esGuardia && (
               <div style={{ padding: '12px 16px', borderBottom: `1px solid ${theme.colors.border}` }}>
                 <Button variant="primary" fullWidth onClick={handleNewChat}>
                   + Nuevo chat
@@ -371,7 +405,7 @@ export default function ChatPage() {
                     </div>
                   )}
                 </>
-              ) : (
+              ) : soloSeguridadAdmin ? null : (
                 <div style={{ display: 'flex', gap: '6px', marginTop: '6px', paddingBottom: '4px' }}>
                   {[
                     { key: 'todos', label: 'Todos' },
