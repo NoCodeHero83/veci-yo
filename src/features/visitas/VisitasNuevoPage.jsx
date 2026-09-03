@@ -61,7 +61,7 @@ function formatTimeRange(start, end) {
 export default function VisitasNuevoPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { agregarVisita, rolActivo, suscripcionActiva, activarSuscripcion, ubicacionActiva, addToast, unidades, configHuespedesTemporales, actualizarConfigHuespedTemporal, permisos, esResidente, usuario } = useApp();
+  const { agregarVisita, rolActivo, suscripcionActiva, activarSuscripcion, ubicacionActiva, addToast, unidades, configHuespedesTemporales, actualizarConfigHuespedTemporal, permisos, esResidente, usuario, estacionamientosVisitantes, estacionamientosAsignados, asignarEstacionamientoVisita } = useApp();
   const TIPOS = rolActivo === 'guardia'
     ? TIPOS_BASE.filter(t => t.id !== 'permanente')
     : rolActivo === 'huesped-temporal'
@@ -107,6 +107,15 @@ export default function VisitasNuevoPage() {
   const [paraAdministracion, setParaAdministracion] = useState(false);
   const [profesion, setProfesion] = useState('');
   const [profesionOtro, setProfesionOtro] = useState('');
+  // Guardia específico: hora ingreso, aprobado, anotaciones, foto, estacionamientos
+  const [horaIngresoGuardia, setHoraIngresoGuardia] = useState(() => {
+    const now = new Date();
+    return `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  });
+  const [aprobadoPor, setAprobadoPor] = useState('');
+  const [anotacionesGuardia, setAnotacionesGuardia] = useState('');
+  const [fotosGuardia, setFotosGuardia] = useState([]);
+  const [estacionamientosSelGuardia, setEstacionamientosSelGuardia] = useState([]);
 
   const horaEstimada = formatTimeRange(horaInicio, horaFin);
   const horaEstimadaSalida = formatTimeRange(horaSalidaInicio, horaSalidaFin);
@@ -134,6 +143,20 @@ export default function VisitasNuevoPage() {
 
   const esGuardiaOAdmin = rolActivo === 'guardia' || rolActivo === 'administrador';
   const esGuardia = rolActivo === 'guardia';
+
+  // Guardia: forzar "notificar-y-anunciar" y precargar quien aprobó
+  useEffect(() => {
+    if (esGuardia) {
+      setTipoNotificacion('notificar-y-anunciar');
+      if (usuario?.nombre && !aprobadoPor) setAprobadoPor(usuario.nombre);
+    }
+  }, [esGuardia, usuario]);
+
+  useEffect(() => {
+    if (esGuardia && tipoSeleccionado === 'temporal' && telefono.trim() === '' && usuario?.telefono) {
+      // opcional precarga
+    }
+  }, [esGuardia, tipoSeleccionado]);
 
   useEffect(() => {
     if (!esGuardiaOAdmin && ubicacionActiva) {
@@ -297,32 +320,50 @@ export default function VisitasNuevoPage() {
         return;
       }
     }
+    // Validaciones específicas Guardia
+    if (esGuardia) {
+      if (!horaIngresoGuardia) {
+        addToast('La hora de ingreso es obligatoria', 'error');
+        return;
+      }
+      if (!aprobadoPor.trim()) {
+        addToast('Debe indicar quién aprobó el ingreso', 'error');
+        return;
+      }
+      if (tipoSeleccionado === 'temporal' && !telefono.trim()) {
+        addToast('El teléfono es obligatorio para profesional temporal', 'error');
+        return;
+      }
+    }
     setIdentificacionError('');
     setAcompanantesCiErrors({});
     const fechaVisita = esGuardia ? new Date() : selectedDate;
-    const invitados = acompanantes
+    const invitadosBase = acompanantes
       .filter(a => a.nombre.trim())
-      .map(a => ({ nombre: a.nombre, ci: a.ci || '', esMenor: !!a.esMenor, llego: false }));
+      .map(a => ({ nombre: a.nombre, ci: a.ci || '', esMenor: !!a.esMenor, llego: esGuardia ? true : false, horaIngreso: esGuardia ? horaIngresoGuardia : '', horaSalida: '' }));
+    // Para guardia con ingreso inmediato, si no hay acompañantes (visita única), también marcamos titular como llegado
     const tieneVehiculo = tieneVehiculoToggle && vehiculos.some(v => v.placa.trim());
     const vehiculosValidos = tieneVehiculoToggle ? vehiculos.filter(v => v.placa.trim()).map(v => ({ placa: v.placa, tipo: v.tipo || 'auto' })) : [];
     const num = Math.floor(Math.random() * 900000 + 100000);
     const cod = generarCodigoAcceso();
     setNumeroReserva(num);
     setCodigoAcceso(cod);
+    const visitaId = Date.now();
     const visita = {
+      id: visitaId,
       tipo: tipoSeleccionado,
       nombre,
       ci: identificacion,
-      email,
-      telefono,
-      estado: 'Pendiente',
+      email: esGuardia ? undefined : email,
+      telefono: esGuardia ? (tipoSeleccionado === 'temporal' ? telefono : undefined) : telefono,
+      estado: esGuardia ? 'Ingresado' : 'Pendiente',
       instruccionDocumento: tipoSeleccionado === 'amigos' ? 'no-verificar' : 'verificar',
-      tipoNotificacion,
+      tipoNotificacion: esGuardia ? 'notificar-y-anunciar' : tipoNotificacion,
       tieneVehiculo,
       instruccionesCumplidas: {},
       fechaDesde: fechaVisita.toLocaleDateString('es-AR'),
       fechaHasta: fechaVisita.toLocaleDateString('es-AR'),
-      invitados,
+      invitados: invitadosBase,
       reserva: `N°: ${num}`,
       codigoAcceso: cod,
       qrUrl: `wwww.veciyolink/reserva-${num}`,
@@ -330,18 +371,31 @@ export default function VisitasNuevoPage() {
       depto,
       paraAdministracion,
       personas: parseInt(personas),
-      horaEstimadaLlegada: horaEstimada,
-      horaEstimadaSalida: horaEstimadaSalida || undefined,
+      horaEstimadaLlegada: esGuardia ? horaIngresoGuardia : horaEstimada,
+      horaEstimadaSalida: esGuardia ? undefined : (horaEstimadaSalida || undefined),
+      horaIngreso: esGuardia ? horaIngresoGuardia : undefined,
+      horaSalida: esGuardia ? undefined : undefined,
+      // para visitas únicas sin invitados, guardamos llego a nivel visita para que el detalle lo refleje
+      llego: esGuardia ? true : undefined,
       vehiculos: vehiculosValidos,
       profesion: esProfesional(tipoSeleccionado) ? profesion : undefined,
       profesionOtro: esProfesional(tipoSeleccionado) && profesionOtra(tipoSeleccionado, profesion) ? profesionOtro : undefined,
       registradoPor: (rolActivo === 'administrador' || rolActivo === 'guardia') ? (usuario?.nombre || usuario?.correo || 'Usuario') : undefined,
-      anotacionesIngreso: '',
-      fotosIngreso: [],
+      autorizadoPor: esGuardia ? aprobadoPor : undefined,
+      autorizadoPorRol: esGuardia ? 'guardia' : undefined,
+      anotacionesIngreso: esGuardia ? anotacionesGuardia : '',
+      fotosIngreso: esGuardia ? fotosGuardia : [],
       anotacionesSalida: '',
       fotosSalida: [],
     };
     agregarVisita(visita);
+    // Asignar estacionamientos seleccionados por guardia (si aplica)
+    if (esGuardia && estacionamientosSelGuardia.length > 0) {
+      estacionamientosSelGuardia.forEach((spot, idx) => {
+        const invIdx = invitadosBase.length === 0 ? -1 : idx;
+        asignarEstacionamientoVisita(spot, `${visitaId}-${invIdx}`);
+      });
+    }
     setShowSuccess(true);
   };
 
@@ -532,25 +586,32 @@ export default function VisitasNuevoPage() {
                 Recuerda indicar a tu invitado que debe presentar su documento (cédula, pasaporte o DNI) en portería al ingresar al edificio.
               </div>
 
-              <div>
-                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Correo electrónico (opcional)</div>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  style={inputStyle}
-                />
-              </div>
+              {!esGuardia && (
+                <div>
+                  <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Correo electrónico (opcional)</div>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    style={inputStyle}
+                  />
+                </div>
+              )}
 
-              <div>
-                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Teléfono (opcional)</div>
-                <input
-                  type="tel"
-                  value={telefono}
-                  onChange={e => setTelefono(e.target.value)}
-                  style={inputStyle}
-                />
-              </div>
+              {(!esGuardia || tipoSeleccionado === 'temporal') && (
+                <div>
+                  <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>
+                    Teléfono {tipoSeleccionado === 'temporal' && esGuardia ? <span style={{ color: theme.colors.danger }}>*</span> : '(opcional)'}
+                  </div>
+                  <input
+                    type="tel"
+                    value={telefono}
+                    onChange={e => setTelefono(e.target.value)}
+                    placeholder={tipoSeleccionado === 'temporal' && esGuardia ? 'Obligatorio para profesional temporal' : 'Opcional'}
+                    style={inputStyle}
+                  />
+                </div>
+              )}
 
               {esProfesional(tipoSeleccionado) && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -641,27 +702,40 @@ export default function VisitasNuevoPage() {
               </div>
             )}
 
-            {/* Hora estimada de llegada */}
-            <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Hora estimada de llegada</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {/* Hora de ingreso - Guardia registra hora real, residente estima rango */}
+            {esGuardia ? (
+              <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Hora de ingreso <span style={{ color: theme.colors.danger }}>*</span></div>
                 <input
                   type="time"
-                  value={horaInicio}
-                  onChange={e => setHoraInicio(e.target.value)}
-                  style={{ ...inputStyle, width: 'auto', flex: 1 }}
+                  value={horaIngresoGuardia}
+                  onChange={e => setHoraIngresoGuardia(e.target.value)}
+                  style={{ ...inputStyle, width: '100%' }}
                 />
-                <span style={{ color: theme.colors.textSecondary, fontSize: theme.fonts.sizes.sm }}>a</span>
-                <input
-                  type="time"
-                  value={horaFin}
-                  onChange={e => setHoraFin(e.target.value)}
-                  style={{ ...inputStyle, width: 'auto', flex: 1 }}
-                />
+                <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>La salida se registra posteriormente desde el detalle del ingreso.</div>
               </div>
-            </div>
+            ) : (
+              <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Hora estimada de llegada</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="time"
+                    value={horaInicio}
+                    onChange={e => setHoraInicio(e.target.value)}
+                    style={{ ...inputStyle, width: 'auto', flex: 1 }}
+                  />
+                  <span style={{ color: theme.colors.textSecondary, fontSize: theme.fonts.sizes.sm }}>a</span>
+                  <input
+                    type="time"
+                    value={horaFin}
+                    onChange={e => setHoraFin(e.target.value)}
+                    style={{ ...inputStyle, width: 'auto', flex: 1 }}
+                  />
+                </div>
+              </div>
+            )}
 
-            {tipoSeleccionado === 'huesped-temporal' && (
+            {!esGuardia && tipoSeleccionado === 'huesped-temporal' && (
               <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Hora estimada de salida</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -734,43 +808,143 @@ export default function VisitasNuevoPage() {
                       </div>
                     </div>
                   ))}
+                  {esGuardia && estacionamientosVisitantes && estacionamientosVisitantes.total > 0 && (
+                    <div style={{ marginTop: '4px', background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold, color: theme.colors.textSecondary }}>
+                        Estacionamientos disponibles: {estacionamientosVisitantes.total - Object.keys(estacionamientosAsignados||{}).length} libres
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', maxHeight: '160px', overflowY: 'auto' }}>
+                        {Array.from({ length: estacionamientosVisitantes.total }, (_, i) => {
+                          const spot = `B${String(i+1).padStart(2,'0')}`;
+                          const ocupado = !!(estacionamientosAsignados||{})[spot];
+                          const seleccionado = estacionamientosSelGuardia.includes(spot);
+                          return (
+                            <button
+                              key={spot}
+                              type="button"
+                              disabled={ocupado}
+                              onClick={() => {
+                                if (ocupado) return;
+                                setEstacionamientosSelGuardia(prev => prev.includes(spot) ? prev.filter(s=>s!==spot) : [...prev, spot]);
+                              }}
+                              style={{
+                                padding: '6px 10px', borderRadius: theme.radius.full,
+                                border: `1.5px solid ${seleccionado ? theme.colors.primary : theme.colors.border}`,
+                                background: ocupado ? '#F3F4F6' : (seleccionado ? theme.colors.primary : theme.colors.bgCard),
+                                color: ocupado ? theme.colors.textMuted : (seleccionado ? '#fff' : theme.colors.text),
+                                fontSize: theme.fonts.sizes.xs, fontWeight: theme.fonts.weights.semibold,
+                                cursor: ocupado ? 'not-allowed' : 'pointer', fontFamily: theme.fonts.family,
+                                opacity: ocupado ? 0.6 : 1,
+                              }}
+                            >
+                              {spot}{ocupado ? ' • ocupado' : (seleccionado ? ' ✓' : '')}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div style={{ fontSize: theme.fonts.sizes.xs, color: theme.colors.textMuted }}>
+                        Seleccionados: {estacionamientosSelGuardia.length ? estacionamientosSelGuardia.join(', ') : 'ninguno'}
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
 
-            {/* Notification type selector */}
-            <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ fontWeight: theme.fonts.weights.semibold, textAlign: 'center', fontSize: theme.fonts.sizes.base }}>
-                Tipo de notificación
+            {/* Notification type selector - Guardia siempre es mediante anuncio */}
+            {esGuardia ? (
+              <div style={{ background: theme.colors.bgMuted, borderRadius: theme.radius.lg, padding: '12px 14px', fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, textAlign: 'center', border: `1px solid ${theme.colors.border}` }}>
+                Ingreso mediante <strong>anuncio</strong> — se notificará y anunciará al residente. La opción "solo notificado" aplica únicamente cuando el residente pre-registró la visita.
               </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {[
-                  { id: 'solo-notificar', label: 'Solo notificar' },
-                  { id: 'notificar-y-anunciar', label: 'Notificar y anunciar' },
-                ].map(op => (
-                  <button
-                    key={op.id}
-                    onClick={() => setTipoNotificacion(op.id)}
-                    style={{
-                      flex: 1,
-                      padding: '12px 8px',
-                      borderRadius: theme.radius.lg,
-                      background: tipoNotificacion === op.id ? theme.colors.primary : theme.colors.bgMuted,
-                      border: `1.5px solid ${tipoNotificacion === op.id ? theme.colors.primary : theme.colors.border}`,
-                      color: tipoNotificacion === op.id ? '#fff' : theme.colors.text,
-                      cursor: 'pointer',
-                      fontFamily: theme.fonts.family,
-                      fontSize: theme.fonts.sizes.sm,
-                      fontWeight: tipoNotificacion === op.id ? theme.fonts.weights.semibold : theme.fonts.weights.normal,
-                      textAlign: 'center',
-                      transition: 'all 200ms',
-                    }}
-                  >
-                    {op.label}
-                  </button>
-                ))}
+            ) : (
+              <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ fontWeight: theme.fonts.weights.semibold, textAlign: 'center', fontSize: theme.fonts.sizes.base }}>
+                  Tipo de notificación
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {[
+                    { id: 'solo-notificar', label: 'Solo notificar' },
+                    { id: 'notificar-y-anunciar', label: 'Notificar y anunciar' },
+                  ].map(op => (
+                    <button
+                      key={op.id}
+                      onClick={() => setTipoNotificacion(op.id)}
+                      style={{
+                        flex: 1,
+                        padding: '12px 8px',
+                        borderRadius: theme.radius.lg,
+                        background: tipoNotificacion === op.id ? theme.colors.primary : theme.colors.bgMuted,
+                        border: `1.5px solid ${tipoNotificacion === op.id ? theme.colors.primary : theme.colors.border}`,
+                        color: tipoNotificacion === op.id ? '#fff' : theme.colors.text,
+                        cursor: 'pointer',
+                        fontFamily: theme.fonts.family,
+                        fontSize: theme.fonts.sizes.sm,
+                        fontWeight: tipoNotificacion === op.id ? theme.fonts.weights.semibold : theme.fonts.weights.normal,
+                        textAlign: 'center',
+                        transition: 'all 200ms',
+                      }}
+                    >
+                      {op.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Campos exclusivos de Guardia: quién aprobó, anotaciones y foto */}
+            {esGuardia && (
+              <>
+                <div style={{ background: theme.colors.bgCard, borderRadius: theme.radius.xl, padding: '14px 16px', boxShadow: theme.shadows.card, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ fontWeight: theme.fonts.weights.semibold, fontSize: theme.fonts.sizes.base }}>Anuncio</div>
+                  <div>
+                    <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>¿Quién aprobó el ingreso? <span style={{ color: theme.colors.danger }}>*</span></div>
+                    <input
+                      type="text"
+                      value={aprobadoPor}
+                      onChange={e => setAprobadoPor(e.target.value)}
+                      placeholder="Nombre de quien aprobó (ej. Residente 105, Administración)"
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Anotaciones adicionales</div>
+                    <textarea
+                      value={anotacionesGuardia}
+                      onChange={e => setAnotacionesGuardia(e.target.value)}
+                      placeholder="Ej.: ingresó con una maleta, acompañado de..."
+                      rows={3}
+                      style={{ ...inputStyle, resize: 'vertical' }}
+                    />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: theme.fonts.sizes.sm, color: theme.colors.textSecondary, marginBottom: '4px' }}>Foto (opcional)</div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={e => {
+                        const files = Array.from(e.target.files || []);
+                        files.forEach(f => {
+                          const reader = new FileReader();
+                          reader.onload = () => setFotosGuardia(prev => [...prev, reader.result]);
+                          reader.readAsDataURL(f);
+                        });
+                      }}
+                      style={{ fontSize: theme.fonts.sizes.sm }}
+                    />
+                    {fotosGuardia.length > 0 && (
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+                        {fotosGuardia.map((f,i) => (
+                          <div key={i} style={{ position: 'relative' }}>
+                            <img src={f} alt={`foto ${i}`} style={{ width: '72px', height: '72px', borderRadius: theme.radius.md, objectFit: 'cover', border: `1px solid ${theme.colors.border}` }} />
+                            <button type="button" onClick={()=> setFotosGuardia(prev=> prev.filter((_,idx)=> idx!==i))} style={{ position: 'absolute', top: '-6px', right: '-6px', width: '20px', height: '20px', borderRadius: '50%', background: theme.colors.danger, color: '#fff', border: 'none', cursor: 'pointer', fontSize: '12px' }}>×</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
 
             <Button variant="primary" fullWidth onClick={handleAceptar}>Aceptar</Button>
           </>

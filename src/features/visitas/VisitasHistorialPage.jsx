@@ -187,7 +187,7 @@ export default function VisitasHistorialPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const fromHome = location.state?.fromHome || false;
-  const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado, aprobarInvitado, rolActivo, addToast, verificaciones, actualizarVerificacion, actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion, toggleInstruccionCumplida, estacionamientosVisitantes, estacionamientosAsignados, asignarEstacionamientoVisita, configHuespedesTemporales, ubicacionActiva, suscripcionActiva, activarSuscripcion, reportarTraSire, usuario, actualizarConfigHuespedTemporal, esResidente, actualizarTimeline, aprobarTerminosManual, aprobarVerificacion, aprobarVerificacionConHallazgos, actualizarVisita } = useApp();
+  const { visitas, actualizarEstadoVisita, eliminarVisita, toggleLlegoInvitado, toggleFavoritoInvitado, aprobarInvitado, rolActivo, addToast, verificaciones, actualizarVerificacion, actualizarHoraIngreso, actualizarHoraSalida, setLlegoInvitado, marcarLlegadaConVerificacion, toggleInstruccionCumplida, estacionamientosVisitantes, estacionamientosAsignados, asignarEstacionamientoVisita, liberarEstacionamientoVisita, configHuespedesTemporales, ubicacionActiva, suscripcionActiva, activarSuscripcion, reportarTraSire, usuario, actualizarConfigHuespedTemporal, esResidente, actualizarTimeline, aprobarTerminosManual, aprobarVerificacion, aprobarVerificacionConHallazgos, actualizarVisita } = useApp();
 
   const esAdminRol = rolActivo === 'administrador';
   const esGuardiaRol = rolActivo === 'guardia';
@@ -310,7 +310,7 @@ export default function VisitasHistorialPage() {
   // 15b: personas (invitados) de una reserva; si no hay invitados, el titular actúa como persona única
   const personasDeReserva = (item) => item.invitados && item.invitados.length > 0
     ? item.invitados.map((inv, idx) => ({ base: item, persona: inv, idx }))
-    : [{ base: item, persona: { nombre: item.nombre, llego: false, horaIngreso: '', horaSalida: '' }, idx: -1 }];
+    : [{ base: item, persona: { nombre: item.nombre, llego: !!item.llego || !!item.horaIngreso, horaIngreso: item.horaIngreso || '', horaSalida: item.horaSalida || '', ciVerificado: item.ciVerificado, ci: item.ci }, idx: -1 }];
 
   // 16: huéspedes a mostrar en la línea de tiempo — siempre al menos una fila para que sea consistente
   const huespedesTimeline = (item) => item.invitados && item.invitados.length > 0 ? item.invitados : [{ nombre: item.nombre }];
@@ -2728,6 +2728,51 @@ export default function VisitasHistorialPage() {
                 </div>
               </div>
 
+              {/* Check de salida + liberación automática de estacionamiento */}
+              <label
+                onClick={() => {
+                  if (!p.persona.llego) {
+                    addToast('El visitante aún no ingresó', 'warning');
+                    return;
+                  }
+                  if (p.persona.horaSalida) {
+                    // quitar salida
+                    actualizarHoraSalida(p.base.id, p.idx, '');
+                    addToast('Salida desmarcada', 'info');
+                  } else {
+                    const hora = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+                    actualizarHoraSalida(p.base.id, p.idx, hora);
+                    // liberar estacionamiento asociado automáticamente
+                    const clave = `${p.base.id}-${p.idx}`;
+                    Object.entries(estacionamientosAsignados || {}).forEach(([spot, val]) => {
+                      if (String(val) === clave || (p.idx === -1 && String(val).startsWith(`${p.base.id}-`))) {
+                        liberarEstacionamientoVisita(spot);
+                      }
+                    });
+                    addToast('Salida registrada y estacionamiento liberado', 'success');
+                  }
+                }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer',
+                  padding: '6px 0', fontSize: theme.fonts.sizes.xs, color: theme.colors.textSecondary,
+                  fontFamily: theme.fonts.family, userSelect: 'none', width: '100%',
+                }}
+              >
+                <div style={{
+                  width: '18px', height: '18px', borderRadius: '4px',
+                  border: `2px solid ${p.persona.horaSalida ? theme.colors.success : theme.colors.border}`,
+                  background: p.persona.horaSalida ? theme.colors.success : 'transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 150ms',
+                }}>
+                  {p.persona.horaSalida && (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  )}
+                </div>
+                {p.persona.horaSalida ? `Salida registrada ${p.persona.horaSalida}` : 'Registrar salida'}
+              </label>
+
               {/* Acciones Guardia — registro de ingreso/salida y estacionamiento */}
               <div style={{
                 display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '12px 0 0',
@@ -2745,7 +2790,13 @@ export default function VisitasHistorialPage() {
                       return;
                     }
                     actualizarHoraSalida(p.base.id, p.idx, new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }));
-                    addToast('Salida registrada (hora aproximada)', 'success');
+                    const clave = `${p.base.id}-${p.idx}`;
+                    Object.entries(estacionamientosAsignados || {}).forEach(([spot, val]) => {
+                      if (String(val) === clave || (p.idx === -1 && String(val).startsWith(`${p.base.id}-`))) {
+                        liberarEstacionamientoVisita(spot);
+                      }
+                    });
+                    addToast('Salida registrada y estacionamiento liberado', 'success');
                   }}
                   style={{
                     flex: '1 1 auto', minWidth: '120px', padding: '10px', borderRadius: theme.radius.full,

@@ -240,8 +240,9 @@ export function AppProvider({ children }) {
 
   // Visitas
   const agregarVisita = useCallback((visita) => {
-    const newVisita = { ...visita, id: Date.now() };
+    const newVisita = { ...visita, id: visita.id ?? Date.now() };
     setVisitas(prev => [newVisita, ...prev]);
+    return newVisita.id;
   }, []);
 
   const actualizarEstadoVisita = useCallback((id, estado) => {
